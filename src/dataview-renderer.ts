@@ -274,8 +274,8 @@ function renderField(
   // frontmatter property
   const val = fm[expr] ?? fm[expr.toLowerCase()];
   if (val == null) return "";
-  if (Array.isArray(val)) return escapeHtml(val.join(", "));
-  const s = String(val);
+  if (Array.isArray(val)) return escapeHtml(val.map(item => (item !== null && typeof item === "object" ? JSON.stringify(item) : String(item))).join(", "));
+  const s = typeof val === "object" && val !== null ? JSON.stringify(val) : String(val);
   // Auto-format date-like strings
   if (/^\d{4}-\d{2}-\d{2}(T|\s|$)/.test(s)) return formatDate(s);
   return escapeHtml(s);
@@ -411,8 +411,7 @@ export function processDataviewBlocks(app: App, sourceFile: TFile, el: HTMLEleme
     if (!pre) continue;
     const queryText = codeEl.textContent ?? "";
     const html = renderDataviewQuery(app, sourceFile, queryText);
-    const temp = document.createElement("div");
-    temp.innerHTML = html;
-    pre.replaceWith(...Array.from(temp.childNodes));
+    const parsed = new DOMParser().parseFromString(html, "text/html");
+    pre.replaceWith(...Array.from(parsed.body.childNodes));
   }
 }

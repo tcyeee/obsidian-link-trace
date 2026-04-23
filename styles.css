@@ -1,0 +1,51 @@
+/* ── Toast notification ── */
+.opal-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 99999;
+  background: var(--background-modifier-message);
+  border-radius: 5px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  font-size: 13.5px;
+  color: var(--text-on-accent);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.opal-toast.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.opal-spinner {
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-top-color: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  animation: opal-spin 0.65s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes opal-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Status bar button ── */
+.opal-status-bar-btn {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+}
+
+/* ── Offscreen render scratch pad ── */
+.opal-render-scratch {
+  position: absolute;
+  left: -9999px;
+  visibility: hidden;
+}

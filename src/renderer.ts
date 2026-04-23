@@ -17,7 +17,7 @@ function extractMath(content: string): { processed: string; entries: MathEntry[]
   // Protect fenced code blocks and inline code from math extraction
   let processed = content.replace(/```[\s\S]*?```|`[^`\n]+`/g, (m) => {
     codes.push(m);
-    return `\x00C${codes.length - 1}\x00`;
+    return `C${codes.length - 1}`;
   });
 
   // Extract display math $$...$$
@@ -34,8 +34,8 @@ function extractMath(content: string): { processed: string; entries: MathEntry[]
     return `<span class="math-i" data-mi="${i}"></span>`;
   });
 
-  // Restore code blocks
-  processed = processed.replace(/\x00C(\d+)\x00/g, (_, i) => codes[+i]);
+  // Restore code blocks (placeholder format: C{n} using PUA delimiter chars)
+  processed = processed.replace(/C(\d+)/g, (_, i) => codes[+i]);
   return { processed, entries };
 }
 
@@ -150,7 +150,7 @@ export async function renderNote(
   const el = document.createElement("div");
   el.className = "markdown-preview-view markdown-rendered";
   // Attach off-screen so mermaid (and other renderers) can use DOM layout APIs.
-  el.style.cssText = "position:absolute;left:-9999px;visibility:hidden;";
+  el.addClass("opal-render-scratch");
   document.body.appendChild(el);
 
   const component = new Component();
@@ -197,13 +197,17 @@ export async function renderNote(
     const baseFile = app.vault.getFiles().find(
       f => f.path === name || f.name === name || f.name === name.split("/").pop()
     ) as TFile | undefined;
-    const temp = document.createElement("div");
     if (baseFile) {
-      temp.innerHTML = await renderBaseAsTable(app, baseFile, images);
+      const parsed = new DOMParser().parseFromString(
+        await renderBaseAsTable(app, baseFile, images), "text/html"
+      );
+      placeholder.replaceWith(...Array.from(parsed.body.childNodes));
     } else {
-      temp.innerHTML = `<p class="base-error">Base 未找到: ${name}</p>`;
+      const errorP = document.createElement("p");
+      errorP.className = "base-error";
+      errorP.textContent = `Base 未找到: ${name}`;
+      placeholder.replaceWith(errorP);
     }
-    placeholder.replaceWith(...Array.from(temp.childNodes));
   }
 
   // Fallback: replace any .internal-embed elements pointing to .base files
@@ -216,13 +220,17 @@ export async function renderNote(
     const baseFile = app.vault.getFiles().find(
       f => f.path === src || f.name === baseName
     ) as TFile | undefined;
-    const temp = document.createElement("div");
     if (baseFile) {
-      temp.innerHTML = await renderBaseAsTable(app, baseFile, images);
+      const parsed = new DOMParser().parseFromString(
+        await renderBaseAsTable(app, baseFile, images), "text/html"
+      );
+      embed.replaceWith(...Array.from(parsed.body.childNodes));
     } else {
-      temp.innerHTML = `<p class="base-error">Base 未找到: ${src}</p>`;
+      const errorP = document.createElement("p");
+      errorP.className = "base-error";
+      errorP.textContent = `Base 未找到: ${src}`;
+      embed.replaceWith(errorP);
     }
-    embed.replaceWith(...Array.from(temp.childNodes));
   }
 
   // Wrap tables in .table-wrapper (skip tables already inside one)

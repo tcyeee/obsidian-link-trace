@@ -38,7 +38,7 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		// ── 导出设置 ──────────────────────────────
-		containerEl.createEl("h3", { text: "导出设置" });
+		new Setting(containerEl).setName("导出设置").setHeading();
 
 		new Setting(containerEl)
 			.setName("包含二级笔记")
@@ -53,7 +53,7 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 			);
 
 		// ── 本地导出 ──────────────────────────────
-		containerEl.createEl("h3", { text: "本地导出" });
+		new Setting(containerEl).setName("本地导出").setHeading();
 
 		new Setting(containerEl)
 			.setName("导出路径")
@@ -69,7 +69,7 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 			);
 
 		// ── 阿里云 OSS ────────────────────────────
-		containerEl.createEl("h3", { text: "阿里云 OSS" });
+		new Setting(containerEl).setName("阿里云 OSS").setHeading();
 
 		new Setting(containerEl)
 			.setName("Region")
@@ -97,7 +97,7 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("Access Key ID")
+			.setName("Access key ID")
 			.addText((text) => {
 				text
 					.setPlaceholder("AccessKey ID")
@@ -110,7 +110,7 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName("Access Key Secret")
+			.setName("Access key secret")
 			.addText((text) => {
 				text
 					.setPlaceholder("AccessKey Secret")

@@ -1,62 +1,22 @@
-import { Menu, Notice, Plugin, TFile } from "obsidian";
+import { Menu, Notice, Plugin, TFile, setIcon } from "obsidian";
 import { ShareOnlineSettings, DEFAULT_SETTINGS, ShareOnlineSettingTab } from "./src/settings";
 import { exportToLocal, prepareExport, collectLinkedNotes, rewriteInternalLinks } from "./src/exporter";
 import { uploadToOss, uploadSubNoteToOss, deleteFromOss } from "./src/oss";
 
 const THEME_COLOR = "#65A692";
 
-const SVG_SHARE = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>`;
-
 /* ── Export Toast ──────────────────────────────────────────────────────── */
-
-const TOAST_CSS = `
-.opal-toast {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 99999;
-  background: var(--background-modifier-message);
-  border-radius: 5px;
-  padding: 10px 16px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  opacity: 0;
-  transform: translateY(-6px);
-  transition: opacity 0.22s ease, transform 0.22s ease;
-  font-size: 13.5px;
-  color: var(--text-on-accent);
-  white-space: nowrap;
-  pointer-events: none;
-}
-.opal-toast.is-visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-.opal-spinner {
-  width: 13px;
-  height: 13px;
-  border: 2px solid rgba(255,255,255,0.25);
-  border-top-color: rgba(255,255,255,0.9);
-  border-radius: 50%;
-  animation: opal-spin 0.65s linear infinite;
-  flex-shrink: 0;
-}
-@keyframes opal-spin { to { transform: rotate(360deg); } }
-`;
 
 class ExportToast {
 	private el: HTMLElement;
 	private state: "loading" | "done" = "loading";
 	private timer = 0;
 
-	private static SVG_CHECK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
-	private static SVG_ERROR = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
-
 	constructor(loadingText = "上传中...") {
 		this.el = document.createElement("div");
 		this.el.className = "opal-toast";
-		this.el.innerHTML = `<div class="opal-spinner"></div><span>${loadingText}</span>`;
+		this.el.createDiv({ cls: "opal-spinner" });
+		this.el.createSpan({ text: loadingText });
 		document.body.appendChild(this.el);
 		requestAnimationFrame(() => this.el.classList.add("is-visible"));
 	}
@@ -65,7 +25,10 @@ class ExportToast {
 		if (this.state === "done") return;
 		this.state = "done";
 		clearTimeout(this.timer);
-		this.el.innerHTML = `${ExportToast.SVG_CHECK}<span>${text}</span>`;
+		this.el.empty();
+		const iconEl = this.el.createDiv();
+		setIcon(iconEl, "check");
+		this.el.createSpan({ text });
 		this.timer = window.setTimeout(() => this.dismiss(), 2800);
 	}
 
@@ -73,7 +36,10 @@ class ExportToast {
 		if (this.state === "done") return;
 		this.state = "done";
 		clearTimeout(this.timer);
-		this.el.innerHTML = `${ExportToast.SVG_ERROR}<span>${text}</span>`;
+		this.el.empty();
+		const iconEl = this.el.createDiv();
+		setIcon(iconEl, "x");
+		this.el.createSpan({ text });
 		this.timer = window.setTimeout(() => this.dismiss(), 4000);
 	}
 
@@ -88,15 +54,10 @@ export default class ShareOnlinePlugin extends Plugin {
 	settings: ShareOnlineSettings;
 	private statusBarEl: HTMLElement;
 	private currentToast: ExportToast | null = null;
-	private toastStyleEl: HTMLStyleElement | null = null;
 
 	async onload() {
 		await this.loadSettings();
 		this.addSettingTab(new ShareOnlineSettingTab(this.app, this));
-
-		this.toastStyleEl = document.createElement("style");
-		this.toastStyleEl.textContent = TOAST_CSS;
-		document.head.appendChild(this.toastStyleEl);
 
 		this.addCommand({
 			id: "export-current-note-to-desktop",
@@ -112,9 +73,9 @@ export default class ShareOnlinePlugin extends Plugin {
 
 		// ── Status bar share button ──────────────────────────────────────
 		this.statusBarEl = this.addStatusBarItem();
-		this.statusBarEl.innerHTML = SVG_SHARE;
-		this.statusBarEl.style.cssText = "cursor:pointer; display:flex; align-items:center; padding:0 4px;";
+		this.statusBarEl.addClass("opal-status-bar-btn");
 		this.statusBarEl.title = "分享笔记";
+		setIcon(this.statusBarEl, "share-2");
 		this.updateStatusBar();
 
 		this.statusBarEl.addEventListener("click", (e) => this.showShareMenu(e));
@@ -331,7 +292,6 @@ export default class ShareOnlinePlugin extends Plugin {
 	}
 
 	onunload() {
-		this.toastStyleEl?.remove();
 		this.currentToast?.dismiss();
 	}
 }

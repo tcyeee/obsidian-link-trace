@@ -103,6 +103,12 @@ function escapeHtml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
+function fmToString(v: unknown): string {
+  if (Array.isArray(v)) return v.map(item => (item !== null && typeof item === "object" ? JSON.stringify(item) : String(item))).join(", ");
+  if (v !== null && typeof v === "object") return JSON.stringify(v);
+  return String(v);
+}
+
 /**
  * Evaluate a Base formula expression.
  * Returns an HTML string — link() produces <a> tags, everything else is plain
@@ -180,12 +186,12 @@ function evalExpr(expr: string, ctx: EvalCtx): string {
   // note.FIELD → frontmatter property (Obsidian Bases convention)
   if (expr.startsWith("note.")) {
     const v = ctx.fm[expr.slice(5)];
-    return v !== undefined && v !== null ? escapeHtml(String(v)) : "";
+    return v !== undefined && v !== null ? escapeHtml(fmToString(v)) : "";
   }
 
   // frontmatter property (bare name)
   const v = ctx.fm[expr];
-  return v !== undefined && v !== null ? escapeHtml(String(v)) : "";
+  return v !== undefined && v !== null ? escapeHtml(fmToString(v)) : "";
 }
 
 /* ── Filter evaluator ───────────────────────────────────────────────────── */
@@ -289,7 +295,7 @@ export async function renderBaseAsTable(
         if (sortProp === "file.ctime") return String(f.stat.ctime);
         if (sortProp === "file.name")  return f.name;
         const v = fm[sortProp];
-        return v !== undefined ? String(v) : "";
+        return v !== undefined ? fmToString(v) : "";
       };
       const va = getV(a), vb = getV(b);
       const cmp = va < vb ? -1 : va > vb ? 1 : 0;
@@ -332,7 +338,7 @@ export async function renderBaseAsTable(
       if (col === "file.backlinks") return "";
       // frontmatter / note property
       const v = fm[col];
-      return v !== undefined ? escapeHtml(String(v)) : "";
+      return v !== undefined ? escapeHtml(fmToString(v)) : "";
     });
 
     return `<tr>${cells.map(c => `<td>${c}</td>`).join("")}</tr>`;
@@ -398,12 +404,12 @@ function renderCards(
         val = formulas[key] ? evalExpr(formulas[key], ctx) : "";
       } else if (col.startsWith("note.")) {
         const v = fm[col.slice(5)];
-        val = v !== undefined ? escapeHtml(String(v)) : "";
+        val = v !== undefined ? escapeHtml(fmToString(v)) : "";
       } else if (col === "file.name")     { val = escapeHtml(f.name); }
       else if (col === "file.basename")   { val = escapeHtml(f.basename); }
       else if (col === "file.mtime")      { val = formatDateValue(f.stat.mtime); }
       else if (col === "file.ctime")      { val = formatDateValue(f.stat.ctime); }
-      else { const v = fm[col]; val = v !== undefined ? escapeHtml(String(v)) : ""; }
+      else { const v = fm[col]; val = v !== undefined ? escapeHtml(fmToString(v)) : ""; }
 
       if (!val) return "";
       const label = colLabel(col, properties);

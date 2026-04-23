@@ -1,8 +1,6 @@
 import { Vault, TFile } from "obsidian";
 import type { ShareOnlineSettings } from "./settings";
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const OSS = require("ali-oss");
+import OSS from "ali-oss";
 
 function getMimeType(ext: string): string {
 	const map: Record<string, string> = {
