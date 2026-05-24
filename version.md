@@ -5,6 +5,18 @@
 
 ---
 
+## Version 1.0.3
+
+- Fixed "[object Object]" text appearing in rendered Dataview and base content
+- Fixed capitalization of settings labels ("Access key ID", "Access key secret")
+- Improved Obsidian API compliance for community plugin submission
+
+- 修复渲染 Dataview 和基础内容时出现"[object Object]"文字的问题
+- 修正设置项标签大小写（"Access key ID"、"Access key secret"）
+- 提升符合 Obsidian 社区插件审核规范的 API 合规性
+
+---
+
 ## Version 1.0.2
 
 ### Installation
