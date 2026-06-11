@@ -32,7 +32,6 @@ export async function uploadToOss(
 	vault: Vault,
 	noteName: string,
 	html: string,
-	css: string,
 	images: Map<string, TFile>
 ): Promise<string> {
 	const { ossRegion, ossBucket, ossAccessKeyId, ossAccessKeySecret, ossPrefix } = settings;
@@ -44,52 +43,51 @@ export async function uploadToOss(
 	const client = makeClient(settings);
 	const prefix = ossPrefix.replace(/\/$/, "");
 
-	// Upload HTML and CSS
+	// CSS is inlined in the HTML; upload as a single flat file.
 	await client.put(
-		`${prefix}/${noteName}/index.html`,
-		new Blob([html], { type: "text/html; charset=utf-8" })
-	);
-	await client.put(
-		`${prefix}/${noteName}/style.css`,
-		new Blob([css], { type: "text/css; charset=utf-8" })
+		`${prefix}/${noteName}`,
+		Buffer.from(html, "utf-8"),
+		{ mime: "text/html; charset=utf-8" }
 	);
 
-	// Upload images
+	// Images live in a peer folder: {prefix}/{noteName}/images/
 	for (const [exportName, imgFile] of images) {
 		const data = await vault.readBinary(imgFile);
 		await client.put(
 			`${prefix}/${noteName}/images/${exportName}`,
-			new Blob([data], { type: getMimeType(imgFile.extension) })
+			Buffer.from(data),
+			{ mime: getMimeType(imgFile.extension) }
 		);
 	}
 
 	const base = settings.ossDomain || `https://${ossBucket}.${ossRegion}.aliyuncs.com`;
-	return `${base}/${prefix}/${noteName}/index.html`;
+	return `${base}/${prefix}/${noteName}`;
 }
 
 export async function uploadSubNoteToOss(
 	settings: ShareOnlineSettings,
 	vault: Vault,
-	parentNoteName: string,
 	subFolderName: string,
 	html: string,
-	css: string,
 	images: Map<string, TFile>
-): Promise<void> {
+): Promise<string> {
 	const client = makeClient(settings);
 	const prefix = settings.ossPrefix.replace(/\/$/, "");
-	const basePath = `${prefix}/${parentNoteName}/${subFolderName}`;
 
-	await client.put(`${basePath}/index.html`, new Blob([html], { type: "text/html; charset=utf-8" }));
-	await client.put(`${basePath}/style.css`, new Blob([css], { type: "text/css; charset=utf-8" }));
+	// Sub-notes are flat alongside the parent note.
+	await client.put(`${prefix}/${subFolderName}`, Buffer.from(html, "utf-8"), { mime: "text/html; charset=utf-8" });
 
 	for (const [exportName, imgFile] of images) {
 		const data = await vault.readBinary(imgFile);
 		await client.put(
-			`${basePath}/images/${exportName}`,
-			new Blob([data], { type: getMimeType(imgFile.extension) })
+			`${prefix}/${subFolderName}/images/${exportName}`,
+			Buffer.from(data),
+			{ mime: getMimeType(imgFile.extension) }
 		);
 	}
+
+	const base = settings.ossDomain || `https://${settings.ossBucket}.${settings.ossRegion}.aliyuncs.com`;
+	return `${base}/${prefix}/${subFolderName}`;
 }
 
 export async function deleteFromOss(
@@ -106,7 +104,9 @@ export async function deleteFromOss(
 	const prefix = ossPrefix.replace(/\/$/, "");
 	const folderPrefix = `${prefix}/${noteName}/`;
 
-	// List all objects under this note's folder and delete them in bulk
+	// Delete the flat HTML file (new format) and all assets under the folder (images).
+	await client.delete(`${prefix}/${noteName}`).catch(() => {});
+
 	try {
 		const listResult = await client.list({ prefix: folderPrefix, "max-keys": 1000 });
 		const keys: string[] = (listResult.objects ?? []).map((o: { name: string }) => o.name);
@@ -114,7 +114,7 @@ export async function deleteFromOss(
 			await client.deleteMulti(keys, { quiet: true });
 		}
 	} catch {
-		// Fallback: delete known files individually
+		// Fallback: delete known files individually (also handles old index.html format)
 		await client.delete(`${folderPrefix}index.html`).catch(() => {});
 		await client.delete(`${folderPrefix}style.css`).catch(() => {});
 	}
