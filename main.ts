@@ -103,18 +103,18 @@ export default class ShareOnlinePlugin extends Plugin {
 	// ── Frontmatter helpers ───────────────────────────────────────────────
 
 	private getShareLink(file: TFile): string {
-		return this.app.metadataCache.getFileCache(file)?.frontmatter?.share_link ?? "";
+		return (this.app.metadataCache.getFileCache(file)?.frontmatter?.["share_link"] as string | undefined) ?? "";
 	}
 
 	private async setShareLink(file: TFile, url: string): Promise<void> {
-		await this.app.fileManager.processFrontMatter(file, (fm) => {
-			fm.share_link = url;
+		await this.app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
+			fm["share_link"] = url;
 		});
 	}
 
 	private async removeShareLink(file: TFile): Promise<void> {
-		await this.app.fileManager.processFrontMatter(file, (fm) => {
-			delete fm.share_link;
+		await this.app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
+			delete fm["share_link"];
 		});
 	}
 
@@ -166,7 +166,7 @@ export default class ShareOnlinePlugin extends Plugin {
 					.onClick(() => {
 						if (!ossReady) return;
 						new ShareModal(this.app, this, file, "publish", (subNotes) => {
-							this.doPublish(file, subNotes);
+							void this.doPublish(file, subNotes);
 						}).open();
 					})
 			);
@@ -201,7 +201,7 @@ export default class ShareOnlinePlugin extends Plugin {
 					.setIcon("eye-off")
 					.onClick(() => {
 						new ShareModal(this.app, this, file, "unpublish", (subNotes) => {
-							this.doUnpublish(file, subNotes);
+							void this.doUnpublish(file, subNotes);
 						}).open();
 					})
 			);
@@ -278,7 +278,7 @@ export default class ShareOnlinePlugin extends Plugin {
 				await navigator.clipboard.writeText(url);
 			}
 			this.currentToast?.setSuccess(successText);
-		} catch (err) {
+		} catch (err: unknown) {
 			this.currentToast?.setError(t("toast.publishFailed", { error: (err as Error).message }));
 			console.error(err);
 		}
@@ -297,7 +297,7 @@ export default class ShareOnlinePlugin extends Plugin {
 				try {
 					await deleteFromOss(this.settings, snName);
 					await this.removeShareLink(sn.file);
-				} catch (err) {
+				} catch (err: unknown) {
 					console.error(`删除二级笔记失败 (${sn.file.basename}):`, err);
 					new Notice(t("notice.deleteSubFailed", { name: sn.file.basename }));
 				}
@@ -312,7 +312,7 @@ export default class ShareOnlinePlugin extends Plugin {
 			await this.removeShareLink(file);
 			this.updateStatusBar();
 			this.currentToast?.setSuccess(t("toast.stopped"));
-		} catch (err) {
+		} catch (err: unknown) {
 			this.currentToast?.setError(t("toast.stopFailed", { error: (err as Error).message }));
 			console.error(err);
 		}
@@ -363,7 +363,7 @@ export default class ShareOnlinePlugin extends Plugin {
 				this.settings.includeLinkedNotes,
 				this.settings.pageLinkLength
 			);
-		} catch (err) {
+		} catch (err: unknown) {
 			this.currentToast?.setError(t("toast.exportFailed", { error: (err as Error).message }));
 			console.error(err);
 		}

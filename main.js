@@ -27389,7 +27389,7 @@ function matchesFilter(expr, file, meta) {
   var _a, _b, _c, _d, _e, _f;
   expr = expr.trim();
   const bodyTags = (_b = (_a = meta == null ? void 0 : meta.tags) == null ? void 0 : _a.map((t2) => t2.tag.replace(/^#/, ""))) != null ? _b : [];
-  const fmTags = (_c = meta == null ? void 0 : meta.frontmatter) == null ? void 0 : _c.tags;
+  const fmTags = (_c = meta == null ? void 0 : meta.frontmatter) == null ? void 0 : _c["tags"];
   const fmTagList = Array.isArray(fmTags) ? fmTags : fmTags ? [String(fmTags)] : [];
   const allTags = /* @__PURE__ */ new Set([...bodyTags, ...fmTagList]);
   const containsAllM = expr.match(/^file\.tags\.containsAll\((.+)\)$/);
@@ -27850,7 +27850,7 @@ ${htmlBody}
 
         // Language label \u2014 attached to wrapper, not pre
         if (code) {
-          var m = code.className.match(/language-(S+)/);
+          var m = code.className.match(/language-(\\S+)/);
           if (m && m[1] && m[1] !== 'undefined' && m[1] !== 'text') {
             var label = document.createElement('span');
             label.className = 'code-lang';
@@ -28723,7 +28723,7 @@ function collectLinkedNotesWithStatus(app, file) {
     const dest = app.metadataCache.getFirstLinkpathDest(link.link, file.path);
     if (dest && dest.extension === "md" && !seen.has(dest.path)) {
       seen.add(dest.path);
-      const shareLink = (_e = (_d = (_c = app.metadataCache.getFileCache(dest)) == null ? void 0 : _c.frontmatter) == null ? void 0 : _d.share_link) != null ? _e : "";
+      const shareLink = (_e = (_d = (_c = app.metadataCache.getFileCache(dest)) == null ? void 0 : _c.frontmatter) == null ? void 0 : _d["share_link"]) != null ? _e : "";
       result.push({ file: dest, shareLink });
     }
   }
@@ -29106,16 +29106,16 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
   // ── Frontmatter helpers ───────────────────────────────────────────────
   getShareLink(file) {
     var _a, _b, _c;
-    return (_c = (_b = (_a = this.app.metadataCache.getFileCache(file)) == null ? void 0 : _a.frontmatter) == null ? void 0 : _b.share_link) != null ? _c : "";
+    return (_c = (_b = (_a = this.app.metadataCache.getFileCache(file)) == null ? void 0 : _a.frontmatter) == null ? void 0 : _b["share_link"]) != null ? _c : "";
   }
   async setShareLink(file, url) {
     await this.app.fileManager.processFrontMatter(file, (fm) => {
-      fm.share_link = url;
+      fm["share_link"] = url;
     });
   }
   async removeShareLink(file) {
     await this.app.fileManager.processFrontMatter(file, (fm) => {
-      delete fm.share_link;
+      delete fm["share_link"];
     });
   }
   // ── File type helper ──────────────────────────────────────────────────
@@ -29149,7 +29149,7 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
         (item) => item.setTitle(t("menu.publish")).setIcon("upload-cloud").setDisabled(!ossReady).onClick(() => {
           if (!ossReady) return;
           new ShareModal(this.app, this, file, "publish", (subNotes) => {
-            this.doPublish(file, subNotes);
+            void this.doPublish(file, subNotes);
           }).open();
         })
       );
@@ -29173,7 +29173,7 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
       menu.addItem(
         (item) => item.setTitle(t("menu.unpublish")).setIcon("eye-off").onClick(() => {
           new ShareModal(this.app, this, file, "unpublish", (subNotes) => {
-            this.doUnpublish(file, subNotes);
+            void this.doUnpublish(file, subNotes);
           }).open();
         })
       );
@@ -29186,7 +29186,7 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
         })
       );
     }
-    menu.showAtPosition({ x: event.clientX + 10, y: event.clientY + 20 });
+    menu.showAtPosition({ x: event.clientX + 12, y: event.clientY + 28 });
   }
   // ── Actions ──────────────────────────────────────────────────────────
   async doPublish(file, subNotes, existingName, successText = t("toast.publishSuccess"), copyToClipboard = true) {

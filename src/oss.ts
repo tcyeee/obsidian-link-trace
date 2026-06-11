@@ -43,10 +43,10 @@ export async function listPublishedNames(settings: ShareOnlineSettings): Promise
 	try {
 		let marker: string | undefined;
 		do {
-			const res = (await client.list(
+			const res = await client.list(
 				{ prefix, delimiter: "/", "max-keys": 1000, marker },
 				{}
-			)) as { objects?: { name: string }[]; prefixes?: string[]; isTruncated?: boolean; nextMarker?: string };
+			);
 			// The note's HTML lives at `${prefix}${name}` (an object); its images
 			// sit under `${prefix}${name}/` (a common prefix). Collect both.
 			for (const o of res.objects ?? []) {
@@ -60,7 +60,7 @@ export async function listPublishedNames(settings: ShareOnlineSettings): Promise
 			marker = res.nextMarker;
 			if (!res.isTruncated) break;
 		} while (marker);
-	} catch (err) {
+	} catch (err: unknown) {
 		console.warn("[publish-as-link] 读取 OSS 已有页面列表失败，本次仅在发布范围内去重", err);
 	}
 	return names;

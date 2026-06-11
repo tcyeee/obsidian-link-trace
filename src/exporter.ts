@@ -73,7 +73,7 @@ export function collectLinkedNotesWithStatus(
 		if (dest && dest.extension === "md" && !seen.has(dest.path)) {
 			seen.add(dest.path);
 			const shareLink =
-				app.metadataCache.getFileCache(dest)?.frontmatter?.share_link ?? "";
+				(app.metadataCache.getFileCache(dest)?.frontmatter?.["share_link"] as string | undefined) ?? "";
 			result.push({ file: dest, shareLink });
 		}
 	}

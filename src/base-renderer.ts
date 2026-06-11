@@ -204,14 +204,14 @@ function matchesFilter(
   expr = expr.trim();
 
   const bodyTags  = meta?.tags?.map(t => t.tag.replace(/^#/, "")) ?? [];
-  const fmTags    = meta?.frontmatter?.tags;
-  const fmTagList = Array.isArray(fmTags) ? fmTags : (fmTags ? [String(fmTags)] : []);
+  const fmTags    = meta?.frontmatter?.["tags"] as string | string[] | undefined;
+  const fmTagList: string[] = Array.isArray(fmTags) ? fmTags : (fmTags ? [String(fmTags)] : []);
   const allTags   = new Set([...bodyTags, ...fmTagList]);
 
   const containsAllM = expr.match(/^file\.tags\.containsAll\((.+)\)$/);
   if (containsAllM) {
-    const req = (containsAllM[1].match(/["']([^"']+)["']/g) ?? [])
-      .map(s => s.replace(/["']/g, ""));
+    const req = (containsAllM[1].match(/["']([^"']+)["']/g) ?? [] as string[])
+      .map((s: string) => s.replace(/["']/g, ""));
     return req.every(t => allTags.has(t));
   }
 

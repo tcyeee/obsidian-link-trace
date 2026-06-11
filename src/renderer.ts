@@ -21,14 +21,14 @@ function extractMath(content: string): { processed: string; entries: MathEntry[]
   });
 
   // Extract display math $$...$$
-  processed = processed.replace(/\$\$([\s\S]+?)\$\$/g, (_, latex) => {
+  processed = processed.replace(/\$\$([\s\S]+?)\$\$/g, (_: string, latex: string) => {
     const i = entries.length;
     entries.push({ type: "display", latex: latex.trim() });
     return `\n<div class="math-d" data-mi="${i}"></div>\n`;
   });
 
   // Extract inline math $...$
-  processed = processed.replace(/\$([^\n$]+?)\$/g, (_, latex) => {
+  processed = processed.replace(/\$([^\n$]+?)\$/g, (_: string, latex: string) => {
     const i = entries.length;
     entries.push({ type: "inline", latex });
     return `<span class="math-i" data-mi="${i}"></span>`;
@@ -119,7 +119,7 @@ const PLUGIN_LANG_PREFIX = "export-raw-";
 function protectPluginCodeBlocks(content: string): string {
   return content.replace(
     /^(`{3,})([\w][\w-]*)[ \t]*$/gm,
-    (match, fence, lang) => {
+    (match: string, fence: string, lang: string) => {
       if (!PLUGIN_CODE_LANGS.has(lang.toLowerCase())) return match;
       return `${fence}${PLUGIN_LANG_PREFIX}${lang}`;
     }
@@ -194,7 +194,7 @@ export async function renderNote(
     const name = placeholder.getAttribute("data-base-embed") ?? "";
     const baseFile = app.vault.getFiles().find(
       f => f.path === name || f.name === name || f.name === name.split("/").pop()
-    ) as TFile | undefined;
+    );
     if (baseFile) {
       const parsed = new DOMParser().parseFromString(
         await renderBaseAsTable(app, baseFile, images), "text/html"
@@ -215,7 +215,7 @@ export async function renderNote(
     const baseName = src.split("/").pop() ?? src;
     const baseFile = app.vault.getFiles().find(
       f => f.path === src || f.name === baseName
-    ) as TFile | undefined;
+    );
     if (baseFile) {
       const parsed = new DOMParser().parseFromString(
         await renderBaseAsTable(app, baseFile, images), "text/html"
@@ -363,7 +363,7 @@ ${htmlBody}
 
         // Language label — attached to wrapper, not pre
         if (code) {
-          var m = code.className.match(/language-(\S+)/);
+          var m = code.className.match(/language-(\\S+)/);
           if (m && m[1] && m[1] !== 'undefined' && m[1] !== 'text') {
             var label = document.createElement('span');
             label.className = 'code-lang';
