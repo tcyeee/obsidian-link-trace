@@ -30,6 +30,12 @@ const context = await esbuild.context({
     "@lezer/lr",
     ...builtinModules,
   ],
+  alias: {
+    // Stubs replace transitive ali-oss dependencies that bundle child_process calls.
+    // See src/stubs/ for rationale.
+    "address": "./src/stubs/address.js",
+    "win-release": "./src/stubs/win-release.js",
+  },
   platform: "node",
   format: "cjs",
   target: "es2018",
