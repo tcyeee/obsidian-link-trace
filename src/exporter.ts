@@ -43,7 +43,11 @@ export function collectLinkedNotesWithStatus(
  * so they point to the exported sub-note pages.
  * subFolderMap: note basename / link path → subfolder name
  */
-export function rewriteInternalLinks(html: string, subFolderMap: Map<string, string>): string {
+export function rewriteInternalLinks(
+	html: string,
+	subFolderMap: Map<string, string>,
+	addExtension = true
+): string {
 	return html.replace(/<a([^>]*?)>/g, (match, attrs: string) => {
 		const dataHrefMatch = attrs.match(/data-href="([^"]*)"/);
 		if (!dataHrefMatch) return match;
@@ -61,8 +65,9 @@ export function rewriteInternalLinks(html: string, subFolderMap: Map<string, str
 			newAttrs = newAttrs.replace(/\s*target="_blank"/, "");
 			return `<a${newAttrs}>`;
 		}
+		const target = addExtension ? `./${subFolder}.html` : `./${subFolder}`;
 		// Use negative lookbehind to avoid matching the `href` inside `data-href="..."`
-		let newAttrs = attrs.replace(/(?<![a-zA-Z-])href="[^"]*"/, `href="./${subFolder}.html"`);
+		let newAttrs = attrs.replace(/(?<![a-zA-Z-])href="[^"]*"/, `href="${target}"`);
 		// Remove target="_blank" so the link opens in the current page
 		newAttrs = newAttrs.replace(/\s*target="_blank"/, "");
 		return `<a${newAttrs}>`;
@@ -79,7 +84,7 @@ export interface ExportResult {
 export async function prepareExport(app: App, vault: Vault, file: TFile, existingName?: string): Promise<ExportResult> {
 	const raw = await vault.read(file);
 	const { html: htmlBody, css, images } = await renderNote(app, file, raw);
-	const folderName = existingName ?? Math.random().toString(36).slice(2, 4);
+	const folderName = existingName ?? Math.random().toString(36).slice(2, 9);
 	// Inline CSS and rewrite image paths so the flat .html file can find its assets
 	// at {folderName}/images/ rather than the old relative images/ subfolder.
 	const html = buildHtml(file.basename, htmlBody, css).replace(/src="images\//g, `src="${folderName}/images/`);

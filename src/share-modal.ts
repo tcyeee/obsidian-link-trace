@@ -110,26 +110,33 @@ export class ShareModal extends Modal {
     }
 
     private renderUnpublishSubNotes(contentEl: HTMLElement) {
-        const withLink = this.subNotes.filter((sn) => sn.shareLink);
-        if (withLink.length === 0) return;
+        if (this.subNotes.length === 0) return;
         const section = contentEl.createDiv({ cls: "opal-modal-section" });
         section.createEl("p", {
             cls: "opal-modal-section-label",
             text: "关联的二级笔记（可选择一并停止）",
         });
-        for (const sn of withLink) {
-            this.checkStates.set(sn.file.path, true);
+        for (const sn of this.subNotes) {
             const item = section.createDiv({ cls: "opal-modal-note-item" });
-            const checkbox = item.createEl("input");
-            checkbox.type = "checkbox";
-            checkbox.checked = true;
-            checkbox.addClass("opal-modal-checkbox");
-            checkbox.addEventListener("change", () => {
-                this.checkStates.set(sn.file.path, checkbox.checked);
-            });
+            if (sn.shareLink) {
+                this.checkStates.set(sn.file.path, true);
+                const checkbox = item.createEl("input");
+                checkbox.type = "checkbox";
+                checkbox.checked = true;
+                checkbox.addClass("opal-modal-checkbox");
+                checkbox.addEventListener("change", () => {
+                    this.checkStates.set(sn.file.path, checkbox.checked);
+                });
+            } else {
+                // Placeholder to keep alignment with checkboxed items
+                item.createDiv({ cls: "opal-modal-checkbox-placeholder" });
+            }
             const iconEl = item.createDiv({ cls: "opal-modal-note-icon" });
             setIcon(iconEl, "file-text");
             item.createSpan({ text: sn.file.basename + ".md", cls: "opal-modal-note-name" });
+            if (!sn.shareLink) {
+                item.addClass("opal-modal-note-item--skip");
+            }
         }
     }
 

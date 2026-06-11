@@ -71,6 +71,11 @@ export async function uploadSubNoteToOss(
 	html: string,
 	images: Map<string, TFile>
 ): Promise<string> {
+	const { ossRegion, ossBucket, ossAccessKeyId, ossAccessKeySecret } = settings;
+	if (!ossRegion || !ossBucket || !ossAccessKeyId || !ossAccessKeySecret) {
+		throw new Error("请先在设置中填写 OSS 配置信息");
+	}
+
 	const client = makeClient(settings);
 	const prefix = settings.ossPrefix.replace(/\/$/, "");
 

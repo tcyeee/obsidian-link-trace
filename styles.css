@@ -102,6 +102,11 @@
 .opal-share-modal .opal-modal-checkbox {
   flex-shrink: 0;
 }
+.opal-share-modal .opal-modal-checkbox-placeholder {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
 .opal-share-modal .opal-modal-btn-row {
   display: flex;
   justify-content: flex-end;

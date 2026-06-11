@@ -246,7 +246,7 @@ export default class ShareOnlinePlugin extends Plugin {
 				}
 			}
 
-			mainHtml = rewriteInternalLinks(mainHtml, subFolderMap);
+			mainHtml = rewriteInternalLinks(mainHtml, subFolderMap, false);
 			const url = await uploadToOss(
 				this.settings,
 				this.app.vault,
