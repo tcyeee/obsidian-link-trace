@@ -81,12 +81,16 @@ export interface ExportResult {
 	images: Map<string, TFile>;
 }
 
-export async function prepareExport(app: App, vault: Vault, file: TFile, existingName?: string): Promise<ExportResult> {
+export async function prepareExport(
+	app: App,
+	vault: Vault,
+	file: TFile,
+	existingName?: string,
+	pageLinkLength = 3
+): Promise<ExportResult> {
 	const raw = await vault.read(file);
 	const { html: htmlBody, css, images } = await renderNote(app, file, raw);
-	const folderName = existingName ?? Math.random().toString(36).slice(2, 9);
-	// Inline CSS and rewrite image paths so the flat .html file can find its assets
-	// at {folderName}/images/ rather than the old relative images/ subfolder.
+	const folderName = existingName ?? Math.random().toString(36).slice(2, 2 + pageLinkLength);
 	const html = buildHtml(file.basename, htmlBody, css).replace(/src="images\//g, `src="${folderName}/images/`);
 	return { noteName: folderName, html, css, images };
 }
@@ -96,9 +100,10 @@ export async function exportToLocal(
 	vault: Vault,
 	file: TFile,
 	exportRoot: string,
-	includeLinkedNotes = false
+	includeLinkedNotes = false,
+	pageLinkLength = 3
 ): Promise<ExportResult> {
-	const result = await prepareExport(app, vault, file);
+	const result = await prepareExport(app, vault, file, undefined, pageLinkLength);
 
 	const subFolderMap = new Map<string, string>();
 	let mainHtml = result.html;
@@ -109,7 +114,7 @@ export async function exportToLocal(
 
 		// First pass: render all sub-notes and build the full map before writing anything.
 		for (const linkedFile of linkedFiles) {
-			const subResult = await prepareExport(app, vault, linkedFile);
+			const subResult = await prepareExport(app, vault, linkedFile, undefined, pageLinkLength);
 			subFolderMap.set(linkedFile.basename, subResult.noteName);
 			subFolderMap.set(linkedFile.path.replace(/\.md$/i, ""), subResult.noteName);
 			subResults.push({ subResult });
