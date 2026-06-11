@@ -153,7 +153,11 @@ export default class ShareOnlinePlugin extends Plugin {
 				item
 					.setTitle("发布到线上")
 					.setIcon("upload-cloud")
-					.onClick(() => this.publishNote(file))
+					.onClick(() => {
+						new ShareModal(this.app, this, file, "publish", (confirmedSubNotes) => {
+							this.doPublish(file, confirmedSubNotes);
+						}).open();
+					})
 			);
 			menu.addItem((item) =>
 				item
@@ -184,7 +188,11 @@ export default class ShareOnlinePlugin extends Plugin {
 				item
 					.setTitle("停止分享")
 					.setIcon("eye-off")
-					.onClick(() => this.unpublishNote(file))
+					.onClick(() => {
+						new ShareModal(this.app, this, file, "unpublish", (selectedSubNotes) => {
+							this.doUnpublish(file, selectedSubNotes);
+						}).open();
+					})
 			);
 			menu.addSeparator();
 			menu.addItem((item) =>
@@ -312,12 +320,10 @@ export default class ShareOnlinePlugin extends Plugin {
 	private async updateNote(file: TFile) {
 		const existingUrl = this.getShareLink(file);
 		const existingName = existingUrl ? this.extractNoteName(existingUrl) : undefined;
-		const url = await this.exportFile(file, true, existingName);
-		if (url) {
-			await this.setShareLink(file, url);
-			this.updateStatusBar();
-			this.currentToast?.setSuccess("更新成功");
-		}
+		const subNotes = this.settings.includeLinkedNotes
+			? collectLinkedNotesWithStatus(this.app, file)
+			: [];
+		await this.doPublish(file, subNotes, existingName, "更新成功", false);
 	}
 
 	private async unpublishNote(file: TFile) {
@@ -343,8 +349,15 @@ export default class ShareOnlinePlugin extends Plugin {
 			new Notice("只能发布 Markdown 笔记");
 			return;
 		}
-		await this.exportFile(file, toOss);
-		this.currentToast?.setSuccess(toOss ? "上传成功" : "导出成功");
+		if (toOss) {
+			const subNotes = this.settings.includeLinkedNotes
+				? collectLinkedNotesWithStatus(this.app, file)
+				: [];
+			await this.doPublish(file, subNotes, undefined, "上传成功", false);
+		} else {
+			await this.exportFile(file, false);
+			this.currentToast?.setSuccess("导出成功");
+		}
 	}
 
 	private async exportFile(file: TFile, toOss = false, existingName?: string): Promise<string> {
