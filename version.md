@@ -1,7 +1,21 @@
-# Publish Single Note as Webpage — 更新日志
+# LinkTrace — 更新日志
 
 > 一键将 Obsidian 笔记发布为网页，生成可分享的链接。
 > Publish your Obsidian notes as a webpage with one click and share via link.
+
+---
+
+## Version 0.1.1
+
+- Added share modal for batch publishing or unpublishing linked notes at once
+- Added configurable page link length setting (2–6 chars) to control short-code size
+- Fixed OSS link generation, credential validation, and unpublish modal appearance
+- Renamed plugin to LinkTrace
+
+- 新增分享弹窗，支持批量发布或停止分享关联笔记
+- 新增页面链接长度设置（2–6 位），控制生成链接短码的字符数
+- 修复 OSS 链接生成、凭证校验与停止分享弹窗样式问题
+- 插件更名为 LinkTrace
 
 ---
 
