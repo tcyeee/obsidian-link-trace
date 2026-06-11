@@ -1,6 +1,7 @@
-import { Menu, Notice, Plugin, TFile, setIcon } from "obsidian";
+import { Menu, Notice, Plugin, TFile, setIcon, setTooltip } from "obsidian";
 import { ShareOnlineSettings, DEFAULT_SETTINGS, ShareOnlineSettingTab } from "./src/settings";
-import { exportToLocal, prepareExport, collectLinkedNotes, rewriteInternalLinks } from "./src/exporter";
+import { exportToLocal, prepareExport, collectLinkedNotes, collectLinkedNotesWithStatus, rewriteInternalLinks } from "./src/exporter";
+import { ShareModal } from "./src/share-modal";
 import { uploadToOss, uploadSubNoteToOss, deleteFromOss } from "./src/oss";
 
 /* ── Export Toast ──────────────────────────────────────────────────────── */
@@ -15,35 +16,35 @@ class ExportToast {
 		this.el.createDiv({ cls: "opal-spinner" });
 		this.el.createSpan({ text: loadingText });
 		activeDocument.body.appendChild(this.el);
-		requestAnimationFrame(() => this.el.classList.add("is-visible"));
+		window.requestAnimationFrame(() => this.el.classList.add("is-visible"));
 	}
 
 	setSuccess(text = "上传成功") {
 		if (this.state === "done") return;
 		this.state = "done";
-		clearTimeout(this.timer);
+		window.clearTimeout(this.timer);
 		this.el.empty();
 		const iconEl = this.el.createDiv();
 		setIcon(iconEl, "check");
 		this.el.createSpan({ text });
-		this.timer = activeWindow.setTimeout(() => this.dismiss(), 2800);
+		this.timer = window.setTimeout(() => this.dismiss(), 2800);
 	}
 
 	setError(text: string) {
 		if (this.state === "done") return;
 		this.state = "done";
-		clearTimeout(this.timer);
+		window.clearTimeout(this.timer);
 		this.el.empty();
 		const iconEl = this.el.createDiv();
 		setIcon(iconEl, "x");
 		this.el.createSpan({ text });
-		this.timer = activeWindow.setTimeout(() => this.dismiss(), 4000);
+		this.timer = window.setTimeout(() => this.dismiss(), 4000);
 	}
 
 	dismiss() {
-		clearTimeout(this.timer);
+		window.clearTimeout(this.timer);
 		this.el.classList.remove("is-visible");
-		activeWindow.setTimeout(() => this.el.remove(), 250);
+		window.setTimeout(() => this.el.remove(), 250);
 	}
 }
 
@@ -71,7 +72,7 @@ export default class ShareOnlinePlugin extends Plugin {
 		// ── Status bar share button ──────────────────────────────────────
 		this.statusBarEl = this.addStatusBarItem();
 		this.statusBarEl.addClass("opal-status-bar-btn");
-		this.statusBarEl.title = "分享笔记";
+		setTooltip(this.statusBarEl, "分享笔记");
 		setIcon(this.statusBarEl, "share-2");
 		this.updateStatusBar();
 
@@ -115,19 +116,32 @@ export default class ShareOnlinePlugin extends Plugin {
 		});
 	}
 
+	// ── File type helper ──────────────────────────────────────────────────
+
+	/** Only Markdown notes can be published / shared. */
+	private isMarkdown(file: TFile | null): file is TFile {
+		return !!file && file.extension === "md";
+	}
+
 	// ── Status bar ───────────────────────────────────────────────────────
 
 	private updateStatusBar() {
 		const file = this.app.workspace.getActiveFile();
-		const published = file ? !!this.getShareLink(file) : false;
+		// Only Markdown notes can be shared — hide the icon for anything else
+		if (!this.isMarkdown(file)) {
+			this.statusBarEl.hide();
+			return;
+		}
+		this.statusBarEl.show();
+		const published = !!this.getShareLink(file);
 		this.statusBarEl.toggleClass("opal-status-published", published);
-		this.statusBarEl.title = published ? "已发布 — 点击管理" : "分享笔记";
+		setTooltip(this.statusBarEl, published ? "已发布 — 点击管理" : "分享笔记");
 	}
 
 	private showShareMenu(event: MouseEvent) {
 		const file = this.app.workspace.getActiveFile();
-		if (!file) {
-			new Notice("没有打开的笔记");
+		if (!this.isMarkdown(file)) {
+			new Notice("只能分享 Markdown 笔记");
 			return;
 		}
 
@@ -157,7 +171,7 @@ export default class ShareOnlinePlugin extends Plugin {
 					.setIcon("external-link")
 					.onClick(() => {
 						const url = this.getShareLink(file);
-						window.open(url, "_blank");
+						activeWindow.open(url, "_blank");
 					})
 			);
 			menu.addItem((item) =>
@@ -199,10 +213,71 @@ export default class ShareOnlinePlugin extends Plugin {
 		}
 	}
 
+	private async doPublish(
+		file: TFile,
+		subNotes: { file: TFile; shareLink: string }[],
+		existingName?: string,
+		successText = "发布成功，链接已复制到剪贴板",
+		copyToClipboard = true
+	): Promise<void> {
+		this.currentToast?.dismiss();
+		this.currentToast = new ExportToast("上传中...");
+		try {
+			const result = await prepareExport(this.app, this.app.vault, file, existingName);
+			const subFolderMap = new Map<string, string>();
+			let mainHtml = result.html;
+
+			for (const sn of subNotes) {
+				if (sn.shareLink) {
+					// Already published — reuse existing noteName for link rewriting
+					const noteName = this.extractNoteName(sn.shareLink);
+					subFolderMap.set(sn.file.basename, noteName);
+					subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), noteName);
+				} else {
+					const subResult = await prepareExport(this.app, this.app.vault, sn.file);
+					subFolderMap.set(sn.file.basename, subResult.noteName);
+					subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), subResult.noteName);
+					const subUrl = await uploadSubNoteToOss(
+						this.settings,
+						this.app.vault,
+						subResult.noteName,
+						subResult.html,
+						subResult.images
+					);
+					await this.setShareLink(sn.file, subUrl);
+				}
+			}
+
+			mainHtml = rewriteInternalLinks(mainHtml, subFolderMap);
+			const url = await uploadToOss(
+				this.settings,
+				this.app.vault,
+				result.noteName,
+				mainHtml,
+				result.images
+			);
+			await this.setShareLink(file, url);
+			this.updateStatusBar();
+			if (copyToClipboard) {
+				await navigator.clipboard.writeText(url);
+			}
+			this.currentToast?.setSuccess(successText);
+		} catch (err) {
+			this.currentToast?.setError(`发布失败：${(err as Error).message}`);
+			console.error(err);
+		}
+	}
+
+	private extractNoteName(url: string): string {
+		const parts = url.split("/");
+		const last = parts[parts.length - 1];
+		// Old format: .../noteName/index.html — new format: .../noteName.html
+		return last === "index.html" ? (parts[parts.length - 2] ?? "") : last.replace(/\.html$/i, "");
+	}
+
 	private async updateNote(file: TFile) {
 		const existingUrl = this.getShareLink(file);
-		// Extract folder name from existing URL: last segment before /index.html
-		const existingName = existingUrl ? existingUrl.split("/").slice(-2, -1)[0] : undefined;
+		const existingName = existingUrl ? this.extractNoteName(existingUrl) : undefined;
 		const url = await this.exportFile(file, true, existingName);
 		if (url) {
 			await this.setShareLink(file, url);
@@ -214,11 +289,13 @@ export default class ShareOnlinePlugin extends Plugin {
 	private async unpublishNote(file: TFile) {
 		const existingUrl = this.getShareLink(file);
 		if (existingUrl) {
-			const existingName = existingUrl.split("/").slice(-2, -1)[0];
+			const existingName = this.extractNoteName(existingUrl);
 			try {
 				await deleteFromOss(this.settings, existingName);
 			} catch (err) {
 				console.error("删除 OSS 文件失败：", err);
+				new Notice("删除线上文件失败，已保留分享链接");
+				return;
 			}
 		}
 		await this.removeShareLink(file);
@@ -228,8 +305,8 @@ export default class ShareOnlinePlugin extends Plugin {
 
 	private async exportCurrentNote(toOss = false) {
 		const file = this.app.workspace.getActiveFile();
-		if (!file) {
-			new Notice("没有打开的笔记");
+		if (!this.isMarkdown(file)) {
+			new Notice("只能发布 Markdown 笔记");
 			return;
 		}
 		await this.exportFile(file, toOss);
@@ -256,10 +333,8 @@ export default class ShareOnlinePlugin extends Plugin {
 						await uploadSubNoteToOss(
 							this.settings,
 							this.app.vault,
-							result.noteName,
 							subResult.noteName,
 							subResult.html,
-							subResult.css,
 							subResult.images
 						);
 					}
@@ -269,7 +344,7 @@ export default class ShareOnlinePlugin extends Plugin {
 				// non-exported targets have their href removed so they are not clickable.
 				mainHtml = rewriteInternalLinks(mainHtml, subFolderMap);
 
-				return await uploadToOss(this.settings, this.app.vault, result.noteName, mainHtml, result.css, result.images);
+				return await uploadToOss(this.settings, this.app.vault, result.noteName, mainHtml, result.images);
 			} else {
 				await exportToLocal(
 					this.app,
