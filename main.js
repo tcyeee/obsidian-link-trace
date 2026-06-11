@@ -28476,7 +28476,7 @@ function collectLinkedNotesWithStatus(app, file) {
   }
   return result;
 }
-function rewriteInternalLinks(html, subFolderMap) {
+function rewriteInternalLinks(html, subFolderMap, addExtension = true) {
   return html.replace(/<a([^>]*?)>/g, (match, attrs) => {
     var _a, _b;
     const dataHrefMatch = attrs.match(/data-href="([^"]*)"/);
@@ -28491,7 +28491,8 @@ function rewriteInternalLinks(html, subFolderMap) {
       newAttrs2 = newAttrs2.replace(/\s*target="_blank"/, "");
       return `<a${newAttrs2}>`;
     }
-    let newAttrs = attrs.replace(/(?<![a-zA-Z-])href="[^"]*"/, `href="./${subFolder}.html"`);
+    const target = addExtension ? `./${subFolder}.html` : `./${subFolder}`;
+    let newAttrs = attrs.replace(/(?<![a-zA-Z-])href="[^"]*"/, `href="${target}"`);
     newAttrs = newAttrs.replace(/\s*target="_blank"/, "");
     return `<a${newAttrs}>`;
   });
@@ -28499,7 +28500,7 @@ function rewriteInternalLinks(html, subFolderMap) {
 async function prepareExport(app, vault, file, existingName) {
   const raw = await vault.read(file);
   const { html: htmlBody, css, images } = await renderNote(app, file, raw);
-  const folderName = existingName != null ? existingName : Math.random().toString(36).slice(2, 4);
+  const folderName = existingName != null ? existingName : Math.random().toString(36).slice(2, 9);
   const html = buildHtml(file.basename, htmlBody, css).replace(/src="images\//g, `src="${folderName}/images/`);
   return { noteName: folderName, html, css, images };
 }
@@ -28615,26 +28616,32 @@ var ShareModal = class extends import_obsidian4.Modal {
     }
   }
   renderUnpublishSubNotes(contentEl) {
-    const withLink = this.subNotes.filter((sn) => sn.shareLink);
-    if (withLink.length === 0) return;
+    if (this.subNotes.length === 0) return;
     const section = contentEl.createDiv({ cls: "opal-modal-section" });
     section.createEl("p", {
       cls: "opal-modal-section-label",
       text: "\u5173\u8054\u7684\u4E8C\u7EA7\u7B14\u8BB0\uFF08\u53EF\u9009\u62E9\u4E00\u5E76\u505C\u6B62\uFF09"
     });
-    for (const sn of withLink) {
-      this.checkStates.set(sn.file.path, true);
+    for (const sn of this.subNotes) {
       const item = section.createDiv({ cls: "opal-modal-note-item" });
-      const checkbox = item.createEl("input");
-      checkbox.type = "checkbox";
-      checkbox.checked = true;
-      checkbox.addClass("opal-modal-checkbox");
-      checkbox.addEventListener("change", () => {
-        this.checkStates.set(sn.file.path, checkbox.checked);
-      });
+      if (sn.shareLink) {
+        this.checkStates.set(sn.file.path, true);
+        const checkbox = item.createEl("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = true;
+        checkbox.addClass("opal-modal-checkbox");
+        checkbox.addEventListener("change", () => {
+          this.checkStates.set(sn.file.path, checkbox.checked);
+        });
+      } else {
+        item.createDiv({ cls: "opal-modal-checkbox-placeholder" });
+      }
       const iconEl = item.createDiv({ cls: "opal-modal-note-icon" });
       (0, import_obsidian4.setIcon)(iconEl, "file-text");
       item.createSpan({ text: sn.file.basename + ".md", cls: "opal-modal-note-name" });
+      if (!sn.shareLink) {
+        item.addClass("opal-modal-note-item--skip");
+      }
     }
   }
   onClose() {
@@ -28692,6 +28699,10 @@ async function uploadToOss(settings, vault, noteName, html, images) {
   return `${base}/${prefix}/${noteName}`;
 }
 async function uploadSubNoteToOss(settings, vault, subFolderName, html, images) {
+  const { ossRegion, ossBucket, ossAccessKeyId, ossAccessKeySecret } = settings;
+  if (!ossRegion || !ossBucket || !ossAccessKeyId || !ossAccessKeySecret) {
+    throw new Error("\u8BF7\u5148\u5728\u8BBE\u7F6E\u4E2D\u586B\u5199 OSS \u914D\u7F6E\u4FE1\u606F");
+  }
   const client = makeClient(settings);
   const prefix = settings.ossPrefix.replace(/\/$/, "");
   await client.put(`${prefix}/${subFolderName}`, Buffer.from(html, "utf-8"), { mime: "text/html; charset=utf-8" });
@@ -28919,7 +28930,7 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
           await this.setShareLink(sn.file, subUrl);
         }
       }
-      mainHtml = rewriteInternalLinks(mainHtml, subFolderMap);
+      mainHtml = rewriteInternalLinks(mainHtml, subFolderMap, false);
       const url = await uploadToOss(
         this.settings,
         this.app.vault,
