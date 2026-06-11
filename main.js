@@ -27061,6 +27061,9 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
     return `${base}/${prefix}/${sample}`;
   }
   display() {
+    this.buildUI();
+  }
+  buildUI() {
     const { containerEl } = this;
     containerEl.empty();
     let previewEl;
@@ -27075,7 +27078,7 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
         this.plugin.settings.language = value;
         setLanguage(value);
         await this.plugin.saveSettings();
-        this.display();
+        this.buildUI();
       })
     );
     const exportDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
