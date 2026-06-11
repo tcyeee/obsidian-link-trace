@@ -54,7 +54,7 @@ function collectImages(
 ): Map<string, TFile> {
   const vaultBasePath =
     app.vault.adapter instanceof FileSystemAdapter
-      ? app.vault.adapter.basePath
+      ? app.vault.adapter.getBasePath()
       : "";
 
   // ── 1. Obsidian wiki-style embeds: .internal-embed[src] wrapping an <img> ──
@@ -165,10 +165,10 @@ export async function renderNote(
       if ((pendingMermaid === 0 && elapsed >= 300) || elapsed >= 1500) {
         resolve();
       } else {
-        activeWindow.setTimeout(check, 100);
+        window.setTimeout(check, 100);
       }
     };
-    activeWindow.setTimeout(check, 300);
+    window.setTimeout(check, 300);
   });
   component.unload();
 
@@ -245,7 +245,7 @@ export async function renderNote(
 }
 
 /* ── HTML builder ──────────────────────────────────────────────────────── */
-export function buildHtml(title: string, htmlBody: string): string {
+export function buildHtml(title: string, htmlBody: string, css: string): string {
   const svgCopy = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
   const svgCheck = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${THEME}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
 
@@ -284,7 +284,7 @@ export function buildHtml(title: string, htmlBody: string): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${title}</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-  <link rel="stylesheet" href="style.css">
+  <style>${css}</style>
 </head>
 <body>
   <button class="toc-toggle" id="toc-toggle" title="OUTLINE">

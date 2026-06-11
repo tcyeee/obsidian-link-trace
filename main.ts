@@ -1,8 +1,9 @@
 import { Menu, Notice, Plugin, TFile, setIcon, setTooltip } from "obsidian";
 import { ShareOnlineSettings, DEFAULT_SETTINGS, ShareOnlineSettingTab } from "./src/settings";
-import { exportToLocal, prepareExport, collectLinkedNotesWithStatus, rewriteInternalLinks } from "./src/exporter";
+import { exportToLocal, prepareExport, generateUniqueName, collectLinkedNotesWithStatus, rewriteInternalLinks } from "./src/exporter";
 import { ShareModal } from "./src/share-modal";
-import { uploadToOss, uploadSubNoteToOss, deleteFromOss } from "./src/oss";
+import { uploadToOss, uploadSubNoteToOss, deleteFromOss, listPublishedNames } from "./src/oss";
+import { t, setLanguage } from "./src/i18n";
 
 /* ── Export Toast ──────────────────────────────────────────────────────── */
 
@@ -11,7 +12,7 @@ class ExportToast {
 	private state: "loading" | "done" = "loading";
 	private timer = 0;
 
-	constructor(loadingText = "上传中...") {
+	constructor(loadingText = t("toast.uploading")) {
 		this.el = createDiv({ cls: "opal-toast" });
 		this.el.createDiv({ cls: "opal-spinner" });
 		this.el.createSpan({ text: loadingText });
@@ -19,7 +20,7 @@ class ExportToast {
 		window.requestAnimationFrame(() => this.el.classList.add("is-visible"));
 	}
 
-	setSuccess(text = "上传成功") {
+	setSuccess(text = t("toast.uploadSuccess")) {
 		if (this.state === "done") return;
 		this.state = "done";
 		window.clearTimeout(this.timer);
@@ -59,20 +60,20 @@ export default class ShareOnlinePlugin extends Plugin {
 
 		this.addCommand({
 			id: "export-current-note-to-desktop",
-			name: "导出到本地",
+			name: t("cmd.exportLocal"),
 			callback: () => this.exportCurrentNote(),
 		});
 
 		this.addCommand({
 			id: "export-current-note-to-oss",
-			name: "导出到 OSS",
+			name: t("cmd.exportOss"),
 			callback: () => this.exportCurrentNote(true),
 		});
 
 		// ── Status bar share button ──────────────────────────────────────
 		this.statusBarEl = this.addStatusBarItem();
 		this.statusBarEl.addClass("opal-status-bar-btn");
-		setTooltip(this.statusBarEl, "分享笔记");
+		setTooltip(this.statusBarEl, t("statusbar.shareNote"));
 		setIcon(this.statusBarEl, "share-2");
 		this.updateStatusBar();
 
@@ -92,6 +93,7 @@ export default class ShareOnlinePlugin extends Plugin {
 
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, (await this.loadData()) as Partial<ShareOnlineSettings>);
+		setLanguage(this.settings.language);
 	}
 
 	async saveSettings() {
@@ -135,25 +137,34 @@ export default class ShareOnlinePlugin extends Plugin {
 		this.statusBarEl.show();
 		const published = !!this.getShareLink(file);
 		this.statusBarEl.toggleClass("opal-status-published", published);
-		setTooltip(this.statusBarEl, published ? "已发布 — 点击管理" : "分享笔记");
+		setTooltip(this.statusBarEl, published ? t("statusbar.published") : t("statusbar.shareNote"));
 	}
 
 	private showShareMenu(event: MouseEvent) {
 		const file = this.app.workspace.getActiveFile();
 		if (!this.isMarkdown(file)) {
-			new Notice("只能分享 Markdown 笔记");
+			new Notice(t("notice.onlyMarkdown.share"));
 			return;
 		}
 
 		const published = !!this.getShareLink(file);
 		const menu = new Menu();
 
+		const ossReady = !!(
+			this.settings.ossRegion &&
+			this.settings.ossBucket &&
+			this.settings.ossAccessKeyId &&
+			this.settings.ossAccessKeySecret
+		);
+
 		if (!published) {
 			menu.addItem((item) =>
 				item
-					.setTitle("发布到线上")
+					.setTitle(t("menu.publish"))
 					.setIcon("upload-cloud")
+					.setDisabled(!ossReady)
 					.onClick(() => {
+						if (!ossReady) return;
 						new ShareModal(this.app, this, file, "publish", (subNotes) => {
 							this.doPublish(file, subNotes);
 						}).open();
@@ -161,17 +172,17 @@ export default class ShareOnlinePlugin extends Plugin {
 			);
 			menu.addItem((item) =>
 				item
-					.setTitle("导出到本地")
+					.setTitle(t("menu.exportLocal"))
 					.setIcon("download")
 					.onClick(async () => {
 						await this.exportFile(file);
-						this.currentToast?.setSuccess("导出成功");
+						this.currentToast?.setSuccess(t("toast.exportSuccess"));
 					})
 			);
 		} else {
 			menu.addItem((item) =>
 				item
-					.setTitle("打开链接")
+					.setTitle(t("menu.openLink"))
 					.setIcon("external-link")
 					.onClick(() => {
 						const url = this.getShareLink(file);
@@ -180,13 +191,13 @@ export default class ShareOnlinePlugin extends Plugin {
 			);
 			menu.addItem((item) =>
 				item
-					.setTitle("内容更新")
+					.setTitle(t("menu.update"))
 					.setIcon("refresh-cw")
 					.onClick(() => this.updateNote(file))
 			);
 			menu.addItem((item) =>
 				item
-					.setTitle("停止分享")
+					.setTitle(t("menu.unpublish"))
 					.setIcon("eye-off")
 					.onClick(() => {
 						new ShareModal(this.app, this, file, "unpublish", (subNotes) => {
@@ -197,16 +208,16 @@ export default class ShareOnlinePlugin extends Plugin {
 			menu.addSeparator();
 			menu.addItem((item) =>
 				item
-					.setTitle("导出到本地")
+					.setTitle(t("menu.exportLocal"))
 					.setIcon("download")
 					.onClick(async () => {
 						await this.exportFile(file);
-						this.currentToast?.setSuccess("导出成功");
+						this.currentToast?.setSuccess(t("toast.exportSuccess"));
 					})
 			);
 		}
 
-		menu.showAtMouseEvent(event);
+		menu.showAtPosition({ x: event.clientX + 12, y: event.clientY + 28 });
 	}
 
 	// ── Actions ──────────────────────────────────────────────────────────
@@ -215,13 +226,19 @@ export default class ShareOnlinePlugin extends Plugin {
 		file: TFile,
 		subNotes: { file: TFile; shareLink: string }[],
 		existingName?: string,
-		successText = "发布成功，链接已复制到剪贴板",
+		successText = t("toast.publishSuccess"),
 		copyToClipboard = true
 	): Promise<void> {
 		this.currentToast?.dismiss();
-		this.currentToast = new ExportToast("上传中...");
+		this.currentToast = new ExportToast(t("toast.uploading"));
 		try {
-			const result = await prepareExport(this.app, this.app.vault, file, existingName, this.settings.pageLinkLength);
+			// Seed with every name already published to OSS so new names never
+			// overwrite an unrelated note; reused names go in too so freshly
+			// generated sub-note names avoid them.
+			const usedNames = await listPublishedNames(this.settings);
+			const mainName = existingName ?? generateUniqueName(usedNames, this.settings.pageLinkLength);
+			usedNames.add(mainName);
+			const result = await prepareExport(this.app, this.app.vault, file, mainName);
 			const subFolderMap = new Map<string, string>();
 			let mainHtml = result.html;
 
@@ -229,10 +246,11 @@ export default class ShareOnlinePlugin extends Plugin {
 				if (sn.shareLink) {
 					// Already published — reuse existing noteName for link rewriting
 					const noteName = this.extractNoteName(sn.shareLink);
+					usedNames.add(noteName);
 					subFolderMap.set(sn.file.basename, noteName);
 					subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), noteName);
 				} else {
-					const subResult = await prepareExport(this.app, this.app.vault, sn.file, undefined, this.settings.pageLinkLength);
+					const subResult = await prepareExport(this.app, this.app.vault, sn.file, generateUniqueName(usedNames, this.settings.pageLinkLength));
 					subFolderMap.set(sn.file.basename, subResult.noteName);
 					subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), subResult.noteName);
 					const subUrl = await uploadSubNoteToOss(
@@ -261,7 +279,7 @@ export default class ShareOnlinePlugin extends Plugin {
 			}
 			this.currentToast?.setSuccess(successText);
 		} catch (err) {
-			this.currentToast?.setError(`发布失败：${(err as Error).message}`);
+			this.currentToast?.setError(t("toast.publishFailed", { error: (err as Error).message }));
 			console.error(err);
 		}
 	}
@@ -271,7 +289,7 @@ export default class ShareOnlinePlugin extends Plugin {
 		subNotesToDelete: { file: TFile; shareLink: string }[]
 	): Promise<void> {
 		this.currentToast?.dismiss();
-		this.currentToast = new ExportToast("停止分享中...");
+		this.currentToast = new ExportToast(t("toast.stopping"));
 		try {
 			// Delete selected sub-notes first (errors are non-fatal)
 			for (const sn of subNotesToDelete) {
@@ -281,7 +299,7 @@ export default class ShareOnlinePlugin extends Plugin {
 					await this.removeShareLink(sn.file);
 				} catch (err) {
 					console.error(`删除二级笔记失败 (${sn.file.basename}):`, err);
-					new Notice(`删除 ${sn.file.basename} 失败，已保留其分享链接`);
+					new Notice(t("notice.deleteSubFailed", { name: sn.file.basename }));
 				}
 			}
 
@@ -293,9 +311,9 @@ export default class ShareOnlinePlugin extends Plugin {
 			}
 			await this.removeShareLink(file);
 			this.updateStatusBar();
-			this.currentToast?.setSuccess("已停止分享");
+			this.currentToast?.setSuccess(t("toast.stopped"));
 		} catch (err) {
-			this.currentToast?.setError(`停止分享失败：${(err as Error).message}`);
+			this.currentToast?.setError(t("toast.stopFailed", { error: (err as Error).message }));
 			console.error(err);
 		}
 	}
@@ -313,20 +331,20 @@ export default class ShareOnlinePlugin extends Plugin {
 		const subNotes = this.settings.includeLinkedNotes
 			? collectLinkedNotesWithStatus(this.app, file)
 			: [];
-		await this.doPublish(file, subNotes, existingName, "更新成功", false);
+		await this.doPublish(file, subNotes, existingName, t("toast.updateSuccess"), false);
 	}
 
 	private async exportCurrentNote(toOss = false) {
 		const file = this.app.workspace.getActiveFile();
 		if (!this.isMarkdown(file)) {
-			new Notice("只能发布 Markdown 笔记");
+			new Notice(t("notice.onlyMarkdown.publish"));
 			return;
 		}
 		if (toOss) {
 			const subNotes = this.settings.includeLinkedNotes
 				? collectLinkedNotesWithStatus(this.app, file)
 				: [];
-			await this.doPublish(file, subNotes, undefined, "上传成功", false);
+			await this.doPublish(file, subNotes, undefined, t("toast.uploadSuccess"), false);
 		} else {
 			await this.exportFile(file);
 			this.currentToast?.setSuccess("导出成功");
@@ -335,7 +353,7 @@ export default class ShareOnlinePlugin extends Plugin {
 
 	private async exportFile(file: TFile): Promise<void> {
 		this.currentToast?.dismiss();
-		this.currentToast = new ExportToast("导出中...");
+		this.currentToast = new ExportToast(t("toast.exporting"));
 		try {
 			await exportToLocal(
 				this.app,
@@ -346,7 +364,7 @@ export default class ShareOnlinePlugin extends Plugin {
 				this.settings.pageLinkLength
 			);
 		} catch (err) {
-			this.currentToast?.setError(`导出失败：${(err as Error).message}`);
+			this.currentToast?.setError(t("toast.exportFailed", { error: (err as Error).message }));
 			console.error(err);
 		}
 	}

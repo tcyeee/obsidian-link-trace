@@ -5582,21 +5582,21 @@ var require_sax = __commonJS({
           emitNode(parser, "onscript", parser.script);
           parser.script = "";
         }
-        var t = parser.tags.length;
+        var t2 = parser.tags.length;
         var tagName = parser.tagName;
         if (!parser.strict) {
           tagName = tagName[parser.looseCase]();
         }
         var closeTo = tagName;
-        while (t--) {
-          var close = parser.tags[t];
+        while (t2--) {
+          var close = parser.tags[t2];
           if (close.name !== closeTo) {
             strictFail(parser, "Unexpected close tag");
           } else {
             break;
           }
         }
-        if (t < 0) {
+        if (t2 < 0) {
           strictFail(parser, "Unmatched closing tag: " + parser.tagName);
           parser.textNode += "</" + parser.tagName + ">";
           parser.state = S.TEXT;
@@ -5604,7 +5604,7 @@ var require_sax = __commonJS({
         }
         parser.tagName = tagName;
         var s2 = parser.tags.length;
-        while (s2-- > t) {
+        while (s2-- > t2) {
           var tag = parser.tag = parser.tags.pop();
           parser.tagName = parser.tag.name;
           emitNode(parser, "onclosetag", parser.tagName);
@@ -5620,7 +5620,7 @@ var require_sax = __commonJS({
             });
           }
         }
-        if (t === 0) parser.closedRoot = true;
+        if (t2 === 0) parser.closedRoot = true;
         parser.tagName = parser.attribValue = parser.attribName = "";
         parser.attribList.length = 0;
         parser.state = S.TEXT;
@@ -7030,11 +7030,11 @@ var require_humanize_ms = __commonJS({
     "use strict";
     var util = require("util");
     var ms = require_ms();
-    module2.exports = function(t) {
-      if (typeof t === "number") return t;
-      var r = ms(t);
+    module2.exports = function(t2) {
+      if (typeof t2 === "number") return t2;
+      var r = ms(t2);
       if (r === void 0) {
-        var err = new Error(util.format("humanize-ms(%j) result undefined", t));
+        var err = new Error(util.format("humanize-ms(%j) result undefined", t2));
         console.warn(err.stack);
       }
       return r;
@@ -9153,13 +9153,13 @@ var require_date = __commonJS({
         H: now.getHours()
       };
     };
-    exports2.timestamp = function timestamp(t) {
-      if (t) {
-        var v = t;
+    exports2.timestamp = function timestamp(t2) {
+      if (t2) {
+        var v = t2;
         if (typeof v === "string") {
           v = Number(v);
         }
-        if (String(t).length === 10) {
+        if (String(t2).length === 10) {
           v *= 1e3;
         }
         return new Date(v);
@@ -13815,8 +13815,8 @@ var require_Mime = __commonJS({
     }
     Mime.prototype.define = function(typeMap, force) {
       for (let type in typeMap) {
-        let extensions = typeMap[type].map(function(t) {
-          return t.toLowerCase();
+        let extensions = typeMap[type].map(function(t2) {
+          return t2.toLowerCase();
         });
         type = type.toLowerCase();
         for (let i = 0; i < extensions.length; i++) {
@@ -19563,7 +19563,7 @@ var require_bowser = __commonJS({
       else if (typeof define == "function" && define.amd) define(name, definition);
       else root[name] = definition();
     })(exports2, "bowser", function() {
-      var t = true;
+      var t2 = true;
       function detect(ua) {
         function getFirstMatch(regex) {
           var match = ua.match(regex);
@@ -19577,213 +19577,213 @@ var require_bowser = __commonJS({
         if (/opera/i.test(ua)) {
           result = {
             name: "Opera",
-            opera: t,
+            opera: t2,
             version: versionIdentifier || getFirstMatch(/(?:opera|opr|opios)[\s\/](\d+(\.\d+)?)/i)
           };
         } else if (/opr\/|opios/i.test(ua)) {
           result = {
             name: "Opera",
-            opera: t,
+            opera: t2,
             version: getFirstMatch(/(?:opr|opios)[\s\/](\d+(\.\d+)?)/i) || versionIdentifier
           };
         } else if (/SamsungBrowser/i.test(ua)) {
           result = {
             name: "Samsung Internet for Android",
-            samsungBrowser: t,
+            samsungBrowser: t2,
             version: versionIdentifier || getFirstMatch(/(?:SamsungBrowser)[\s\/](\d+(\.\d+)?)/i)
           };
         } else if (/Whale/i.test(ua)) {
           result = {
             name: "NAVER Whale browser",
-            whale: t,
+            whale: t2,
             version: getFirstMatch(/(?:whale)[\s\/](\d+(?:\.\d+)+)/i)
           };
         } else if (/MZBrowser/i.test(ua)) {
           result = {
             name: "MZ Browser",
-            mzbrowser: t,
+            mzbrowser: t2,
             version: getFirstMatch(/(?:MZBrowser)[\s\/](\d+(?:\.\d+)+)/i)
           };
         } else if (/coast/i.test(ua)) {
           result = {
             name: "Opera Coast",
-            coast: t,
+            coast: t2,
             version: versionIdentifier || getFirstMatch(/(?:coast)[\s\/](\d+(\.\d+)?)/i)
           };
         } else if (/focus/i.test(ua)) {
           result = {
             name: "Focus",
-            focus: t,
+            focus: t2,
             version: getFirstMatch(/(?:focus)[\s\/](\d+(?:\.\d+)+)/i)
           };
         } else if (/yabrowser/i.test(ua)) {
           result = {
             name: "Yandex Browser",
-            yandexbrowser: t,
+            yandexbrowser: t2,
             version: versionIdentifier || getFirstMatch(/(?:yabrowser)[\s\/](\d+(\.\d+)?)/i)
           };
         } else if (/ucbrowser/i.test(ua)) {
           result = {
             name: "UC Browser",
-            ucbrowser: t,
+            ucbrowser: t2,
             version: getFirstMatch(/(?:ucbrowser)[\s\/](\d+(?:\.\d+)+)/i)
           };
         } else if (/mxios/i.test(ua)) {
           result = {
             name: "Maxthon",
-            maxthon: t,
+            maxthon: t2,
             version: getFirstMatch(/(?:mxios)[\s\/](\d+(?:\.\d+)+)/i)
           };
         } else if (/epiphany/i.test(ua)) {
           result = {
             name: "Epiphany",
-            epiphany: t,
+            epiphany: t2,
             version: getFirstMatch(/(?:epiphany)[\s\/](\d+(?:\.\d+)+)/i)
           };
         } else if (/puffin/i.test(ua)) {
           result = {
             name: "Puffin",
-            puffin: t,
+            puffin: t2,
             version: getFirstMatch(/(?:puffin)[\s\/](\d+(?:\.\d+)?)/i)
           };
         } else if (/sleipnir/i.test(ua)) {
           result = {
             name: "Sleipnir",
-            sleipnir: t,
+            sleipnir: t2,
             version: getFirstMatch(/(?:sleipnir)[\s\/](\d+(?:\.\d+)+)/i)
           };
         } else if (/k-meleon/i.test(ua)) {
           result = {
             name: "K-Meleon",
-            kMeleon: t,
+            kMeleon: t2,
             version: getFirstMatch(/(?:k-meleon)[\s\/](\d+(?:\.\d+)+)/i)
           };
         } else if (windowsphone) {
           result = {
             name: "Windows Phone",
             osname: "Windows Phone",
-            windowsphone: t
+            windowsphone: t2
           };
           if (edgeVersion) {
-            result.msedge = t;
+            result.msedge = t2;
             result.version = edgeVersion;
           } else {
-            result.msie = t;
+            result.msie = t2;
             result.version = getFirstMatch(/iemobile\/(\d+(\.\d+)?)/i);
           }
         } else if (/msie|trident/i.test(ua)) {
           result = {
             name: "Internet Explorer",
-            msie: t,
+            msie: t2,
             version: getFirstMatch(/(?:msie |rv:)(\d+(\.\d+)?)/i)
           };
         } else if (chromeos) {
           result = {
             name: "Chrome",
             osname: "Chrome OS",
-            chromeos: t,
-            chromeBook: t,
-            chrome: t,
+            chromeos: t2,
+            chromeBook: t2,
+            chrome: t2,
             version: getFirstMatch(/(?:chrome|crios|crmo)\/(\d+(\.\d+)?)/i)
           };
         } else if (/edg([ea]|ios)/i.test(ua)) {
           result = {
             name: "Microsoft Edge",
-            msedge: t,
+            msedge: t2,
             version: edgeVersion
           };
         } else if (/vivaldi/i.test(ua)) {
           result = {
             name: "Vivaldi",
-            vivaldi: t,
+            vivaldi: t2,
             version: getFirstMatch(/vivaldi\/(\d+(\.\d+)?)/i) || versionIdentifier
           };
         } else if (sailfish) {
           result = {
             name: "Sailfish",
             osname: "Sailfish OS",
-            sailfish: t,
+            sailfish: t2,
             version: getFirstMatch(/sailfish\s?browser\/(\d+(\.\d+)?)/i)
           };
         } else if (/seamonkey\//i.test(ua)) {
           result = {
             name: "SeaMonkey",
-            seamonkey: t,
+            seamonkey: t2,
             version: getFirstMatch(/seamonkey\/(\d+(\.\d+)?)/i)
           };
         } else if (/firefox|iceweasel|fxios/i.test(ua)) {
           result = {
             name: "Firefox",
-            firefox: t,
+            firefox: t2,
             version: getFirstMatch(/(?:firefox|iceweasel|fxios)[ \/](\d+(\.\d+)?)/i)
           };
           if (/\((mobile|tablet);[^\)]*rv:[\d\.]+\)/i.test(ua)) {
-            result.firefoxos = t;
+            result.firefoxos = t2;
             result.osname = "Firefox OS";
           }
         } else if (silk) {
           result = {
             name: "Amazon Silk",
-            silk: t,
+            silk: t2,
             version: getFirstMatch(/silk\/(\d+(\.\d+)?)/i)
           };
         } else if (/phantom/i.test(ua)) {
           result = {
             name: "PhantomJS",
-            phantom: t,
+            phantom: t2,
             version: getFirstMatch(/phantomjs\/(\d+(\.\d+)?)/i)
           };
         } else if (/slimerjs/i.test(ua)) {
           result = {
             name: "SlimerJS",
-            slimer: t,
+            slimer: t2,
             version: getFirstMatch(/slimerjs\/(\d+(\.\d+)?)/i)
           };
         } else if (/blackberry|\bbb\d+/i.test(ua) || /rim\stablet/i.test(ua)) {
           result = {
             name: "BlackBerry",
             osname: "BlackBerry OS",
-            blackberry: t,
+            blackberry: t2,
             version: versionIdentifier || getFirstMatch(/blackberry[\d]+\/(\d+(\.\d+)?)/i)
           };
         } else if (webos) {
           result = {
             name: "WebOS",
             osname: "WebOS",
-            webos: t,
+            webos: t2,
             version: versionIdentifier || getFirstMatch(/w(?:eb)?osbrowser\/(\d+(\.\d+)?)/i)
           };
-          /touchpad\//i.test(ua) && (result.touchpad = t);
+          /touchpad\//i.test(ua) && (result.touchpad = t2);
         } else if (/bada/i.test(ua)) {
           result = {
             name: "Bada",
             osname: "Bada",
-            bada: t,
+            bada: t2,
             version: getFirstMatch(/dolfin\/(\d+(\.\d+)?)/i)
           };
         } else if (tizen) {
           result = {
             name: "Tizen",
             osname: "Tizen",
-            tizen: t,
+            tizen: t2,
             version: getFirstMatch(/(?:tizen\s?)?browser\/(\d+(\.\d+)?)/i) || versionIdentifier
           };
         } else if (/qupzilla/i.test(ua)) {
           result = {
             name: "QupZilla",
-            qupzilla: t,
+            qupzilla: t2,
             version: getFirstMatch(/(?:qupzilla)[\s\/](\d+(?:\.\d+)+)/i) || versionIdentifier
           };
         } else if (/chromium/i.test(ua)) {
           result = {
             name: "Chromium",
-            chromium: t,
+            chromium: t2,
             version: getFirstMatch(/(?:chromium)[\s\/](\d+(?:\.\d+)?)/i) || versionIdentifier
           };
         } else if (/chrome|crios|crmo/i.test(ua)) {
           result = {
             name: "Chrome",
-            chrome: t,
+            chrome: t2,
             version: getFirstMatch(/(?:chrome|crios|crmo)\/(\d+(\.\d+)?)/i)
           };
         } else if (android) {
@@ -19794,7 +19794,7 @@ var require_bowser = __commonJS({
         } else if (/safari|applewebkit/i.test(ua)) {
           result = {
             name: "Safari",
-            safari: t
+            safari: t2
           };
           if (versionIdentifier) {
             result.version = versionIdentifier;
@@ -19809,7 +19809,7 @@ var require_bowser = __commonJS({
         } else if (/googlebot/i.test(ua)) {
           result = {
             name: "Googlebot",
-            googlebot: t,
+            googlebot: t2,
             version: getFirstMatch(/googlebot\/(\d+(\.\d+))/i) || versionIdentifier
           };
         } else {
@@ -19821,37 +19821,37 @@ var require_bowser = __commonJS({
         if (!result.msedge && /(apple)?webkit/i.test(ua)) {
           if (/(apple)?webkit\/537\.36/i.test(ua)) {
             result.name = result.name || "Blink";
-            result.blink = t;
+            result.blink = t2;
           } else {
             result.name = result.name || "Webkit";
-            result.webkit = t;
+            result.webkit = t2;
           }
           if (!result.version && versionIdentifier) {
             result.version = versionIdentifier;
           }
         } else if (!result.opera && /gecko\//i.test(ua)) {
           result.name = result.name || "Gecko";
-          result.gecko = t;
+          result.gecko = t2;
           result.version = result.version || getFirstMatch(/gecko\/(\d+(\.\d+)?)/i);
         }
         if (!result.windowsphone && (android || result.silk)) {
-          result.android = t;
+          result.android = t2;
           result.osname = "Android";
         } else if (!result.windowsphone && iosdevice) {
-          result[iosdevice] = t;
-          result.ios = t;
+          result[iosdevice] = t2;
+          result.ios = t2;
           result.osname = "iOS";
         } else if (mac) {
-          result.mac = t;
+          result.mac = t2;
           result.osname = "macOS";
         } else if (xbox) {
-          result.xbox = t;
+          result.xbox = t2;
           result.osname = "Xbox";
         } else if (windows) {
-          result.windows = t;
+          result.windows = t2;
           result.osname = "Windows";
         } else if (linux) {
-          result.linux = t;
+          result.linux = t2;
           result.osname = "Linux";
         }
         function getWindowsVersion(s) {
@@ -19907,15 +19907,15 @@ var require_bowser = __commonJS({
         }
         var osMajorVersion = !result.windows && osVersion.split(".")[0];
         if (tablet || nexusTablet || iosdevice == "ipad" || android && (osMajorVersion == 3 || osMajorVersion >= 4 && !mobile) || result.silk) {
-          result.tablet = t;
+          result.tablet = t2;
         } else if (mobile || iosdevice == "iphone" || iosdevice == "ipod" || android || nexusMobile || result.blackberry || result.webos || result.bada) {
-          result.mobile = t;
+          result.mobile = t2;
         }
         if (result.msedge || result.msie && result.version >= 10 || result.yandexbrowser && result.version >= 15 || result.vivaldi && result.version >= 1 || result.chrome && result.version >= 20 || result.samsungBrowser && result.version >= 4 || result.whale && compareVersions([result.version, "1.0"]) === 1 || result.mzbrowser && compareVersions([result.version, "6.0"]) === 1 || result.focus && compareVersions([result.version, "1.0"]) === 1 || result.firefox && result.version >= 20 || result.safari && result.version >= 6 || result.opera && result.version >= 10 || result.ios && result.osversion && result.osversion.split(".")[0] >= 6 || result.blackberry && result.version >= 10.1 || result.chromium && result.version >= 20) {
-          result.a = t;
+          result.a = t2;
         } else if (result.msie && result.version < 10 || result.chrome && result.version < 20 || result.firefox && result.version < 20 || result.safari && result.version < 6 || result.opera && result.version < 10 || result.ios && result.osversion && result.osversion.split(".")[0] < 6 || result.chromium && result.version < 20) {
-          result.c = t;
-        } else result.x = t;
+          result.c = t2;
+        } else result.x = t2;
         return result;
       }
       var bowser = detect(typeof navigator !== "undefined" ? navigator.userAgent || "" : "");
@@ -22854,9 +22854,9 @@ var require_base64 = __commonJS({
       var version = "2.6.4";
       var b64chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
       var b64tab = (function(bin) {
-        var t = {};
-        for (var i = 0, l = bin.length; i < l; i++) t[bin.charAt(i)] = i;
-        return t;
+        var t2 = {};
+        for (var i = 0, l = bin.length; i < l; i++) t2[bin.charAt(i)] = i;
+        return t2;
       })(b64chars);
       var fromCharCode = String.fromCharCode;
       var cb_utob = function(c) {
@@ -26873,6 +26873,169 @@ var import_obsidian5 = require("obsidian");
 var import_obsidian = require("obsidian");
 var path = __toESM(require("path"));
 var os = __toESM(require("os"));
+
+// src/i18n.ts
+var zh = {
+  "settings.language": "\u8BED\u8A00 / Language",
+  "settings.language.desc": "\u5207\u6362\u754C\u9762\u8BED\u8A00",
+  "settings.general.heading": "\u901A\u7528",
+  "settings.export.heading": "\u5BFC\u51FA\u8BBE\u7F6E",
+  "settings.local.heading": "\u672C\u5730\u5BFC\u51FA",
+  "settings.oss.heading": "\u901A\u8FC7\u963F\u91CC\u4E91OSS\u53D1\u5E03",
+  "settings.oss.callout.item1": "\u8BF7\u786E\u4FDD OSS Bucket \u6743\u9650\u4E3A\u300C\u516C\u5171\u8BFB\u300D",
+  "settings.oss.callout.item2": "OSS \u5FC5\u987B\u914D\u7F6E\u57DF\u540D\uFF0C\u5426\u5219\u94FE\u63A5\u6253\u5F00\u53EA\u4F1A\u89E6\u53D1\u4E0B\u8F7D",
+  "settings.includeLinked.name": "\u5305\u542B\u4E8C\u7EA7\u7B14\u8BB0",
+  "settings.includeLinked.desc": "\u5BFC\u51FA\u5355\u4E2A\u7B14\u8BB0\u65F6\uFF0C\u540C\u65F6\u5BFC\u51FA\u8BE5\u7B14\u8BB0\u4E2D\u94FE\u63A5\u7684\u6240\u6709\u4E8C\u7EA7\u7B14\u8BB0",
+  "settings.pageLinkLength.name": "\u9875\u9762\u540D\u79F0\u957F\u5EA6",
+  "settings.pageLinkLength.desc": "\u751F\u6210\u5206\u4EAB\u94FE\u63A5\u65F6\u7684\u8DEF\u5F84\u957F\u5EA6\uFF0C\u8D8A\u957F\u78B0\u649E\u6982\u7387\u8D8A\u4F4E",
+  "settings.exportPath.name": "\u5BFC\u51FA\u8DEF\u5F84",
+  "settings.exportPath.desc": "\u7B14\u8BB0\u5BFC\u51FA\u7684\u76EE\u6807\u6587\u4EF6\u5939\uFF0C\u9ED8\u8BA4\u4E3A\u684C\u9762",
+  "settings.ossRegion.name": "Region",
+  "settings.ossRegion.desc": "\u4F8B\u5982 oss-cn-hangzhou",
+  "settings.ossBucket.name": "Bucket",
+  "settings.ossKeyId.name": "Access key ID",
+  "settings.ossKeySecret.name": "Access key secret",
+  "settings.ossPrefix.name": "\u4E0A\u4F20\u524D\u7F00\u8DEF\u5F84",
+  "settings.ossPrefix.desc": "OSS \u4E2D\u7684\u76EE\u5F55\u524D\u7F00\uFF0C\u4F8B\u5982 notes \u2192 notes/<\u7B14\u8BB0\u540D>/index.html",
+  "settings.ossDomain.name": "\u81EA\u5B9A\u4E49\u57DF\u540D",
+  "settings.ossDomain.desc": "\u66FF\u6362\u9ED8\u8BA4\u7684 OSS \u57DF\u540D\uFF0C\u7559\u7A7A\u5219\u4F7F\u7528\u9ED8\u8BA4\u3002\u4F8B\u5982 https://cdn.example.com",
+  "settings.urlPreview.label": "\u9884\u89C8\uFF1A",
+  "cmd.exportLocal": "\u5BFC\u51FA\u5230\u672C\u5730",
+  "cmd.exportOss": "\u5BFC\u51FA\u5230 OSS",
+  "statusbar.shareNote": "\u5206\u4EAB\u7B14\u8BB0",
+  "statusbar.published": "\u5DF2\u53D1\u5E03 \u2014 \u70B9\u51FB\u7BA1\u7406",
+  "toast.uploading": "\u4E0A\u4F20\u4E2D...",
+  "toast.uploadSuccess": "\u4E0A\u4F20\u6210\u529F",
+  "toast.exporting": "\u5BFC\u51FA\u4E2D...",
+  "toast.exportSuccess": "\u5BFC\u51FA\u6210\u529F",
+  "toast.stopping": "\u505C\u6B62\u5206\u4EAB\u4E2D...",
+  "toast.stopped": "\u5DF2\u505C\u6B62\u5206\u4EAB",
+  "toast.publishSuccess": "\u53D1\u5E03\u6210\u529F\uFF0C\u94FE\u63A5\u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F",
+  "toast.updateSuccess": "\u66F4\u65B0\u6210\u529F",
+  "toast.publishFailed": "\u53D1\u5E03\u5931\u8D25\uFF1A{error}",
+  "toast.exportFailed": "\u5BFC\u51FA\u5931\u8D25\uFF1A{error}",
+  "toast.stopFailed": "\u505C\u6B62\u5206\u4EAB\u5931\u8D25\uFF1A{error}",
+  "menu.publish": "\u53D1\u5E03\u7B14\u8BB0",
+  "menu.exportLocal": "\u5BFC\u51FA\u5230\u672C\u5730",
+  "menu.openLink": "\u6253\u5F00\u94FE\u63A5",
+  "menu.update": "\u5185\u5BB9\u66F4\u65B0",
+  "menu.unpublish": "\u505C\u6B62\u5206\u4EAB",
+  "notice.onlyMarkdown.share": "\u53EA\u80FD\u5206\u4EAB Markdown \u7B14\u8BB0",
+  "notice.onlyMarkdown.publish": "\u53EA\u80FD\u53D1\u5E03 Markdown \u7B14\u8BB0",
+  "notice.deleteSubFailed": "\u5220\u9664 {name} \u5931\u8D25\uFF0C\u5DF2\u4FDD\u7559\u5176\u5206\u4EAB\u94FE\u63A5",
+  "modal.publish.title": "\u53D1\u5E03\u7B14\u8BB0",
+  "modal.unpublish.title": "\u505C\u6B62\u5206\u4EAB",
+  "modal.mainNote": "\u4E3B\u7B14\u8BB0",
+  "modal.mainNote.stopping": "\u4E3B\u7B14\u8BB0\uFF08\u5C06\u88AB\u505C\u6B62\u5206\u4EAB\uFF09",
+  "modal.subNotes.publish": "\u5173\u8054\u7684\u4E8C\u7EA7\u7B14\u8BB0 ({count})",
+  "modal.subNotes.unpublish": "\u5173\u8054\u7684\u4E8C\u7EA7\u7B14\u8BB0\uFF08\u53EF\u9009\u62E9\u4E00\u5E76\u505C\u6B62\uFF09",
+  "modal.badge.hasLink": "\u5DF2\u6709\u94FE\u63A5\uFF0C\u8DF3\u8FC7",
+  "modal.badge.willUpload": "\u5C06\u88AB\u4E0A\u4F20",
+  "modal.btn.cancel": "\u53D6\u6D88",
+  "modal.btn.confirmPublish": "\u786E\u8BA4\u53D1\u5E03",
+  "modal.btn.confirmUnpublish": "\u786E\u8BA4\u505C\u6B62\u5206\u4EAB"
+};
+var en = {
+  "settings.language": "\u8BED\u8A00 / Language",
+  "settings.language.desc": "Switch interface language",
+  "settings.general.heading": "General",
+  "settings.export.heading": "Export Settings",
+  "settings.local.heading": "Local Export",
+  "settings.oss.heading": "Publish via Aliyun OSS",
+  "settings.oss.callout.item1": 'Ensure your OSS Bucket ACL is set to "Public Read"',
+  "settings.oss.callout.item2": "OSS must have a custom domain configured; otherwise links will trigger a download instead of opening",
+  "settings.includeLinked.name": "Include Linked Notes",
+  "settings.includeLinked.desc": "When exporting a note, also export all linked sub-notes",
+  "settings.pageLinkLength.name": "Page Name Length",
+  "settings.pageLinkLength.desc": "Length of the share link path; longer means fewer collisions",
+  "settings.exportPath.name": "Export Path",
+  "settings.exportPath.desc": "Target folder for note export, defaults to Desktop",
+  "settings.ossRegion.name": "Region",
+  "settings.ossRegion.desc": "e.g. oss-cn-hangzhou",
+  "settings.ossBucket.name": "Bucket",
+  "settings.ossKeyId.name": "Access key ID",
+  "settings.ossKeySecret.name": "Access key secret",
+  "settings.ossPrefix.name": "Upload Prefix",
+  "settings.ossPrefix.desc": "Directory prefix in OSS, e.g. notes \u2192 notes/<note-name>/index.html",
+  "settings.ossDomain.name": "Custom Domain",
+  "settings.ossDomain.desc": "Replace the default OSS domain. Leave empty for default. e.g. https://cdn.example.com",
+  "settings.urlPreview.label": "Preview: ",
+  "cmd.exportLocal": "Export to local",
+  "cmd.exportOss": "Export to OSS",
+  "statusbar.shareNote": "Share note",
+  "statusbar.published": "Published \u2014 click to manage",
+  "toast.uploading": "Uploading...",
+  "toast.uploadSuccess": "Upload successful",
+  "toast.exporting": "Exporting...",
+  "toast.exportSuccess": "Export successful",
+  "toast.stopping": "Stopping share...",
+  "toast.stopped": "Sharing stopped",
+  "toast.publishSuccess": "Published, link copied to clipboard",
+  "toast.updateSuccess": "Updated successfully",
+  "toast.publishFailed": "Publish failed: {error}",
+  "toast.exportFailed": "Export failed: {error}",
+  "toast.stopFailed": "Stop sharing failed: {error}",
+  "menu.publish": "Publish Note",
+  "menu.exportLocal": "Export to local",
+  "menu.openLink": "Open link",
+  "menu.update": "Update content",
+  "menu.unpublish": "Stop sharing",
+  "notice.onlyMarkdown.share": "Only Markdown notes can be shared",
+  "notice.onlyMarkdown.publish": "Only Markdown notes can be published",
+  "notice.deleteSubFailed": "Failed to delete {name}, share link retained",
+  "modal.publish.title": "Publish Note",
+  "modal.unpublish.title": "Stop Sharing",
+  "modal.mainNote": "Main Note",
+  "modal.mainNote.stopping": "Main Note (sharing will be stopped)",
+  "modal.subNotes.publish": "Linked sub-notes ({count})",
+  "modal.subNotes.unpublish": "Linked sub-notes (optionally stop sharing)",
+  "modal.badge.hasLink": "Has link, skipping",
+  "modal.badge.willUpload": "Will be uploaded",
+  "modal.btn.cancel": "Cancel",
+  "modal.btn.confirmPublish": "Confirm Publish",
+  "modal.btn.confirmUnpublish": "Confirm Stop Sharing"
+};
+var translations = { zh, en };
+var currentLanguage = "zh";
+function setLanguage(lang) {
+  currentLanguage = lang;
+}
+function t(key, replacements) {
+  var _a, _b;
+  let str = (_b = (_a = translations[currentLanguage][key]) != null ? _a : translations.en[key]) != null ? _b : key;
+  if (replacements) {
+    for (const [k, v] of Object.entries(replacements)) {
+      str = str.replace(`{${k}}`, v);
+    }
+  }
+  return str;
+}
+function formatPageCount(count) {
+  if (currentLanguage === "zh") {
+    let n;
+    if (count >= 1e8) {
+      n = (count / 1e8).toFixed(1) + "\u4EBF";
+    } else if (count >= 1e4) {
+      const wan = count / 1e4;
+      n = (wan >= 100 ? Math.round(wan).toLocaleString("zh-CN") : wan.toFixed(1)) + "\u4E07";
+    } else {
+      n = count.toLocaleString("zh-CN");
+    }
+    return `\u53EF\u53D1\u5E03${n}\u4E2A\u9875\u9762`;
+  } else {
+    let n;
+    if (count >= 1e9) {
+      n = (count / 1e9).toFixed(1) + "B";
+    } else if (count >= 1e6) {
+      n = (count / 1e6).toFixed(1) + "M";
+    } else {
+      n = (count / 1e3).toFixed(1) + "K";
+    }
+    return `~${n} pages`;
+  }
+}
+
+// src/settings.ts
 var DEFAULT_SETTINGS = {
   exportPath: path.join(os.homedir(), "Desktop"),
   includeLinkedNotes: false,
@@ -26882,30 +27045,58 @@ var DEFAULT_SETTINGS = {
   ossAccessKeySecret: "",
   ossPrefix: "notes",
   ossDomain: "",
-  pageLinkLength: 3
+  pageLinkLength: 3,
+  language: "zh"
 };
 var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;
   }
+  buildPreviewUrl() {
+    const { ossDomain, ossRegion, ossBucket, ossPrefix, pageLinkLength } = this.plugin.settings;
+    const base = ossDomain ? ossDomain : ossRegion && ossBucket ? `https://${ossBucket}.${ossRegion}.aliyuncs.com` : `https://<bucket>.<region>.aliyuncs.com`;
+    const prefix = (ossPrefix || DEFAULT_SETTINGS.ossPrefix).replace(/\/$/, "");
+    const sample = "ab3c5d7e9f2x".slice(0, Math.max(1, pageLinkLength));
+    return `${base}/${prefix}/${sample}`;
+  }
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    new import_obsidian.Setting(containerEl).setName("\u5BFC\u51FA\u8BBE\u7F6E").setHeading();
-    new import_obsidian.Setting(containerEl).setName("\u5305\u542B\u4E8C\u7EA7\u7B14\u8BB0").setDesc("\u5BFC\u51FA\u5355\u4E2A\u7B14\u8BB0\u65F6\uFF0C\u540C\u65F6\u5BFC\u51FA\u8BE5\u7B14\u8BB0\u4E2D\u94FE\u63A5\u7684\u6240\u6709\u4E8C\u7EA7\u7B14\u8BB0").addToggle(
+    let previewEl;
+    const generalDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
+    generalDetails.setAttribute("open", "");
+    generalDetails.createEl("summary", {
+      cls: "opal-collapsible-heading",
+      text: t("settings.general.heading")
+    });
+    new import_obsidian.Setting(generalDetails).setName(t("settings.language")).setDesc(t("settings.language.desc")).addDropdown(
+      (dropdown) => dropdown.addOption("zh", "\u4E2D\u6587").addOption("en", "English").setValue(this.plugin.settings.language).onChange(async (value) => {
+        this.plugin.settings.language = value;
+        setLanguage(value);
+        await this.plugin.saveSettings();
+        this.display();
+      })
+    );
+    const exportDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
+    exportDetails.setAttribute("open", "");
+    exportDetails.createEl("summary", {
+      cls: "opal-collapsible-heading",
+      text: t("settings.export.heading")
+    });
+    new import_obsidian.Setting(exportDetails).setName(t("settings.includeLinked.name")).setDesc(t("settings.includeLinked.desc")).addToggle(
       (toggle) => toggle.setValue(this.plugin.settings.includeLinkedNotes).onChange(async (value) => {
         this.plugin.settings.includeLinkedNotes = value;
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian.Setting(containerEl).setName("\u9875\u9762\u540D\u79F0\u957F\u5EA6").setDesc("\u751F\u6210\u5206\u4EAB\u94FE\u63A5\u65F6\u7684\u8DEF\u5F84\u957F\u5EA6\uFF0C\u8D8A\u957F\u78B0\u649E\u6982\u7387\u8D8A\u4F4E").addDropdown((dropdown) => {
+    new import_obsidian.Setting(exportDetails).setName(t("settings.pageLinkLength.name")).setDesc(t("settings.pageLinkLength.desc")).addDropdown((dropdown) => {
       const capacities = {
-        2: "\u7EA6 1,296 \u4E2A\u552F\u4E00\u9875\u9762",
-        3: "\u7EA6 46,656 \u4E2A\u552F\u4E00\u9875\u9762",
-        4: "\u7EA6 1,679,616 \u4E2A\u552F\u4E00\u9875\u9762",
-        5: "\u7EA6 60,466,176 \u4E2A\u552F\u4E00\u9875\u9762",
-        6: "\u7EA6 2,176,782,336 \u4E2A\u552F\u4E00\u9875\u9762"
+        2: formatPageCount(36 ** 2),
+        3: formatPageCount(36 ** 3),
+        4: formatPageCount(36 ** 4),
+        5: formatPageCount(36 ** 5),
+        6: formatPageCount(36 ** 6)
       };
       for (const len of [2, 3, 4, 5, 6]) {
         dropdown.addOption(String(len), `${len} \u2014 ${capacities[len]}`);
@@ -26913,54 +27104,75 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
       dropdown.setValue(String(this.plugin.settings.pageLinkLength)).onChange(async (value) => {
         this.plugin.settings.pageLinkLength = parseInt(value, 10);
         await this.plugin.saveSettings();
+        previewEl == null ? void 0 : previewEl.setText(this.buildPreviewUrl());
       });
     });
-    new import_obsidian.Setting(containerEl).setName("\u672C\u5730\u5BFC\u51FA").setHeading();
-    new import_obsidian.Setting(containerEl).setName("\u5BFC\u51FA\u8DEF\u5F84").setDesc("\u7B14\u8BB0\u5BFC\u51FA\u7684\u76EE\u6807\u6587\u4EF6\u5939\uFF0C\u9ED8\u8BA4\u4E3A\u684C\u9762").addText(
+    const localDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
+    localDetails.setAttribute("open", "");
+    localDetails.createEl("summary", {
+      cls: "opal-collapsible-heading",
+      text: t("settings.local.heading")
+    });
+    new import_obsidian.Setting(localDetails).setName(t("settings.exportPath.name")).setDesc(t("settings.exportPath.desc")).addText(
       (text) => text.setPlaceholder(DEFAULT_SETTINGS.exportPath).setValue(this.plugin.settings.exportPath).onChange(async (value) => {
         this.plugin.settings.exportPath = value.trim() || DEFAULT_SETTINGS.exportPath;
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian.Setting(containerEl).setName("\u963F\u91CC\u4E91 OSS").setHeading();
-    new import_obsidian.Setting(containerEl).setName("Region").setDesc("\u4F8B\u5982 oss-cn-hangzhou").addText(
+    const ossDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
+    ossDetails.createEl("summary", {
+      cls: "opal-collapsible-heading",
+      text: t("settings.oss.heading")
+    });
+    const ossCallout = ossDetails.createDiv({ cls: "opal-oss-callout" });
+    const ossCalloutList = ossCallout.createEl("ul");
+    ossCalloutList.createEl("li", { text: t("settings.oss.callout.item1") });
+    ossCalloutList.createEl("li", { text: t("settings.oss.callout.item2") });
+    new import_obsidian.Setting(ossDetails).setName(t("settings.ossRegion.name")).setDesc(t("settings.ossRegion.desc")).addText(
       (text) => text.setPlaceholder("oss-cn-hangzhou").setValue(this.plugin.settings.ossRegion).onChange(async (value) => {
         this.plugin.settings.ossRegion = value.trim();
         await this.plugin.saveSettings();
+        previewEl == null ? void 0 : previewEl.setText(this.buildPreviewUrl());
       })
     );
-    new import_obsidian.Setting(containerEl).setName("Bucket").addText(
+    new import_obsidian.Setting(ossDetails).setName(t("settings.ossBucket.name")).addText(
       (text) => text.setPlaceholder("my-bucket").setValue(this.plugin.settings.ossBucket).onChange(async (value) => {
         this.plugin.settings.ossBucket = value.trim();
         await this.plugin.saveSettings();
+        previewEl == null ? void 0 : previewEl.setText(this.buildPreviewUrl());
       })
     );
-    new import_obsidian.Setting(containerEl).setName("Access key ID").addText((text) => {
+    new import_obsidian.Setting(ossDetails).setName(t("settings.ossKeyId.name")).addText((text) => {
       text.setPlaceholder("AccessKey ID").setValue(this.plugin.settings.ossAccessKeyId).onChange(async (value) => {
         this.plugin.settings.ossAccessKeyId = value.trim();
         await this.plugin.saveSettings();
       });
       text.inputEl.type = "password";
     });
-    new import_obsidian.Setting(containerEl).setName("Access key secret").addText((text) => {
+    new import_obsidian.Setting(ossDetails).setName(t("settings.ossKeySecret.name")).addText((text) => {
       text.setPlaceholder("AccessKey Secret").setValue(this.plugin.settings.ossAccessKeySecret).onChange(async (value) => {
         this.plugin.settings.ossAccessKeySecret = value.trim();
         await this.plugin.saveSettings();
       });
       text.inputEl.type = "password";
     });
-    new import_obsidian.Setting(containerEl).setName("\u4E0A\u4F20\u524D\u7F00\u8DEF\u5F84").setDesc("OSS \u4E2D\u7684\u76EE\u5F55\u524D\u7F00\uFF0C\u4F8B\u5982 notes \u2192 notes/<\u7B14\u8BB0\u540D>/index.html").addText(
+    new import_obsidian.Setting(ossDetails).setName(t("settings.ossPrefix.name")).setDesc(t("settings.ossPrefix.desc")).addText(
       (text) => text.setPlaceholder("notes").setValue(this.plugin.settings.ossPrefix).onChange(async (value) => {
         this.plugin.settings.ossPrefix = value.trim() || DEFAULT_SETTINGS.ossPrefix;
         await this.plugin.saveSettings();
+        previewEl == null ? void 0 : previewEl.setText(this.buildPreviewUrl());
       })
     );
-    new import_obsidian.Setting(containerEl).setName("\u81EA\u5B9A\u4E49\u57DF\u540D").setDesc("\u66FF\u6362\u9ED8\u8BA4\u7684 OSS \u57DF\u540D\uFF0C\u7559\u7A7A\u5219\u4F7F\u7528\u9ED8\u8BA4\u3002\u4F8B\u5982 https://cdn.example.com").addText(
+    new import_obsidian.Setting(ossDetails).setName(t("settings.ossDomain.name")).setDesc(t("settings.ossDomain.desc")).addText(
       (text) => text.setPlaceholder("https://cdn.example.com").setValue(this.plugin.settings.ossDomain).onChange(async (value) => {
         this.plugin.settings.ossDomain = value.trim().replace(/\/$/, "");
         await this.plugin.saveSettings();
+        previewEl == null ? void 0 : previewEl.setText(this.buildPreviewUrl());
       })
     );
+    const previewWrap = ossDetails.createDiv({ cls: "opal-url-preview" });
+    previewWrap.createSpan({ cls: "opal-url-preview-label", text: t("settings.urlPreview.label") });
+    previewEl = previewWrap.createSpan({ cls: "opal-url-preview-url", text: this.buildPreviewUrl() });
   }
 };
 
@@ -27108,9 +27320,9 @@ function formatDateValue(val, fmt = "YYYY-MM-DD") {
     mm: String(d.getMinutes()).padStart(2, "0"),
     ss: String(d.getSeconds()).padStart(2, "0")
   };
-  return fmt.replace(/YYYY|MM|DD|HH|mm|ss/g, (t) => {
+  return fmt.replace(/YYYY|MM|DD|HH|mm|ss/g, (t2) => {
     var _a;
-    return (_a = tokens[t]) != null ? _a : t;
+    return (_a = tokens[t2]) != null ? _a : t2;
   });
 }
 function escapeHtml(s) {
@@ -27176,14 +27388,14 @@ function evalExpr(expr, ctx) {
 function matchesFilter(expr, file, meta) {
   var _a, _b, _c, _d, _e, _f;
   expr = expr.trim();
-  const bodyTags = (_b = (_a = meta == null ? void 0 : meta.tags) == null ? void 0 : _a.map((t) => t.tag.replace(/^#/, ""))) != null ? _b : [];
+  const bodyTags = (_b = (_a = meta == null ? void 0 : meta.tags) == null ? void 0 : _a.map((t2) => t2.tag.replace(/^#/, ""))) != null ? _b : [];
   const fmTags = (_c = meta == null ? void 0 : meta.frontmatter) == null ? void 0 : _c.tags;
   const fmTagList = Array.isArray(fmTags) ? fmTags : fmTags ? [String(fmTags)] : [];
   const allTags = /* @__PURE__ */ new Set([...bodyTags, ...fmTagList]);
   const containsAllM = expr.match(/^file\.tags\.containsAll\((.+)\)$/);
   if (containsAllM) {
     const req = ((_d = containsAllM[1].match(/["']([^"']+)["']/g)) != null ? _d : []).map((s) => s.replace(/["']/g, ""));
-    return req.every((t) => allTags.has(t));
+    return req.every((t2) => allTags.has(t2));
   }
   const containsM = expr.match(/^file\.tags\.contains\((.+)\)$/);
   if (containsM) return allTags.has(containsM[1].replace(/["']/g, ""));
@@ -28464,6 +28676,30 @@ body:hover ::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.4); }
 }
 
 // src/exporter.ts
+var NAME_ALPHABET_SIZE = 36;
+var CROWD_THRESHOLD = 2 / 3;
+function randomName(length) {
+  let s = "";
+  while (s.length < length) {
+    s += Math.random().toString(36).slice(2);
+  }
+  return s.slice(0, length);
+}
+function generateUniqueName(usedNames, pageLinkLength) {
+  let length = Math.max(1, pageLinkLength);
+  while (usedNames.size >= Math.pow(NAME_ALPHABET_SIZE, length) * CROWD_THRESHOLD) {
+    length++;
+    console.warn(
+      `[publish-as-link] \u77ED\u94FE\u547D\u540D\u7A7A\u95F4\u63A5\u8FD1\u9971\u548C\uFF08\u5DF2\u7528 ${usedNames.size} \u4E2A\uFF09\uFF0C\u957F\u5EA6\u81EA\u52A8\u589E\u52A0\u5230 ${length}`
+    );
+  }
+  let name;
+  do {
+    name = randomName(length);
+  } while (usedNames.has(name));
+  usedNames.add(name);
+  return name;
+}
 function collectLinkedNotes(app, file) {
   var _a, _b;
   const links = (_b = (_a = app.metadataCache.getFileCache(file)) == null ? void 0 : _a.links) != null ? _b : [];
@@ -28514,22 +28750,22 @@ function rewriteInternalLinks(html, subFolderMap, addExtension = true) {
     return `<a${newAttrs}>`;
   });
 }
-async function prepareExport(app, vault, file, existingName, pageLinkLength = 3) {
+async function prepareExport(app, vault, file, noteName) {
   const raw = await vault.read(file);
   const { html: htmlBody, css, images } = await renderNote(app, file, raw);
-  const folderName = existingName != null ? existingName : Math.random().toString(36).slice(2, 2 + pageLinkLength);
-  const html = buildHtml(file.basename, htmlBody, css).replace(/src="images\//g, `src="${folderName}/images/`);
-  return { noteName: folderName, html, css, images };
+  const html = buildHtml(file.basename, htmlBody, css).replace(/src="images\//g, `src="${noteName}/images/`);
+  return { noteName, html, css, images };
 }
 async function exportToLocal(app, vault, file, exportRoot, includeLinkedNotes = false, pageLinkLength = 3) {
-  const result = await prepareExport(app, vault, file, void 0, pageLinkLength);
+  const usedNames = /* @__PURE__ */ new Set();
+  const result = await prepareExport(app, vault, file, generateUniqueName(usedNames, pageLinkLength));
   const subFolderMap = /* @__PURE__ */ new Map();
   let mainHtml = result.html;
   if (includeLinkedNotes) {
     const linkedFiles = collectLinkedNotes(app, file);
     const subResults = [];
     for (const linkedFile of linkedFiles) {
-      const subResult = await prepareExport(app, vault, linkedFile, void 0, pageLinkLength);
+      const subResult = await prepareExport(app, vault, linkedFile, generateUniqueName(usedNames, pageLinkLength));
       subFolderMap.set(linkedFile.basename, subResult.noteName);
       subFolderMap.set(linkedFile.path.replace(/\.md$/i, ""), subResult.noteName);
       subResults.push({ subResult });
@@ -28578,13 +28814,13 @@ var ShareModal = class extends import_obsidian4.Modal {
     contentEl.addClass("opal-share-modal");
     this.subNotes = this.plugin.settings.includeLinkedNotes ? collectLinkedNotesWithStatus(this.app, this.file) : [];
     contentEl.createEl("h2", {
-      text: this.mode === "publish" ? "\u53D1\u5E03\u7B14\u8BB0" : "\u505C\u6B62\u5206\u4EAB",
+      text: this.mode === "publish" ? t("modal.publish.title") : t("modal.unpublish.title"),
       cls: "opal-modal-title"
     });
     const mainSection = contentEl.createDiv({ cls: "opal-modal-section" });
     mainSection.createEl("p", {
       cls: "opal-modal-section-label",
-      text: this.mode === "publish" ? "\u4E3B\u7B14\u8BB0" : "\u4E3B\u7B14\u8BB0\uFF08\u5C06\u88AB\u505C\u6B62\u5206\u4EAB\uFF09"
+      text: this.mode === "publish" ? t("modal.mainNote") : t("modal.mainNote.stopping")
     });
     this.renderNoteItem(mainSection, this.file.basename + ".md", null);
     if (this.mode === "publish") {
@@ -28593,10 +28829,10 @@ var ShareModal = class extends import_obsidian4.Modal {
       this.renderUnpublishSubNotes(contentEl);
     }
     const btnRow = contentEl.createDiv({ cls: "opal-modal-btn-row" });
-    const cancelBtn = btnRow.createEl("button", { text: "\u53D6\u6D88" });
+    const cancelBtn = btnRow.createEl("button", { text: t("modal.btn.cancel") });
     cancelBtn.addEventListener("click", () => this.close());
     const confirmBtn = btnRow.createEl("button", {
-      text: this.mode === "publish" ? "\u786E\u8BA4\u53D1\u5E03" : "\u786E\u8BA4\u505C\u6B62\u5206\u4EAB",
+      text: this.mode === "publish" ? t("modal.btn.confirmPublish") : t("modal.btn.confirmUnpublish"),
       cls: "mod-cta"
     });
     confirmBtn.addEventListener("click", () => {
@@ -28622,10 +28858,10 @@ var ShareModal = class extends import_obsidian4.Modal {
     const section = contentEl.createDiv({ cls: "opal-modal-section" });
     section.createEl("p", {
       cls: "opal-modal-section-label",
-      text: `\u5173\u8054\u7684\u4E8C\u7EA7\u7B14\u8BB0 (${this.subNotes.length})`
+      text: t("modal.subNotes.publish", { count: String(this.subNotes.length) })
     });
     for (const sn of this.subNotes) {
-      const badge = sn.shareLink ? "\u5DF2\u6709\u94FE\u63A5\uFF0C\u8DF3\u8FC7" : "\u5C06\u88AB\u4E0A\u4F20";
+      const badge = sn.shareLink ? t("modal.badge.hasLink") : t("modal.badge.willUpload");
       const item = this.renderNoteItem(section, sn.file.basename + ".md", badge);
       if (sn.shareLink) {
         item.addClass("opal-modal-note-item--skip");
@@ -28637,7 +28873,7 @@ var ShareModal = class extends import_obsidian4.Modal {
     const section = contentEl.createDiv({ cls: "opal-modal-section" });
     section.createEl("p", {
       cls: "opal-modal-section-label",
-      text: "\u5173\u8054\u7684\u4E8C\u7EA7\u7B14\u8BB0\uFF08\u53EF\u9009\u62E9\u4E00\u5E76\u505C\u6B62\uFF09"
+      text: t("modal.subNotes.unpublish")
     });
     for (const sn of this.subNotes) {
       const item = section.createDiv({ cls: "opal-modal-note-item" });
@@ -28691,6 +28927,36 @@ function makeClient(settings) {
     bucket: ossBucket,
     authorizationV4: true
   });
+}
+async function listPublishedNames(settings) {
+  var _a, _b;
+  const { ossRegion, ossBucket, ossAccessKeyId, ossAccessKeySecret, ossPrefix } = settings;
+  const names = /* @__PURE__ */ new Set();
+  if (!ossRegion || !ossBucket || !ossAccessKeyId || !ossAccessKeySecret) return names;
+  const client = makeClient(settings);
+  const prefix = ossPrefix.replace(/\/$/, "") + "/";
+  try {
+    let marker;
+    do {
+      const res = await client.list(
+        { prefix, delimiter: "/", "max-keys": 1e3, marker },
+        {}
+      );
+      for (const o of (_a = res.objects) != null ? _a : []) {
+        const n = o.name.slice(prefix.length).replace(/\/.*$/, "");
+        if (n) names.add(n);
+      }
+      for (const p of (_b = res.prefixes) != null ? _b : []) {
+        const n = p.slice(prefix.length).replace(/\/$/, "");
+        if (n) names.add(n);
+      }
+      marker = res.nextMarker;
+      if (!res.isTruncated) break;
+    } while (marker);
+  } catch (err) {
+    console.warn("[publish-as-link] \u8BFB\u53D6 OSS \u5DF2\u6709\u9875\u9762\u5217\u8868\u5931\u8D25\uFF0C\u672C\u6B21\u4EC5\u5728\u53D1\u5E03\u8303\u56F4\u5185\u53BB\u91CD", err);
+  }
+  return names;
 }
 async function uploadToOss(settings, vault, noteName, html, images) {
   const { ossRegion, ossBucket, ossAccessKeyId, ossAccessKeySecret, ossPrefix } = settings;
@@ -28761,7 +29027,7 @@ async function deleteFromOss(settings, noteName) {
 
 // main.ts
 var ExportToast = class {
-  constructor(loadingText = "\u4E0A\u4F20\u4E2D...") {
+  constructor(loadingText = t("toast.uploading")) {
     this.state = "loading";
     this.timer = 0;
     this.el = createDiv({ cls: "opal-toast" });
@@ -28770,7 +29036,7 @@ var ExportToast = class {
     activeDocument.body.appendChild(this.el);
     window.requestAnimationFrame(() => this.el.classList.add("is-visible"));
   }
-  setSuccess(text = "\u4E0A\u4F20\u6210\u529F") {
+  setSuccess(text = t("toast.uploadSuccess")) {
     if (this.state === "done") return;
     this.state = "done";
     window.clearTimeout(this.timer);
@@ -28806,17 +29072,17 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
     this.addSettingTab(new ShareOnlineSettingTab(this.app, this));
     this.addCommand({
       id: "export-current-note-to-desktop",
-      name: "\u5BFC\u51FA\u5230\u672C\u5730",
+      name: t("cmd.exportLocal"),
       callback: () => this.exportCurrentNote()
     });
     this.addCommand({
       id: "export-current-note-to-oss",
-      name: "\u5BFC\u51FA\u5230 OSS",
+      name: t("cmd.exportOss"),
       callback: () => this.exportCurrentNote(true)
     });
     this.statusBarEl = this.addStatusBarItem();
     this.statusBarEl.addClass("opal-status-bar-btn");
-    (0, import_obsidian5.setTooltip)(this.statusBarEl, "\u5206\u4EAB\u7B14\u8BB0");
+    (0, import_obsidian5.setTooltip)(this.statusBarEl, t("statusbar.shareNote"));
     (0, import_obsidian5.setIcon)(this.statusBarEl, "share-2");
     this.updateStatusBar();
     this.statusBarEl.addEventListener("click", (e) => this.showShareMenu(e));
@@ -28832,6 +29098,7 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
   }
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    setLanguage(this.settings.language);
   }
   async saveSettings() {
     await this.saveData(this.settings);
@@ -28866,43 +29133,45 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
     this.statusBarEl.show();
     const published = !!this.getShareLink(file);
     this.statusBarEl.toggleClass("opal-status-published", published);
-    (0, import_obsidian5.setTooltip)(this.statusBarEl, published ? "\u5DF2\u53D1\u5E03 \u2014 \u70B9\u51FB\u7BA1\u7406" : "\u5206\u4EAB\u7B14\u8BB0");
+    (0, import_obsidian5.setTooltip)(this.statusBarEl, published ? t("statusbar.published") : t("statusbar.shareNote"));
   }
   showShareMenu(event) {
     const file = this.app.workspace.getActiveFile();
     if (!this.isMarkdown(file)) {
-      new import_obsidian5.Notice("\u53EA\u80FD\u5206\u4EAB Markdown \u7B14\u8BB0");
+      new import_obsidian5.Notice(t("notice.onlyMarkdown.share"));
       return;
     }
     const published = !!this.getShareLink(file);
     const menu = new import_obsidian5.Menu();
+    const ossReady = !!(this.settings.ossRegion && this.settings.ossBucket && this.settings.ossAccessKeyId && this.settings.ossAccessKeySecret);
     if (!published) {
       menu.addItem(
-        (item) => item.setTitle("\u53D1\u5E03\u5230\u7EBF\u4E0A").setIcon("upload-cloud").onClick(() => {
+        (item) => item.setTitle(t("menu.publish")).setIcon("upload-cloud").setDisabled(!ossReady).onClick(() => {
+          if (!ossReady) return;
           new ShareModal(this.app, this, file, "publish", (subNotes) => {
             this.doPublish(file, subNotes);
           }).open();
         })
       );
       menu.addItem(
-        (item) => item.setTitle("\u5BFC\u51FA\u5230\u672C\u5730").setIcon("download").onClick(async () => {
+        (item) => item.setTitle(t("menu.exportLocal")).setIcon("download").onClick(async () => {
           var _a;
           await this.exportFile(file);
-          (_a = this.currentToast) == null ? void 0 : _a.setSuccess("\u5BFC\u51FA\u6210\u529F");
+          (_a = this.currentToast) == null ? void 0 : _a.setSuccess(t("toast.exportSuccess"));
         })
       );
     } else {
       menu.addItem(
-        (item) => item.setTitle("\u6253\u5F00\u94FE\u63A5").setIcon("external-link").onClick(() => {
+        (item) => item.setTitle(t("menu.openLink")).setIcon("external-link").onClick(() => {
           const url = this.getShareLink(file);
           activeWindow.open(url, "_blank");
         })
       );
       menu.addItem(
-        (item) => item.setTitle("\u5185\u5BB9\u66F4\u65B0").setIcon("refresh-cw").onClick(() => this.updateNote(file))
+        (item) => item.setTitle(t("menu.update")).setIcon("refresh-cw").onClick(() => this.updateNote(file))
       );
       menu.addItem(
-        (item) => item.setTitle("\u505C\u6B62\u5206\u4EAB").setIcon("eye-off").onClick(() => {
+        (item) => item.setTitle(t("menu.unpublish")).setIcon("eye-off").onClick(() => {
           new ShareModal(this.app, this, file, "unpublish", (subNotes) => {
             this.doUnpublish(file, subNotes);
           }).open();
@@ -28910,31 +29179,35 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
       );
       menu.addSeparator();
       menu.addItem(
-        (item) => item.setTitle("\u5BFC\u51FA\u5230\u672C\u5730").setIcon("download").onClick(async () => {
+        (item) => item.setTitle(t("menu.exportLocal")).setIcon("download").onClick(async () => {
           var _a;
           await this.exportFile(file);
-          (_a = this.currentToast) == null ? void 0 : _a.setSuccess("\u5BFC\u51FA\u6210\u529F");
+          (_a = this.currentToast) == null ? void 0 : _a.setSuccess(t("toast.exportSuccess"));
         })
       );
     }
-    menu.showAtMouseEvent(event);
+    menu.showAtPosition({ x: event.clientX + 10, y: event.clientY + 20 });
   }
   // ── Actions ──────────────────────────────────────────────────────────
-  async doPublish(file, subNotes, existingName, successText = "\u53D1\u5E03\u6210\u529F\uFF0C\u94FE\u63A5\u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F", copyToClipboard = true) {
+  async doPublish(file, subNotes, existingName, successText = t("toast.publishSuccess"), copyToClipboard = true) {
     var _a, _b, _c;
     (_a = this.currentToast) == null ? void 0 : _a.dismiss();
-    this.currentToast = new ExportToast("\u4E0A\u4F20\u4E2D...");
+    this.currentToast = new ExportToast(t("toast.uploading"));
     try {
-      const result = await prepareExport(this.app, this.app.vault, file, existingName, this.settings.pageLinkLength);
+      const usedNames = await listPublishedNames(this.settings);
+      const mainName = existingName != null ? existingName : generateUniqueName(usedNames, this.settings.pageLinkLength);
+      usedNames.add(mainName);
+      const result = await prepareExport(this.app, this.app.vault, file, mainName);
       const subFolderMap = /* @__PURE__ */ new Map();
       let mainHtml = result.html;
       for (const sn of subNotes) {
         if (sn.shareLink) {
           const noteName = this.extractNoteName(sn.shareLink);
+          usedNames.add(noteName);
           subFolderMap.set(sn.file.basename, noteName);
           subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), noteName);
         } else {
-          const subResult = await prepareExport(this.app, this.app.vault, sn.file, void 0, this.settings.pageLinkLength);
+          const subResult = await prepareExport(this.app, this.app.vault, sn.file, generateUniqueName(usedNames, this.settings.pageLinkLength));
           subFolderMap.set(sn.file.basename, subResult.noteName);
           subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), subResult.noteName);
           const subUrl = await uploadSubNoteToOss(
@@ -28962,14 +29235,14 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
       }
       (_b = this.currentToast) == null ? void 0 : _b.setSuccess(successText);
     } catch (err) {
-      (_c = this.currentToast) == null ? void 0 : _c.setError(`\u53D1\u5E03\u5931\u8D25\uFF1A${err.message}`);
+      (_c = this.currentToast) == null ? void 0 : _c.setError(t("toast.publishFailed", { error: err.message }));
       console.error(err);
     }
   }
   async doUnpublish(file, subNotesToDelete) {
     var _a, _b, _c;
     (_a = this.currentToast) == null ? void 0 : _a.dismiss();
-    this.currentToast = new ExportToast("\u505C\u6B62\u5206\u4EAB\u4E2D...");
+    this.currentToast = new ExportToast(t("toast.stopping"));
     try {
       for (const sn of subNotesToDelete) {
         const snName = this.extractNoteName(sn.shareLink);
@@ -28978,7 +29251,7 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
           await this.removeShareLink(sn.file);
         } catch (err) {
           console.error(`\u5220\u9664\u4E8C\u7EA7\u7B14\u8BB0\u5931\u8D25 (${sn.file.basename}):`, err);
-          new import_obsidian5.Notice(`\u5220\u9664 ${sn.file.basename} \u5931\u8D25\uFF0C\u5DF2\u4FDD\u7559\u5176\u5206\u4EAB\u94FE\u63A5`);
+          new import_obsidian5.Notice(t("notice.deleteSubFailed", { name: sn.file.basename }));
         }
       }
       const existingUrl = this.getShareLink(file);
@@ -28988,9 +29261,9 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
       }
       await this.removeShareLink(file);
       this.updateStatusBar();
-      (_b = this.currentToast) == null ? void 0 : _b.setSuccess("\u5DF2\u505C\u6B62\u5206\u4EAB");
+      (_b = this.currentToast) == null ? void 0 : _b.setSuccess(t("toast.stopped"));
     } catch (err) {
-      (_c = this.currentToast) == null ? void 0 : _c.setError(`\u505C\u6B62\u5206\u4EAB\u5931\u8D25\uFF1A${err.message}`);
+      (_c = this.currentToast) == null ? void 0 : _c.setError(t("toast.stopFailed", { error: err.message }));
       console.error(err);
     }
   }
@@ -29004,18 +29277,18 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
     const existingUrl = this.getShareLink(file);
     const existingName = existingUrl ? this.extractNoteName(existingUrl) : void 0;
     const subNotes = this.settings.includeLinkedNotes ? collectLinkedNotesWithStatus(this.app, file) : [];
-    await this.doPublish(file, subNotes, existingName, "\u66F4\u65B0\u6210\u529F", false);
+    await this.doPublish(file, subNotes, existingName, t("toast.updateSuccess"), false);
   }
   async exportCurrentNote(toOss = false) {
     var _a;
     const file = this.app.workspace.getActiveFile();
     if (!this.isMarkdown(file)) {
-      new import_obsidian5.Notice("\u53EA\u80FD\u53D1\u5E03 Markdown \u7B14\u8BB0");
+      new import_obsidian5.Notice(t("notice.onlyMarkdown.publish"));
       return;
     }
     if (toOss) {
       const subNotes = this.settings.includeLinkedNotes ? collectLinkedNotesWithStatus(this.app, file) : [];
-      await this.doPublish(file, subNotes, void 0, "\u4E0A\u4F20\u6210\u529F", false);
+      await this.doPublish(file, subNotes, void 0, t("toast.uploadSuccess"), false);
     } else {
       await this.exportFile(file);
       (_a = this.currentToast) == null ? void 0 : _a.setSuccess("\u5BFC\u51FA\u6210\u529F");
@@ -29024,7 +29297,7 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
   async exportFile(file) {
     var _a, _b;
     (_a = this.currentToast) == null ? void 0 : _a.dismiss();
-    this.currentToast = new ExportToast("\u5BFC\u51FA\u4E2D...");
+    this.currentToast = new ExportToast(t("toast.exporting"));
     try {
       await exportToLocal(
         this.app,
@@ -29035,7 +29308,7 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
         this.settings.pageLinkLength
       );
     } catch (err) {
-      (_b = this.currentToast) == null ? void 0 : _b.setError(`\u5BFC\u51FA\u5931\u8D25\uFF1A${err.message}`);
+      (_b = this.currentToast) == null ? void 0 : _b.setError(t("toast.exportFailed", { error: err.message }));
       console.error(err);
     }
   }

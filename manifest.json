@@ -1,9 +1,9 @@
 {
-  "id": "publish-as-link",
-  "name": "Publish Single Note as Webpage",
-  "version": "1.0.4",
+  "id": "link-trace",
+  "name": "LinkTrace",
+  "version": "1.0.5",
   "minAppVersion": "1.4.4",
-  "description": "Publish your notes to Alibaba Cloud OSS and share them as a link with one click.",
+  "description": "Publish notes as short links and track who's viewed them.",
   "author": "tcyeee",
   "authorUrl": "",
   "isDesktopOnly": true

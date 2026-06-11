@@ -5,6 +5,18 @@
 
 ---
 
+## Version 1.0.5
+
+- Stopping sharing now keeps the local share link and warns you if the online files can't be deleted
+- Improved pop-out window compatibility and Obsidian API compliance
+- Internal cleanup: removed dead code and an unused dependency, enabled type checking in CI
+
+- 停止分享时若线上文件删除失败，现在会保留本地链接并给出提示
+- 提升弹出窗口兼容性与 Obsidian API 合规性
+- 内部清理：移除死代码与未使用依赖，在 CI 中启用类型检查
+
+---
+
 ## Version 1.0.3
 
 - Fixed "[object Object]" text appearing in rendered Dataview and base content

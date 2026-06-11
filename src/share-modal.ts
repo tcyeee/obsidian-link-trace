@@ -1,6 +1,7 @@
 import { App, Modal, TFile, setIcon } from "obsidian";
 import type ShareOnlinePlugin from "../main";
 import { collectLinkedNotesWithStatus } from "./exporter";
+import { t } from "./i18n";
 
 export type ShareMode = "publish" | "unpublish";
 
@@ -38,7 +39,7 @@ export class ShareModal extends Modal {
             : [];
 
         contentEl.createEl("h2", {
-            text: this.mode === "publish" ? "发布笔记" : "停止分享",
+            text: this.mode === "publish" ? t("modal.publish.title") : t("modal.unpublish.title"),
             cls: "opal-modal-title",
         });
 
@@ -46,7 +47,7 @@ export class ShareModal extends Modal {
         const mainSection = contentEl.createDiv({ cls: "opal-modal-section" });
         mainSection.createEl("p", {
             cls: "opal-modal-section-label",
-            text: this.mode === "publish" ? "主笔记" : "主笔记（将被停止分享）",
+            text: this.mode === "publish" ? t("modal.mainNote") : t("modal.mainNote.stopping"),
         });
         this.renderNoteItem(mainSection, this.file.basename + ".md", null);
 
@@ -59,11 +60,11 @@ export class ShareModal extends Modal {
 
         // Button row
         const btnRow = contentEl.createDiv({ cls: "opal-modal-btn-row" });
-        const cancelBtn = btnRow.createEl("button", { text: "取消" });
+        const cancelBtn = btnRow.createEl("button", { text: t("modal.btn.cancel") });
         cancelBtn.addEventListener("click", () => this.close());
 
         const confirmBtn = btnRow.createEl("button", {
-            text: this.mode === "publish" ? "确认发布" : "确认停止分享",
+            text: this.mode === "publish" ? t("modal.btn.confirmPublish") : t("modal.btn.confirmUnpublish"),
             cls: "mod-cta",
         });
         confirmBtn.addEventListener("click", () => {
@@ -98,10 +99,10 @@ export class ShareModal extends Modal {
         const section = contentEl.createDiv({ cls: "opal-modal-section" });
         section.createEl("p", {
             cls: "opal-modal-section-label",
-            text: `关联的二级笔记 (${this.subNotes.length})`,
+            text: t("modal.subNotes.publish", { count: String(this.subNotes.length) }),
         });
         for (const sn of this.subNotes) {
-            const badge = sn.shareLink ? "已有链接，跳过" : "将被上传";
+            const badge = sn.shareLink ? t("modal.badge.hasLink") : t("modal.badge.willUpload");
             const item = this.renderNoteItem(section, sn.file.basename + ".md", badge);
             if (sn.shareLink) {
                 item.addClass("opal-modal-note-item--skip");
@@ -114,7 +115,7 @@ export class ShareModal extends Modal {
         const section = contentEl.createDiv({ cls: "opal-modal-section" });
         section.createEl("p", {
             cls: "opal-modal-section-label",
-            text: "关联的二级笔记（可选择一并停止）",
+            text: t("modal.subNotes.unpublish"),
         });
         for (const sn of this.subNotes) {
             const item = section.createDiv({ cls: "opal-modal-note-item" });

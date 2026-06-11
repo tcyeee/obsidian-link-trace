@@ -4,12 +4,14 @@
     "inlineSourceMap": true,
     "inlineSources": true,
     "module": "ESNext",
-    "target": "ES6",
+    "target": "ES2018",
     "allowSyntheticDefaultImports": true,
     "importHelpers": true,
     "jsx": "react",
-    "lib": ["ES6", "DOM"],
-    "moduleResolution": "bundler"
+    "lib": ["ES2018", "DOM"],
+    "moduleResolution": "node",
+    "types": ["node"],
+    "skipLibCheck": true
   },
   "include": ["**/*.ts"]
 }

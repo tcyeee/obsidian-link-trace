@@ -1,6 +1,6 @@
-# Publish Single Note as Webpage
+# LinkTrace
 
-An [Obsidian](https://obsidian.md) plugin that publishes your notes to Alibaba Cloud OSS and shares them as a link with one click — or exports them as polished, standalone web pages locally.
+An [Obsidian](https://obsidian.md) plugin that publishes your notes as short links and lets you track who's viewed them — or exports them as polished, standalone web pages locally.
 
 ## Features
 
@@ -23,7 +23,7 @@ An [Obsidian](https://obsidian.md) plugin that publishes your notes to Alibaba C
 > Currently not listed in the Obsidian community plugins registry. Install manually:
 
 1. Download the latest release files (`main.js`, `manifest.json`, `styles.css`) from the [Releases](../../releases) page.
-2. Copy them to your vault's plugin folder: `<vault>/.obsidian/plugins/publish-as-link/`
+2. Copy them to your vault's plugin folder: `<vault>/.obsidian/plugins/link-trace/`
 3. Reload Obsidian and enable the plugin under **Settings → Community plugins**.
 
 ## Usage

@@ -2,6 +2,7 @@ import { App, PluginSettingTab, Setting } from "obsidian";
 import * as path from "path";
 import * as os from "os";
 import type ShareOnlinePlugin from "../main";
+import { Language, t, setLanguage, formatPageCount } from "./i18n";
 
 export interface ShareOnlineSettings {
 	exportPath: string;
@@ -13,6 +14,7 @@ export interface ShareOnlineSettings {
 	ossPrefix: string;
 	ossDomain: string;
 	pageLinkLength: number;
+	language: Language;
 }
 
 export const DEFAULT_SETTINGS: ShareOnlineSettings = {
@@ -25,6 +27,7 @@ export const DEFAULT_SETTINGS: ShareOnlineSettings = {
 	ossPrefix: "notes",
 	ossDomain: "",
 	pageLinkLength: 3,
+	language: "zh",
 };
 
 export class ShareOnlineSettingTab extends PluginSettingTab {
@@ -35,16 +38,59 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
+	private buildPreviewUrl(): string {
+		const { ossDomain, ossRegion, ossBucket, ossPrefix, pageLinkLength } = this.plugin.settings;
+		const base = ossDomain
+			? ossDomain
+			: ossRegion && ossBucket
+			? `https://${ossBucket}.${ossRegion}.aliyuncs.com`
+			: `https://<bucket>.<region>.aliyuncs.com`;
+		const prefix = (ossPrefix || DEFAULT_SETTINGS.ossPrefix).replace(/\/$/, "");
+		const sample = "ab3c5d7e9f2x".slice(0, Math.max(1, pageLinkLength));
+		return `${base}/${prefix}/${sample}`;
+	}
+
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		// ── 导出设置 ──────────────────────────────
-		new Setting(containerEl).setName("导出设置").setHeading();
+		let previewEl: HTMLElement | undefined;
 
-		new Setting(containerEl)
-			.setName("包含二级笔记")
-			.setDesc("导出单个笔记时，同时导出该笔记中链接的所有二级笔记")
+		// ── 通用 / General ────────────────────────
+		const generalDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
+		generalDetails.setAttribute("open", "");
+		generalDetails.createEl("summary", {
+			cls: "opal-collapsible-heading",
+			text: t("settings.general.heading"),
+		});
+
+		new Setting(generalDetails)
+			.setName(t("settings.language"))
+			.setDesc(t("settings.language.desc"))
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("zh", "中文")
+					.addOption("en", "English")
+					.setValue(this.plugin.settings.language)
+					.onChange(async (value) => {
+						this.plugin.settings.language = value as Language;
+						setLanguage(value as Language);
+						await this.plugin.saveSettings();
+						this.display();
+					})
+			);
+
+		// ── 导出设置 / Export Settings ────────────
+		const exportDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
+		exportDetails.setAttribute("open", "");
+		exportDetails.createEl("summary", {
+			cls: "opal-collapsible-heading",
+			text: t("settings.export.heading"),
+		});
+
+		new Setting(exportDetails)
+			.setName(t("settings.includeLinked.name"))
+			.setDesc(t("settings.includeLinked.desc"))
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.plugin.settings.includeLinkedNotes)
@@ -54,16 +100,16 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 					})
 			);
 
-		new Setting(containerEl)
-			.setName("页面名称长度")
-			.setDesc("生成分享链接时的路径长度，越长碰撞概率越低")
+		new Setting(exportDetails)
+			.setName(t("settings.pageLinkLength.name"))
+			.setDesc(t("settings.pageLinkLength.desc"))
 			.addDropdown((dropdown) => {
 				const capacities: Record<number, string> = {
-					2: "约 1,296 个唯一页面",
-					3: "约 46,656 个唯一页面",
-					4: "约 1,679,616 个唯一页面",
-					5: "约 60,466,176 个唯一页面",
-					6: "约 2,176,782,336 个唯一页面",
+					2: formatPageCount(36 ** 2),
+					3: formatPageCount(36 ** 3),
+					4: formatPageCount(36 ** 4),
+					5: formatPageCount(36 ** 5),
+					6: formatPageCount(36 ** 6),
 				};
 				for (const len of [2, 3, 4, 5, 6]) {
 					dropdown.addOption(String(len), `${len} — ${capacities[len]}`);
@@ -73,15 +119,21 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.pageLinkLength = parseInt(value, 10);
 						await this.plugin.saveSettings();
+						previewEl?.setText(this.buildPreviewUrl());
 					});
 			});
 
-		// ── 本地导出 ──────────────────────────────
-		new Setting(containerEl).setName("本地导出").setHeading();
+		// ── 本地导出 / Local Export ───────────────
+		const localDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
+		localDetails.setAttribute("open", "");
+		localDetails.createEl("summary", {
+			cls: "opal-collapsible-heading",
+			text: t("settings.local.heading"),
+		});
 
-		new Setting(containerEl)
-			.setName("导出路径")
-			.setDesc("笔记导出的目标文件夹，默认为桌面")
+		new Setting(localDetails)
+			.setName(t("settings.exportPath.name"))
+			.setDesc(t("settings.exportPath.desc"))
 			.addText((text) =>
 				text
 					.setPlaceholder(DEFAULT_SETTINGS.exportPath)
@@ -92,12 +144,21 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 					})
 			);
 
-		// ── 阿里云 OSS ────────────────────────────
-		new Setting(containerEl).setName("阿里云 OSS").setHeading();
+		// ── 阿里云 OSS / Aliyun OSS ─ collapsible ──
+		const ossDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
+		ossDetails.createEl("summary", {
+			cls: "opal-collapsible-heading",
+			text: t("settings.oss.heading"),
+		});
 
-		new Setting(containerEl)
-			.setName("Region")
-			.setDesc("例如 oss-cn-hangzhou")
+		const ossCallout = ossDetails.createDiv({ cls: "opal-oss-callout" });
+		const ossCalloutList = ossCallout.createEl("ul");
+		ossCalloutList.createEl("li", { text: t("settings.oss.callout.item1") });
+		ossCalloutList.createEl("li", { text: t("settings.oss.callout.item2") });
+
+		new Setting(ossDetails)
+			.setName(t("settings.ossRegion.name"))
+			.setDesc(t("settings.ossRegion.desc"))
 			.addText((text) =>
 				text
 					.setPlaceholder("oss-cn-hangzhou")
@@ -105,11 +166,12 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.ossRegion = value.trim();
 						await this.plugin.saveSettings();
+						previewEl?.setText(this.buildPreviewUrl());
 					})
 			);
 
-		new Setting(containerEl)
-			.setName("Bucket")
+		new Setting(ossDetails)
+			.setName(t("settings.ossBucket.name"))
 			.addText((text) =>
 				text
 					.setPlaceholder("my-bucket")
@@ -117,11 +179,12 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.ossBucket = value.trim();
 						await this.plugin.saveSettings();
+						previewEl?.setText(this.buildPreviewUrl());
 					})
 			);
 
-		new Setting(containerEl)
-			.setName("Access key ID")
+		new Setting(ossDetails)
+			.setName(t("settings.ossKeyId.name"))
 			.addText((text) => {
 				text
 					.setPlaceholder("AccessKey ID")
@@ -133,8 +196,8 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 				text.inputEl.type = "password";
 			});
 
-		new Setting(containerEl)
-			.setName("Access key secret")
+		new Setting(ossDetails)
+			.setName(t("settings.ossKeySecret.name"))
 			.addText((text) => {
 				text
 					.setPlaceholder("AccessKey Secret")
@@ -146,9 +209,9 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 				text.inputEl.type = "password";
 			});
 
-		new Setting(containerEl)
-			.setName("上传前缀路径")
-			.setDesc("OSS 中的目录前缀，例如 notes → notes/<笔记名>/index.html")
+		new Setting(ossDetails)
+			.setName(t("settings.ossPrefix.name"))
+			.setDesc(t("settings.ossPrefix.desc"))
 			.addText((text) =>
 				text
 					.setPlaceholder("notes")
@@ -156,12 +219,13 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.ossPrefix = value.trim() || DEFAULT_SETTINGS.ossPrefix;
 						await this.plugin.saveSettings();
+						previewEl?.setText(this.buildPreviewUrl());
 					})
 			);
 
-		new Setting(containerEl)
-			.setName("自定义域名")
-			.setDesc("替换默认的 OSS 域名，留空则使用默认。例如 https://cdn.example.com")
+		new Setting(ossDetails)
+			.setName(t("settings.ossDomain.name"))
+			.setDesc(t("settings.ossDomain.desc"))
 			.addText((text) =>
 				text
 					.setPlaceholder("https://cdn.example.com")
@@ -169,7 +233,12 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.ossDomain = value.trim().replace(/\/$/, "");
 						await this.plugin.saveSettings();
+						previewEl?.setText(this.buildPreviewUrl());
 					})
 			);
+
+		const previewWrap = ossDetails.createDiv({ cls: "opal-url-preview" });
+		previewWrap.createSpan({ cls: "opal-url-preview-label", text: t("settings.urlPreview.label") });
+		previewEl = previewWrap.createSpan({ cls: "opal-url-preview-url", text: this.buildPreviewUrl() });
 	}
 }

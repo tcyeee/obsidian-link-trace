@@ -3,6 +3,48 @@ import * as fs from "fs";
 import * as path from "path";
 import { renderNote, buildHtml } from "./renderer";
 
+/** Base36 alphabet size — names are drawn from [0-9a-z]. */
+const NAME_ALPHABET_SIZE = 36;
+/**
+ * When the name space is fuller than this fraction, widen the name length.
+ * At 2/3 full the average number of random retries is still < 3; past that it
+ * climbs steeply (≈10 at 9/10 full, unbounded when full), so we never let it
+ * get there — we add a character instead, which multiplies capacity by 36.
+ */
+const CROWD_THRESHOLD = 2 / 3;
+
+/** Generate exactly `length` base36 characters. */
+function randomName(length: number): string {
+	let s = "";
+	// One Math.random() yields ~11 usable base36 chars; loop only for long names.
+	while (s.length < length) {
+		s += Math.random().toString(36).slice(2);
+	}
+	return s.slice(0, length);
+}
+
+/**
+ * Produce a name that is not already in `usedNames`, registering it before
+ * returning. `pageLinkLength` is the desired length, but if the space is
+ * already crowded (≥ CROWD_THRESHOLD of 36^length taken) the length is grown
+ * so retries stay cheap and the loop can never spin forever near saturation.
+ */
+export function generateUniqueName(usedNames: Set<string>, pageLinkLength: number): string {
+	let length = Math.max(1, pageLinkLength);
+	while (usedNames.size >= Math.pow(NAME_ALPHABET_SIZE, length) * CROWD_THRESHOLD) {
+		length++;
+		console.warn(
+			`[publish-as-link] 短链命名空间接近饱和（已用 ${usedNames.size} 个），长度自动增加到 ${length}`
+		);
+	}
+	let name: string;
+	do {
+		name = randomName(length);
+	} while (usedNames.has(name));
+	usedNames.add(name);
+	return name;
+}
+
 /** Collect all directly linked markdown notes from a file (no duplicates). */
 export function collectLinkedNotes(app: App, file: TFile): TFile[] {
 	const links = app.metadataCache.getFileCache(file)?.links ?? [];
@@ -85,14 +127,12 @@ export async function prepareExport(
 	app: App,
 	vault: Vault,
 	file: TFile,
-	existingName?: string,
-	pageLinkLength = 3
+	noteName: string
 ): Promise<ExportResult> {
 	const raw = await vault.read(file);
 	const { html: htmlBody, css, images } = await renderNote(app, file, raw);
-	const folderName = existingName ?? Math.random().toString(36).slice(2, 2 + pageLinkLength);
-	const html = buildHtml(file.basename, htmlBody, css).replace(/src="images\//g, `src="${folderName}/images/`);
-	return { noteName: folderName, html, css, images };
+	const html = buildHtml(file.basename, htmlBody, css).replace(/src="images\//g, `src="${noteName}/images/`);
+	return { noteName, html, css, images };
 }
 
 export async function exportToLocal(
@@ -103,7 +143,9 @@ export async function exportToLocal(
 	includeLinkedNotes = false,
 	pageLinkLength = 3
 ): Promise<ExportResult> {
-	const result = await prepareExport(app, vault, file, undefined, pageLinkLength);
+	// All names generated in this export share one set so they never collide.
+	const usedNames = new Set<string>();
+	const result = await prepareExport(app, vault, file, generateUniqueName(usedNames, pageLinkLength));
 
 	const subFolderMap = new Map<string, string>();
 	let mainHtml = result.html;
@@ -114,7 +156,7 @@ export async function exportToLocal(
 
 		// First pass: render all sub-notes and build the full map before writing anything.
 		for (const linkedFile of linkedFiles) {
-			const subResult = await prepareExport(app, vault, linkedFile, undefined, pageLinkLength);
+			const subResult = await prepareExport(app, vault, linkedFile, generateUniqueName(usedNames, pageLinkLength));
 			subFolderMap.set(linkedFile.basename, subResult.noteName);
 			subFolderMap.set(linkedFile.path.replace(/\.md$/i, ""), subResult.noteName);
 			subResults.push({ subResult });

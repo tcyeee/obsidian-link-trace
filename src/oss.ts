@@ -27,6 +27,45 @@ function makeClient(settings: ShareOnlineSettings) {
 	});
 }
 
+/**
+ * List the names of all already-published notes under the configured prefix.
+ * Used to seed the unique-name generator so a new publish never overwrites an
+ * unrelated note. Best-effort: returns an empty set if OSS is unconfigured or
+ * the request fails (dedup then falls back to within-publish only).
+ */
+export async function listPublishedNames(settings: ShareOnlineSettings): Promise<Set<string>> {
+	const { ossRegion, ossBucket, ossAccessKeyId, ossAccessKeySecret, ossPrefix } = settings;
+	const names = new Set<string>();
+	if (!ossRegion || !ossBucket || !ossAccessKeyId || !ossAccessKeySecret) return names;
+
+	const client = makeClient(settings);
+	const prefix = ossPrefix.replace(/\/$/, "") + "/";
+	try {
+		let marker: string | undefined;
+		do {
+			const res = (await client.list(
+				{ prefix, delimiter: "/", "max-keys": 1000, marker },
+				{}
+			)) as { objects?: { name: string }[]; prefixes?: string[]; isTruncated?: boolean; nextMarker?: string };
+			// The note's HTML lives at `${prefix}${name}` (an object); its images
+			// sit under `${prefix}${name}/` (a common prefix). Collect both.
+			for (const o of res.objects ?? []) {
+				const n = o.name.slice(prefix.length).replace(/\/.*$/, "");
+				if (n) names.add(n);
+			}
+			for (const p of res.prefixes ?? []) {
+				const n = p.slice(prefix.length).replace(/\/$/, "");
+				if (n) names.add(n);
+			}
+			marker = res.nextMarker;
+			if (!res.isTruncated) break;
+		} while (marker);
+	} catch (err) {
+		console.warn("[publish-as-link] 读取 OSS 已有页面列表失败，本次仅在发布范围内去重", err);
+	}
+	return names;
+}
+
 export async function uploadToOss(
 	settings: ShareOnlineSettings,
 	vault: Vault,

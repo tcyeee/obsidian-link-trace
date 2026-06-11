@@ -107,6 +107,78 @@
   height: 13px;
   flex-shrink: 0;
 }
+/* ── URL Preview ── */
+.opal-url-preview {
+  margin: -4px 0 20px 0;
+  padding: 6px 10px;
+  border-radius: 4px;
+  background: var(--background-secondary);
+  font-size: 12px;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.opal-url-preview-label {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.opal-url-preview-url {
+  font-family: var(--font-monospace);
+  color: var(--text-accent);
+  word-break: break-all;
+}
+
+/* ── Collapsible settings section ── */
+.opal-collapsible {
+  border: none;
+  margin: 0;
+}
+.opal-collapsible-heading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 18px 0 6px 0;
+  font-size: var(--h6-size);
+  font-weight: var(--h6-weight);
+  color: var(--h6-color);
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+}
+.opal-collapsible-heading::-webkit-details-marker {
+  display: none;
+}
+.opal-collapsible-heading::before {
+  content: "›";
+  font-size: 18px;
+  line-height: 1;
+  color: var(--text-muted);
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+details[open] > .opal-collapsible-heading::before {
+  transform: rotate(90deg);
+}
+
+/* ── OSS callout note ── */
+.opal-oss-callout {
+  margin: 6px 0 12px 0;
+  padding: 8px 12px;
+  border-radius: 4px;
+  border-left: 3px solid var(--color-orange);
+  background: rgba(var(--color-orange-rgb), 0.08);
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.opal-oss-callout ul {
+  margin: 0;
+  padding-left: 16px;
+}
+.opal-oss-callout li {
+  margin: 2px 0;
+}
+
 .opal-share-modal .opal-modal-btn-row {
   display: flex;
   justify-content: flex-end;
