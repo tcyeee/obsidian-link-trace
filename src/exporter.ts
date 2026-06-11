@@ -1,4 +1,6 @@
 import { App, Vault, TFile } from "obsidian";
+// fs/path are required for local export: exportRoot is a user-configured absolute path
+// outside the vault; app.vault.adapter only resolves vault-relative paths.
 import * as fs from "fs";
 import * as path from "path";
 import { renderNote, buildHtml } from "./renderer";
