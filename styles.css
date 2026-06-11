@@ -52,3 +52,59 @@
   left: -9999px;
   visibility: hidden;
 }
+
+/* ── Share Modal ── */
+.opal-share-modal .opal-modal-title {
+  margin-bottom: 16px;
+}
+.opal-share-modal .opal-modal-section {
+  margin-bottom: 14px;
+}
+.opal-share-modal .opal-modal-section-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin: 0 0 6px 0;
+}
+.opal-share-modal .opal-modal-note-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+}
+.opal-share-modal .opal-modal-note-icon {
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.opal-share-modal .opal-modal-note-name {
+  flex: 1;
+  font-size: 13.5px;
+}
+.opal-share-modal .opal-modal-badge {
+  font-size: 11px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  background: var(--background-modifier-success);
+  color: var(--text-on-accent);
+  flex-shrink: 0;
+}
+.opal-share-modal .opal-modal-note-item--skip .opal-modal-badge {
+  background: var(--background-modifier-border);
+  color: var(--text-muted);
+}
+.opal-share-modal .opal-modal-note-item--skip .opal-modal-note-name {
+  color: var(--text-muted);
+}
+.opal-share-modal .opal-modal-checkbox {
+  flex-shrink: 0;
+}
+.opal-share-modal .opal-modal-btn-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
