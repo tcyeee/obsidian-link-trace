@@ -18,6 +18,26 @@ export function collectLinkedNotes(app: App, file: TFile): TFile[] {
 	return result;
 }
 
+/** Same as collectLinkedNotes but also returns each note's current share_link value. */
+export function collectLinkedNotesWithStatus(
+	app: App,
+	file: TFile
+): { file: TFile; shareLink: string }[] {
+	const links = app.metadataCache.getFileCache(file)?.links ?? [];
+	const seen = new Set<string>();
+	const result: { file: TFile; shareLink: string }[] = [];
+	for (const link of links) {
+		const dest = app.metadataCache.getFirstLinkpathDest(link.link, file.path);
+		if (dest && dest.extension === "md" && !seen.has(dest.path)) {
+			seen.add(dest.path);
+			const shareLink =
+				app.metadataCache.getFileCache(dest)?.frontmatter?.share_link ?? "";
+			result.push({ file: dest, shareLink });
+		}
+	}
+	return result;
+}
+
 /**
  * Rewrite internal Obsidian link hrefs in exported HTML
  * so they point to the exported sub-note pages.
@@ -42,7 +62,7 @@ export function rewriteInternalLinks(html: string, subFolderMap: Map<string, str
 			return `<a${newAttrs}>`;
 		}
 		// Use negative lookbehind to avoid matching the `href` inside `data-href="..."`
-		let newAttrs = attrs.replace(/(?<![a-zA-Z-])href="[^"]*"/, `href="./${subFolder}/index.html"`);
+		let newAttrs = attrs.replace(/(?<![a-zA-Z-])href="[^"]*"/, `href="./${subFolder}.html"`);
 		// Remove target="_blank" so the link opens in the current page
 		newAttrs = newAttrs.replace(/\s*target="_blank"/, "");
 		return `<a${newAttrs}>`;
@@ -59,8 +79,10 @@ export interface ExportResult {
 export async function prepareExport(app: App, vault: Vault, file: TFile, existingName?: string): Promise<ExportResult> {
 	const raw = await vault.read(file);
 	const { html: htmlBody, css, images } = await renderNote(app, file, raw);
-	const html = buildHtml(file.basename, htmlBody);
-	const folderName = existingName ?? Date.now().toString(36);
+	const folderName = existingName ?? Math.random().toString(36).slice(2, 4);
+	// Inline CSS and rewrite image paths so the flat .html file can find its assets
+	// at {folderName}/images/ rather than the old relative images/ subfolder.
+	const html = buildHtml(file.basename, htmlBody, css).replace(/src="images\//g, `src="${folderName}/images/`);
 	return { noteName: folderName, html, css, images };
 }
 
@@ -73,42 +95,28 @@ export async function exportToLocal(
 ): Promise<ExportResult> {
 	const result = await prepareExport(app, vault, file);
 
-	const folderPath = path.join(exportRoot, result.noteName);
-	fs.mkdirSync(folderPath, { recursive: true });
-
 	const subFolderMap = new Map<string, string>();
 	let mainHtml = result.html;
 
 	if (includeLinkedNotes) {
 		const linkedFiles = collectLinkedNotes(app, file);
-		const subResults: { linkedFile: TFile; subResult: ExportResult }[] = [];
+		const subResults: { subResult: ExportResult }[] = [];
 
 		// First pass: render all sub-notes and build the full map before writing anything.
 		for (const linkedFile of linkedFiles) {
 			const subResult = await prepareExport(app, vault, linkedFile);
-			// Map both basename and path-without-extension so the rewriter finds it
 			subFolderMap.set(linkedFile.basename, subResult.noteName);
 			subFolderMap.set(linkedFile.path.replace(/\.md$/i, ""), subResult.noteName);
-			subResults.push({ linkedFile, subResult });
+			subResults.push({ subResult });
 		}
 
-		// Sub-notes live one level deeper than the main note, so links between
-		// sibling sub-notes need a "../" prefix instead of "./".
-		const subNoteSubFolderMap = new Map<string, string>();
-		for (const [key, value] of subFolderMap) {
-			subNoteSubFolderMap.set(key, `../${value}`);
-		}
-
-		// Second pass: rewrite sub-note links then write to disk.
+		// All notes (main and sub) are flat at exportRoot, so links use the same map.
 		for (const { subResult } of subResults) {
-			const subFolderPath = path.join(folderPath, subResult.noteName);
-			fs.mkdirSync(subFolderPath, { recursive: true });
-			const rewrittenSubHtml = rewriteInternalLinks(subResult.html, subNoteSubFolderMap);
-			fs.writeFileSync(path.join(subFolderPath, "index.html"), rewrittenSubHtml, "utf8");
-			fs.writeFileSync(path.join(subFolderPath, "style.css"), subResult.css, "utf8");
+			const rewrittenSubHtml = rewriteInternalLinks(subResult.html, subFolderMap);
+			fs.writeFileSync(path.join(exportRoot, `${subResult.noteName}.html`), rewrittenSubHtml, "utf8");
 
 			if (subResult.images.size > 0) {
-				const subImagesDir = path.join(subFolderPath, "images");
+				const subImagesDir = path.join(exportRoot, subResult.noteName, "images");
 				fs.mkdirSync(subImagesDir, { recursive: true });
 				for (const [exportName, imgFile] of subResult.images) {
 					const data = await vault.readBinary(imgFile);
@@ -118,16 +126,12 @@ export async function exportToLocal(
 		}
 	}
 
-	// Always rewrite internal links: exported targets get proper hrefs,
-	// non-exported targets have their href removed so they are not clickable.
 	mainHtml = rewriteInternalLinks(mainHtml, subFolderMap);
 
-	fs.writeFileSync(path.join(folderPath, "index.html"), mainHtml, "utf8");
-	fs.writeFileSync(path.join(folderPath, "style.css"), result.css, "utf8");
+	fs.writeFileSync(path.join(exportRoot, `${result.noteName}.html`), mainHtml, "utf8");
 
-	// Copy referenced images into images/ subfolder
 	if (result.images.size > 0) {
-		const imagesDir = path.join(folderPath, "images");
+		const imagesDir = path.join(exportRoot, result.noteName, "images");
 		fs.mkdirSync(imagesDir, { recursive: true });
 		for (const [exportName, imgFile] of result.images) {
 			const data = await vault.readBinary(imgFile);
