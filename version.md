@@ -5,6 +5,11 @@
 
 ---
 
+## Version 0.1.2
+
+- Improved reliability of frontmatter reading with stricter type handling
+- 改进前置元数据读取的可靠性，采用更严格的类型处理
+
 ## Version 0.1.1
 
 - One-click publish current note as a shareable webpage link
