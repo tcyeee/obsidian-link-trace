@@ -268,6 +268,40 @@ export default class ShareOnlinePlugin extends Plugin {
 		}
 	}
 
+	private async doUnpublish(
+		file: TFile,
+		subNotesToDelete: { file: TFile; shareLink: string }[]
+	): Promise<void> {
+		this.currentToast?.dismiss();
+		this.currentToast = new ExportToast("停止分享中...");
+		try {
+			// Delete selected sub-notes first (errors are non-fatal)
+			for (const sn of subNotesToDelete) {
+				const snName = this.extractNoteName(sn.shareLink);
+				try {
+					await deleteFromOss(this.settings, snName);
+					await this.removeShareLink(sn.file);
+				} catch (err) {
+					console.error(`删除二级笔记失败 (${sn.file.basename}):`, err);
+					new Notice(`删除 ${sn.file.basename} 失败，已保留其分享链接`);
+				}
+			}
+
+			// Delete main note (fatal on failure)
+			const existingUrl = this.getShareLink(file);
+			if (existingUrl) {
+				const existingName = this.extractNoteName(existingUrl);
+				await deleteFromOss(this.settings, existingName);
+			}
+			await this.removeShareLink(file);
+			this.updateStatusBar();
+			this.currentToast?.setSuccess("已停止分享");
+		} catch (err) {
+			this.currentToast?.setError(`停止分享失败：${(err as Error).message}`);
+			console.error(err);
+		}
+	}
+
 	private extractNoteName(url: string): string {
 		const parts = url.split("/");
 		const last = parts[parts.length - 1];
