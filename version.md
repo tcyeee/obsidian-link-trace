@@ -5,6 +5,11 @@
 
 ---
 
+## Version 0.1.4
+
+- Fixed settings panel reloading by extracting an internal `buildUI()` method to avoid calling the deprecated `display()` recursively
+- 修复设置面板重载逻辑，提取内部 `buildUI()` 方法，避免递归调用已废弃的 `display()`
+
 ## Version 0.1.3
 
 - Fixed plugin display name from "LinkTrace" to "Link Trace"
