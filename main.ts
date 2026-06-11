@@ -221,7 +221,7 @@ export default class ShareOnlinePlugin extends Plugin {
 		this.currentToast?.dismiss();
 		this.currentToast = new ExportToast("上传中...");
 		try {
-			const result = await prepareExport(this.app, this.app.vault, file, existingName);
+			const result = await prepareExport(this.app, this.app.vault, file, existingName, this.settings.pageLinkLength);
 			const subFolderMap = new Map<string, string>();
 			let mainHtml = result.html;
 
@@ -232,7 +232,7 @@ export default class ShareOnlinePlugin extends Plugin {
 					subFolderMap.set(sn.file.basename, noteName);
 					subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), noteName);
 				} else {
-					const subResult = await prepareExport(this.app, this.app.vault, sn.file);
+					const subResult = await prepareExport(this.app, this.app.vault, sn.file, undefined, this.settings.pageLinkLength);
 					subFolderMap.set(sn.file.basename, subResult.noteName);
 					subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), subResult.noteName);
 					const subUrl = await uploadSubNoteToOss(
@@ -342,7 +342,8 @@ export default class ShareOnlinePlugin extends Plugin {
 				this.app.vault,
 				file,
 				this.settings.exportPath || DEFAULT_SETTINGS.exportPath,
-				this.settings.includeLinkedNotes
+				this.settings.includeLinkedNotes,
+				this.settings.pageLinkLength
 			);
 		} catch (err) {
 			this.currentToast?.setError(`导出失败：${(err as Error).message}`);
