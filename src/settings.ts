@@ -69,7 +69,7 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 					dropdown.addOption(String(len), `${len} — ${capacities[len]}`);
 				}
 				dropdown
-					.setValue(String(this.plugin.settings.pageLinkLength ?? 3))
+					.setValue(String(this.plugin.settings.pageLinkLength))
 					.onChange(async (value) => {
 						this.plugin.settings.pageLinkLength = parseInt(value, 10);
 						await this.plugin.saveSettings();
