@@ -82,7 +82,7 @@ export class ShareModal extends Modal {
         parent: HTMLElement,
         label: string,
         badge: string | null
-    ) {
+    ): HTMLElement {
         const item = parent.createDiv({ cls: "opal-modal-note-item" });
         const iconEl = item.createDiv({ cls: "opal-modal-note-icon" });
         setIcon(iconEl, "file-text");
@@ -90,6 +90,7 @@ export class ShareModal extends Modal {
         if (badge) {
             item.createSpan({ text: badge, cls: "opal-modal-badge" });
         }
+        return item;
     }
 
     private renderPublishSubNotes(contentEl: HTMLElement) {
@@ -101,9 +102,9 @@ export class ShareModal extends Modal {
         });
         for (const sn of this.subNotes) {
             const badge = sn.shareLink ? "已有链接，跳过" : "将被上传";
-            this.renderNoteItem(section, sn.file.basename + ".md", badge);
+            const item = this.renderNoteItem(section, sn.file.basename + ".md", badge);
             if (sn.shareLink) {
-                section.lastElementChild?.addClass("opal-modal-note-item--skip");
+                item.addClass("opal-modal-note-item--skip");
             }
         }
     }
