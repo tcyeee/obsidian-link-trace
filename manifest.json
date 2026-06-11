@@ -1,7 +1,7 @@
 {
   "id": "link-trace",
   "name": "Link Trace",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "minAppVersion": "1.4.4",
   "description": "Publish notes as short links and track who's viewed them.",
   "author": "tcyeee",

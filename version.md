@@ -5,6 +5,11 @@
 
 ---
 
+## Version 0.1.3
+
+- Fixed plugin display name from "LinkTrace" to "Link Trace"
+- 修复插件显示名称，从 "LinkTrace" 更正为 "Link Trace"
+
 ## Version 0.1.2
 
 - Improved reliability of frontmatter reading with stricter type handling
