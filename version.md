@@ -5,6 +5,11 @@
 
 ---
 
+## Version 0.1.5
+
+- Fixed Shell Execution submission-bot warning by stubbing transitive `address` and `win-release` dependencies of ali-oss with implementations that avoid `child_process`
+- 修复发布机器人"Shell Execution"警告：为 ali-oss 传递依赖 `address` 和 `win-release` 创建不依赖 `child_process` 的 stub 实现
+
 ## Version 0.1.4
 
 - Fixed settings panel reloading by extracting an internal `buildUI()` method to avoid calling the deprecated `display()` recursively
