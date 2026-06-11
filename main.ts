@@ -1,6 +1,6 @@
 import { Menu, Notice, Plugin, TFile, setIcon, setTooltip } from "obsidian";
 import { ShareOnlineSettings, DEFAULT_SETTINGS, ShareOnlineSettingTab } from "./src/settings";
-import { exportToLocal, prepareExport, collectLinkedNotes, collectLinkedNotesWithStatus, rewriteInternalLinks } from "./src/exporter";
+import { exportToLocal, prepareExport, collectLinkedNotesWithStatus, rewriteInternalLinks } from "./src/exporter";
 import { ShareModal } from "./src/share-modal";
 import { uploadToOss, uploadSubNoteToOss, deleteFromOss } from "./src/oss";
 
@@ -154,8 +154,8 @@ export default class ShareOnlinePlugin extends Plugin {
 					.setTitle("发布到线上")
 					.setIcon("upload-cloud")
 					.onClick(() => {
-						new ShareModal(this.app, this, file, "publish", (confirmedSubNotes) => {
-							this.doPublish(file, confirmedSubNotes);
+						new ShareModal(this.app, this, file, "publish", (subNotes) => {
+							this.doPublish(file, subNotes);
 						}).open();
 					})
 			);
@@ -164,7 +164,7 @@ export default class ShareOnlinePlugin extends Plugin {
 					.setTitle("导出到本地")
 					.setIcon("download")
 					.onClick(async () => {
-						await this.exportFile(file, false);
+						await this.exportFile(file);
 						this.currentToast?.setSuccess("导出成功");
 					})
 			);
@@ -189,8 +189,8 @@ export default class ShareOnlinePlugin extends Plugin {
 					.setTitle("停止分享")
 					.setIcon("eye-off")
 					.onClick(() => {
-						new ShareModal(this.app, this, file, "unpublish", (selectedSubNotes) => {
-							this.doUnpublish(file, selectedSubNotes);
+						new ShareModal(this.app, this, file, "unpublish", (subNotes) => {
+							this.doUnpublish(file, subNotes);
 						}).open();
 					})
 			);
@@ -200,7 +200,7 @@ export default class ShareOnlinePlugin extends Plugin {
 					.setTitle("导出到本地")
 					.setIcon("download")
 					.onClick(async () => {
-						await this.exportFile(file, false);
+						await this.exportFile(file);
 						this.currentToast?.setSuccess("导出成功");
 					})
 			);
@@ -210,16 +210,6 @@ export default class ShareOnlinePlugin extends Plugin {
 	}
 
 	// ── Actions ──────────────────────────────────────────────────────────
-
-	private async publishNote(file: TFile) {
-		const url = await this.exportFile(file, true);
-		if (url) {
-			await this.setShareLink(file, url);
-			this.updateStatusBar();
-			await navigator.clipboard.writeText(url);
-			this.currentToast?.setSuccess("发布成功，链接已复制到剪贴板");
-		}
-	}
 
 	private async doPublish(
 		file: TFile,
@@ -326,23 +316,6 @@ export default class ShareOnlinePlugin extends Plugin {
 		await this.doPublish(file, subNotes, existingName, "更新成功", false);
 	}
 
-	private async unpublishNote(file: TFile) {
-		const existingUrl = this.getShareLink(file);
-		if (existingUrl) {
-			const existingName = this.extractNoteName(existingUrl);
-			try {
-				await deleteFromOss(this.settings, existingName);
-			} catch (err) {
-				console.error("删除 OSS 文件失败：", err);
-				new Notice("删除线上文件失败，已保留分享链接");
-				return;
-			}
-		}
-		await this.removeShareLink(file);
-		this.updateStatusBar();
-		new Notice("已停止分享");
-	}
-
 	private async exportCurrentNote(toOss = false) {
 		const file = this.app.workspace.getActiveFile();
 		if (!this.isMarkdown(file)) {
@@ -355,57 +328,25 @@ export default class ShareOnlinePlugin extends Plugin {
 				: [];
 			await this.doPublish(file, subNotes, undefined, "上传成功", false);
 		} else {
-			await this.exportFile(file, false);
+			await this.exportFile(file);
 			this.currentToast?.setSuccess("导出成功");
 		}
 	}
 
-	private async exportFile(file: TFile, toOss = false, existingName?: string): Promise<string> {
+	private async exportFile(file: TFile): Promise<void> {
 		this.currentToast?.dismiss();
-		this.currentToast = new ExportToast(toOss ? "上传中..." : "导出中...");
+		this.currentToast = new ExportToast("导出中...");
 		try {
-			if (toOss) {
-				const result = await prepareExport(this.app, this.app.vault, file, existingName);
-				const subFolderMap = new Map<string, string>();
-				let mainHtml = result.html;
-
-				if (this.settings.includeLinkedNotes) {
-					const linkedFiles = collectLinkedNotes(this.app, file);
-
-					for (const linkedFile of linkedFiles) {
-						const subResult = await prepareExport(this.app, this.app.vault, linkedFile);
-						// subResult.noteName is the generated folder name; map basename/path to it
-						subFolderMap.set(linkedFile.basename, subResult.noteName);
-						subFolderMap.set(linkedFile.path.replace(/\.md$/i, ""), subResult.noteName);
-						await uploadSubNoteToOss(
-							this.settings,
-							this.app.vault,
-							subResult.noteName,
-							subResult.html,
-							subResult.images
-						);
-					}
-				}
-
-				// Always rewrite internal links: exported targets get proper hrefs,
-				// non-exported targets have their href removed so they are not clickable.
-				mainHtml = rewriteInternalLinks(mainHtml, subFolderMap);
-
-				return await uploadToOss(this.settings, this.app.vault, result.noteName, mainHtml, result.images);
-			} else {
-				await exportToLocal(
-					this.app,
-					this.app.vault,
-					file,
-					this.settings.exportPath || DEFAULT_SETTINGS.exportPath,
-					this.settings.includeLinkedNotes
-				);
-				return "";
-			}
+			await exportToLocal(
+				this.app,
+				this.app.vault,
+				file,
+				this.settings.exportPath || DEFAULT_SETTINGS.exportPath,
+				this.settings.includeLinkedNotes
+			);
 		} catch (err) {
 			this.currentToast?.setError(`导出失败：${(err as Error).message}`);
 			console.error(err);
-			return "";
 		}
 	}
 
