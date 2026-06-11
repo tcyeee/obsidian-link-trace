@@ -12,6 +12,7 @@ export interface ShareOnlineSettings {
 	ossAccessKeySecret: string;
 	ossPrefix: string;
 	ossDomain: string;
+	pageLinkLength: number;
 }
 
 export const DEFAULT_SETTINGS: ShareOnlineSettings = {
@@ -23,6 +24,7 @@ export const DEFAULT_SETTINGS: ShareOnlineSettings = {
 	ossAccessKeySecret: "",
 	ossPrefix: "notes",
 	ossDomain: "",
+	pageLinkLength: 3,
 };
 
 export class ShareOnlineSettingTab extends PluginSettingTab {
@@ -51,6 +53,28 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					})
 			);
+
+		new Setting(containerEl)
+			.setName("页面名称长度")
+			.setDesc("生成分享链接时的路径长度，越长碰撞概率越低")
+			.addDropdown((dropdown) => {
+				const capacities: Record<number, string> = {
+					2: "约 1,296 个唯一页面",
+					3: "约 46,656 个唯一页面",
+					4: "约 1,679,616 个唯一页面",
+					5: "约 60,466,176 个唯一页面",
+					6: "约 2,176,782,336 个唯一页面",
+				};
+				for (const len of [2, 3, 4, 5, 6]) {
+					dropdown.addOption(String(len), `${len} — ${capacities[len]}`);
+				}
+				dropdown
+					.setValue(String(this.plugin.settings.pageLinkLength ?? 3))
+					.onChange(async (value) => {
+						this.plugin.settings.pageLinkLength = parseInt(value, 10);
+						await this.plugin.saveSettings();
+					});
+			});
 
 		// ── 本地导出 ──────────────────────────────
 		new Setting(containerEl).setName("本地导出").setHeading();
