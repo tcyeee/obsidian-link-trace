@@ -26867,7 +26867,7 @@ __export(main_exports, {
   default: () => ShareOnlinePlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian4 = require("obsidian");
+var import_obsidian5 = require("obsidian");
 
 // src/settings.ts
 var import_obsidian = require("obsidian");
@@ -27350,7 +27350,7 @@ function extractMath(content) {
   return { processed, entries };
 }
 function collectImages(app, sourceFile, el, images = /* @__PURE__ */ new Map()) {
-  const vaultBasePath = app.vault.adapter instanceof import_obsidian3.FileSystemAdapter ? app.vault.adapter.basePath : "";
+  const vaultBasePath = app.vault.adapter instanceof import_obsidian3.FileSystemAdapter ? app.vault.adapter.getBasePath() : "";
   el.querySelectorAll(".internal-embed").forEach((embed) => {
     var _a;
     const imgEl = embed.querySelector("img");
@@ -27435,10 +27435,10 @@ async function renderNote(app, file, rawContent) {
       if (pendingMermaid === 0 && elapsed >= 300 || elapsed >= 1500) {
         resolve();
       } else {
-        activeWindow.setTimeout(check, 100);
+        window.setTimeout(check, 100);
       }
     };
-    activeWindow.setTimeout(check, 300);
+    window.setTimeout(check, 300);
   });
   component.unload();
   el.querySelectorAll("[data-mi]").forEach((placeholder) => {
@@ -27499,7 +27499,7 @@ async function renderNote(app, file, rawContent) {
   activeDocument.body.removeChild(el);
   return { html, css: buildCss(), images };
 }
-function buildHtml(title, htmlBody) {
+function buildHtml(title, htmlBody, css) {
   const svgCopy = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
   const svgCheck = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${THEME}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
   const calloutIcons = {
@@ -27542,7 +27542,7 @@ function buildHtml(title, htmlBody) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${title}</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-  <link rel="stylesheet" href="style.css">
+  <style>${css}</style>
 </head>
 <body>
   <button class="toc-toggle" id="toc-toggle" title="OUTLINE">
@@ -28461,6 +28461,21 @@ function collectLinkedNotes(app, file) {
   }
   return result;
 }
+function collectLinkedNotesWithStatus(app, file) {
+  var _a, _b, _c, _d, _e;
+  const links = (_b = (_a = app.metadataCache.getFileCache(file)) == null ? void 0 : _a.links) != null ? _b : [];
+  const seen = /* @__PURE__ */ new Set();
+  const result = [];
+  for (const link of links) {
+    const dest = app.metadataCache.getFirstLinkpathDest(link.link, file.path);
+    if (dest && dest.extension === "md" && !seen.has(dest.path)) {
+      seen.add(dest.path);
+      const shareLink = (_e = (_d = (_c = app.metadataCache.getFileCache(dest)) == null ? void 0 : _c.frontmatter) == null ? void 0 : _d.share_link) != null ? _e : "";
+      result.push({ file: dest, shareLink });
+    }
+  }
+  return result;
+}
 function rewriteInternalLinks(html, subFolderMap) {
   return html.replace(/<a([^>]*?)>/g, (match, attrs) => {
     var _a, _b;
@@ -28476,7 +28491,7 @@ function rewriteInternalLinks(html, subFolderMap) {
       newAttrs2 = newAttrs2.replace(/\s*target="_blank"/, "");
       return `<a${newAttrs2}>`;
     }
-    let newAttrs = attrs.replace(/(?<![a-zA-Z-])href="[^"]*"/, `href="./${subFolder}/index.html"`);
+    let newAttrs = attrs.replace(/(?<![a-zA-Z-])href="[^"]*"/, `href="./${subFolder}.html"`);
     newAttrs = newAttrs.replace(/\s*target="_blank"/, "");
     return `<a${newAttrs}>`;
   });
@@ -28484,14 +28499,12 @@ function rewriteInternalLinks(html, subFolderMap) {
 async function prepareExport(app, vault, file, existingName) {
   const raw = await vault.read(file);
   const { html: htmlBody, css, images } = await renderNote(app, file, raw);
-  const html = buildHtml(file.basename, htmlBody);
-  const folderName = existingName != null ? existingName : Date.now().toString(36);
+  const folderName = existingName != null ? existingName : Math.random().toString(36).slice(2, 4);
+  const html = buildHtml(file.basename, htmlBody, css).replace(/src="images\//g, `src="${folderName}/images/`);
   return { noteName: folderName, html, css, images };
 }
 async function exportToLocal(app, vault, file, exportRoot, includeLinkedNotes = false) {
   const result = await prepareExport(app, vault, file);
-  const folderPath = path2.join(exportRoot, result.noteName);
-  fs.mkdirSync(folderPath, { recursive: true });
   const subFolderMap = /* @__PURE__ */ new Map();
   let mainHtml = result.html;
   if (includeLinkedNotes) {
@@ -28501,20 +28514,13 @@ async function exportToLocal(app, vault, file, exportRoot, includeLinkedNotes = 
       const subResult = await prepareExport(app, vault, linkedFile);
       subFolderMap.set(linkedFile.basename, subResult.noteName);
       subFolderMap.set(linkedFile.path.replace(/\.md$/i, ""), subResult.noteName);
-      subResults.push({ linkedFile, subResult });
-    }
-    const subNoteSubFolderMap = /* @__PURE__ */ new Map();
-    for (const [key, value] of subFolderMap) {
-      subNoteSubFolderMap.set(key, `../${value}`);
+      subResults.push({ subResult });
     }
     for (const { subResult } of subResults) {
-      const subFolderPath = path2.join(folderPath, subResult.noteName);
-      fs.mkdirSync(subFolderPath, { recursive: true });
-      const rewrittenSubHtml = rewriteInternalLinks(subResult.html, subNoteSubFolderMap);
-      fs.writeFileSync(path2.join(subFolderPath, "index.html"), rewrittenSubHtml, "utf8");
-      fs.writeFileSync(path2.join(subFolderPath, "style.css"), subResult.css, "utf8");
+      const rewrittenSubHtml = rewriteInternalLinks(subResult.html, subFolderMap);
+      fs.writeFileSync(path2.join(exportRoot, `${subResult.noteName}.html`), rewrittenSubHtml, "utf8");
       if (subResult.images.size > 0) {
-        const subImagesDir = path2.join(subFolderPath, "images");
+        const subImagesDir = path2.join(exportRoot, subResult.noteName, "images");
         fs.mkdirSync(subImagesDir, { recursive: true });
         for (const [exportName, imgFile] of subResult.images) {
           const data = await vault.readBinary(imgFile);
@@ -28524,10 +28530,9 @@ async function exportToLocal(app, vault, file, exportRoot, includeLinkedNotes = 
     }
   }
   mainHtml = rewriteInternalLinks(mainHtml, subFolderMap);
-  fs.writeFileSync(path2.join(folderPath, "index.html"), mainHtml, "utf8");
-  fs.writeFileSync(path2.join(folderPath, "style.css"), result.css, "utf8");
+  fs.writeFileSync(path2.join(exportRoot, `${result.noteName}.html`), mainHtml, "utf8");
   if (result.images.size > 0) {
-    const imagesDir = path2.join(folderPath, "images");
+    const imagesDir = path2.join(exportRoot, result.noteName, "images");
     fs.mkdirSync(imagesDir, { recursive: true });
     for (const [exportName, imgFile] of result.images) {
       const data = await vault.readBinary(imgFile);
@@ -28536,6 +28541,106 @@ async function exportToLocal(app, vault, file, exportRoot, includeLinkedNotes = 
   }
   return result;
 }
+
+// src/share-modal.ts
+var import_obsidian4 = require("obsidian");
+var ShareModal = class extends import_obsidian4.Modal {
+  constructor(app, plugin, file, mode, onConfirm) {
+    super(app);
+    this.subNotes = [];
+    this.checkStates = /* @__PURE__ */ new Map();
+    this.plugin = plugin;
+    this.file = file;
+    this.mode = mode;
+    this.onConfirm = onConfirm;
+  }
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.empty();
+    contentEl.addClass("opal-share-modal");
+    this.subNotes = this.plugin.settings.includeLinkedNotes ? collectLinkedNotesWithStatus(this.app, this.file) : [];
+    contentEl.createEl("h2", {
+      text: this.mode === "publish" ? "\u53D1\u5E03\u7B14\u8BB0" : "\u505C\u6B62\u5206\u4EAB",
+      cls: "opal-modal-title"
+    });
+    const mainSection = contentEl.createDiv({ cls: "opal-modal-section" });
+    mainSection.createEl("p", {
+      cls: "opal-modal-section-label",
+      text: this.mode === "publish" ? "\u4E3B\u7B14\u8BB0" : "\u4E3B\u7B14\u8BB0\uFF08\u5C06\u88AB\u505C\u6B62\u5206\u4EAB\uFF09"
+    });
+    this.renderNoteItem(mainSection, this.file.basename + ".md", null);
+    if (this.mode === "publish") {
+      this.renderPublishSubNotes(contentEl);
+    } else {
+      this.renderUnpublishSubNotes(contentEl);
+    }
+    const btnRow = contentEl.createDiv({ cls: "opal-modal-btn-row" });
+    const cancelBtn = btnRow.createEl("button", { text: "\u53D6\u6D88" });
+    cancelBtn.addEventListener("click", () => this.close());
+    const confirmBtn = btnRow.createEl("button", {
+      text: this.mode === "publish" ? "\u786E\u8BA4\u53D1\u5E03" : "\u786E\u8BA4\u505C\u6B62\u5206\u4EAB",
+      cls: "mod-cta"
+    });
+    confirmBtn.addEventListener("click", () => {
+      const result = this.mode === "unpublish" ? this.subNotes.filter(
+        (sn) => sn.shareLink && this.checkStates.get(sn.file.path)
+      ) : this.subNotes;
+      this.close();
+      this.onConfirm(result);
+    });
+  }
+  renderNoteItem(parent, label, badge) {
+    const item = parent.createDiv({ cls: "opal-modal-note-item" });
+    const iconEl = item.createDiv({ cls: "opal-modal-note-icon" });
+    (0, import_obsidian4.setIcon)(iconEl, "file-text");
+    item.createSpan({ text: label, cls: "opal-modal-note-name" });
+    if (badge) {
+      item.createSpan({ text: badge, cls: "opal-modal-badge" });
+    }
+    return item;
+  }
+  renderPublishSubNotes(contentEl) {
+    if (this.subNotes.length === 0) return;
+    const section = contentEl.createDiv({ cls: "opal-modal-section" });
+    section.createEl("p", {
+      cls: "opal-modal-section-label",
+      text: `\u5173\u8054\u7684\u4E8C\u7EA7\u7B14\u8BB0 (${this.subNotes.length})`
+    });
+    for (const sn of this.subNotes) {
+      const badge = sn.shareLink ? "\u5DF2\u6709\u94FE\u63A5\uFF0C\u8DF3\u8FC7" : "\u5C06\u88AB\u4E0A\u4F20";
+      const item = this.renderNoteItem(section, sn.file.basename + ".md", badge);
+      if (sn.shareLink) {
+        item.addClass("opal-modal-note-item--skip");
+      }
+    }
+  }
+  renderUnpublishSubNotes(contentEl) {
+    const withLink = this.subNotes.filter((sn) => sn.shareLink);
+    if (withLink.length === 0) return;
+    const section = contentEl.createDiv({ cls: "opal-modal-section" });
+    section.createEl("p", {
+      cls: "opal-modal-section-label",
+      text: "\u5173\u8054\u7684\u4E8C\u7EA7\u7B14\u8BB0\uFF08\u53EF\u9009\u62E9\u4E00\u5E76\u505C\u6B62\uFF09"
+    });
+    for (const sn of withLink) {
+      this.checkStates.set(sn.file.path, true);
+      const item = section.createDiv({ cls: "opal-modal-note-item" });
+      const checkbox = item.createEl("input");
+      checkbox.type = "checkbox";
+      checkbox.checked = true;
+      checkbox.addClass("opal-modal-checkbox");
+      checkbox.addEventListener("change", () => {
+        this.checkStates.set(sn.file.path, checkbox.checked);
+      });
+      const iconEl = item.createDiv({ cls: "opal-modal-note-icon" });
+      (0, import_obsidian4.setIcon)(iconEl, "file-text");
+      item.createSpan({ text: sn.file.basename + ".md", cls: "opal-modal-note-name" });
+    }
+  }
+  onClose() {
+    this.contentEl.empty();
+  }
+};
 
 // src/oss.ts
 var import_ali_oss = __toESM(require_client());
@@ -28563,7 +28668,7 @@ function makeClient(settings) {
     authorizationV4: true
   });
 }
-async function uploadToOss(settings, vault, noteName, html, css, images) {
+async function uploadToOss(settings, vault, noteName, html, images) {
   const { ossRegion, ossBucket, ossAccessKeyId, ossAccessKeySecret, ossPrefix } = settings;
   if (!ossRegion || !ossBucket || !ossAccessKeyId || !ossAccessKeySecret) {
     throw new Error("\u8BF7\u5148\u5728\u8BBE\u7F6E\u4E2D\u586B\u5199 OSS \u914D\u7F6E\u4FE1\u606F");
@@ -28571,36 +28676,35 @@ async function uploadToOss(settings, vault, noteName, html, css, images) {
   const client = makeClient(settings);
   const prefix = ossPrefix.replace(/\/$/, "");
   await client.put(
-    `${prefix}/${noteName}/index.html`,
-    new Blob([html], { type: "text/html; charset=utf-8" })
-  );
-  await client.put(
-    `${prefix}/${noteName}/style.css`,
-    new Blob([css], { type: "text/css; charset=utf-8" })
+    `${prefix}/${noteName}`,
+    Buffer.from(html, "utf-8"),
+    { mime: "text/html; charset=utf-8" }
   );
   for (const [exportName, imgFile] of images) {
     const data = await vault.readBinary(imgFile);
     await client.put(
       `${prefix}/${noteName}/images/${exportName}`,
-      new Blob([data], { type: getMimeType(imgFile.extension) })
+      Buffer.from(data),
+      { mime: getMimeType(imgFile.extension) }
     );
   }
   const base = settings.ossDomain || `https://${ossBucket}.${ossRegion}.aliyuncs.com`;
-  return `${base}/${prefix}/${noteName}/index.html`;
+  return `${base}/${prefix}/${noteName}`;
 }
-async function uploadSubNoteToOss(settings, vault, parentNoteName, subFolderName, html, css, images) {
+async function uploadSubNoteToOss(settings, vault, subFolderName, html, images) {
   const client = makeClient(settings);
   const prefix = settings.ossPrefix.replace(/\/$/, "");
-  const basePath = `${prefix}/${parentNoteName}/${subFolderName}`;
-  await client.put(`${basePath}/index.html`, new Blob([html], { type: "text/html; charset=utf-8" }));
-  await client.put(`${basePath}/style.css`, new Blob([css], { type: "text/css; charset=utf-8" }));
+  await client.put(`${prefix}/${subFolderName}`, Buffer.from(html, "utf-8"), { mime: "text/html; charset=utf-8" });
   for (const [exportName, imgFile] of images) {
     const data = await vault.readBinary(imgFile);
     await client.put(
-      `${basePath}/images/${exportName}`,
-      new Blob([data], { type: getMimeType(imgFile.extension) })
+      `${prefix}/${subFolderName}/images/${exportName}`,
+      Buffer.from(data),
+      { mime: getMimeType(imgFile.extension) }
     );
   }
+  const base = settings.ossDomain || `https://${settings.ossBucket}.${settings.ossRegion}.aliyuncs.com`;
+  return `${base}/${prefix}/${subFolderName}`;
 }
 async function deleteFromOss(settings, noteName) {
   var _a;
@@ -28611,6 +28715,8 @@ async function deleteFromOss(settings, noteName) {
   const client = makeClient(settings);
   const prefix = ossPrefix.replace(/\/$/, "");
   const folderPrefix = `${prefix}/${noteName}/`;
+  await client.delete(`${prefix}/${noteName}`).catch(() => {
+  });
   try {
     const listResult = await client.list({ prefix: folderPrefix, "max-keys": 1e3 });
     const keys = ((_a = listResult.objects) != null ? _a : []).map((o) => o.name);
@@ -28634,35 +28740,35 @@ var ExportToast = class {
     this.el.createDiv({ cls: "opal-spinner" });
     this.el.createSpan({ text: loadingText });
     activeDocument.body.appendChild(this.el);
-    requestAnimationFrame(() => this.el.classList.add("is-visible"));
+    window.requestAnimationFrame(() => this.el.classList.add("is-visible"));
   }
   setSuccess(text = "\u4E0A\u4F20\u6210\u529F") {
     if (this.state === "done") return;
     this.state = "done";
-    clearTimeout(this.timer);
+    window.clearTimeout(this.timer);
     this.el.empty();
     const iconEl = this.el.createDiv();
-    (0, import_obsidian4.setIcon)(iconEl, "check");
+    (0, import_obsidian5.setIcon)(iconEl, "check");
     this.el.createSpan({ text });
-    this.timer = activeWindow.setTimeout(() => this.dismiss(), 2800);
+    this.timer = window.setTimeout(() => this.dismiss(), 2800);
   }
   setError(text) {
     if (this.state === "done") return;
     this.state = "done";
-    clearTimeout(this.timer);
+    window.clearTimeout(this.timer);
     this.el.empty();
     const iconEl = this.el.createDiv();
-    (0, import_obsidian4.setIcon)(iconEl, "x");
+    (0, import_obsidian5.setIcon)(iconEl, "x");
     this.el.createSpan({ text });
-    this.timer = activeWindow.setTimeout(() => this.dismiss(), 4e3);
+    this.timer = window.setTimeout(() => this.dismiss(), 4e3);
   }
   dismiss() {
-    clearTimeout(this.timer);
+    window.clearTimeout(this.timer);
     this.el.classList.remove("is-visible");
-    activeWindow.setTimeout(() => this.el.remove(), 250);
+    window.setTimeout(() => this.el.remove(), 250);
   }
 };
-var ShareOnlinePlugin = class extends import_obsidian4.Plugin {
+var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
   constructor() {
     super(...arguments);
     this.currentToast = null;
@@ -28682,8 +28788,8 @@ var ShareOnlinePlugin = class extends import_obsidian4.Plugin {
     });
     this.statusBarEl = this.addStatusBarItem();
     this.statusBarEl.addClass("opal-status-bar-btn");
-    this.statusBarEl.title = "\u5206\u4EAB\u7B14\u8BB0";
-    (0, import_obsidian4.setIcon)(this.statusBarEl, "share-2");
+    (0, import_obsidian5.setTooltip)(this.statusBarEl, "\u5206\u4EAB\u7B14\u8BB0");
+    (0, import_obsidian5.setIcon)(this.statusBarEl, "share-2");
     this.updateStatusBar();
     this.statusBarEl.addEventListener("click", (e) => this.showShareMenu(e));
     this.registerEvent(
@@ -28717,29 +28823,43 @@ var ShareOnlinePlugin = class extends import_obsidian4.Plugin {
       delete fm.share_link;
     });
   }
+  // ── File type helper ──────────────────────────────────────────────────
+  /** Only Markdown notes can be published / shared. */
+  isMarkdown(file) {
+    return !!file && file.extension === "md";
+  }
   // ── Status bar ───────────────────────────────────────────────────────
   updateStatusBar() {
     const file = this.app.workspace.getActiveFile();
-    const published = file ? !!this.getShareLink(file) : false;
+    if (!this.isMarkdown(file)) {
+      this.statusBarEl.hide();
+      return;
+    }
+    this.statusBarEl.show();
+    const published = !!this.getShareLink(file);
     this.statusBarEl.toggleClass("opal-status-published", published);
-    this.statusBarEl.title = published ? "\u5DF2\u53D1\u5E03 \u2014 \u70B9\u51FB\u7BA1\u7406" : "\u5206\u4EAB\u7B14\u8BB0";
+    (0, import_obsidian5.setTooltip)(this.statusBarEl, published ? "\u5DF2\u53D1\u5E03 \u2014 \u70B9\u51FB\u7BA1\u7406" : "\u5206\u4EAB\u7B14\u8BB0");
   }
   showShareMenu(event) {
     const file = this.app.workspace.getActiveFile();
-    if (!file) {
-      new import_obsidian4.Notice("\u6CA1\u6709\u6253\u5F00\u7684\u7B14\u8BB0");
+    if (!this.isMarkdown(file)) {
+      new import_obsidian5.Notice("\u53EA\u80FD\u5206\u4EAB Markdown \u7B14\u8BB0");
       return;
     }
     const published = !!this.getShareLink(file);
-    const menu = new import_obsidian4.Menu();
+    const menu = new import_obsidian5.Menu();
     if (!published) {
       menu.addItem(
-        (item) => item.setTitle("\u53D1\u5E03\u5230\u7EBF\u4E0A").setIcon("upload-cloud").onClick(() => this.publishNote(file))
+        (item) => item.setTitle("\u53D1\u5E03\u5230\u7EBF\u4E0A").setIcon("upload-cloud").onClick(() => {
+          new ShareModal(this.app, this, file, "publish", (subNotes) => {
+            this.doPublish(file, subNotes);
+          }).open();
+        })
       );
       menu.addItem(
         (item) => item.setTitle("\u5BFC\u51FA\u5230\u672C\u5730").setIcon("download").onClick(async () => {
           var _a;
-          await this.exportFile(file, false);
+          await this.exportFile(file);
           (_a = this.currentToast) == null ? void 0 : _a.setSuccess("\u5BFC\u51FA\u6210\u529F");
         })
       );
@@ -28747,20 +28867,24 @@ var ShareOnlinePlugin = class extends import_obsidian4.Plugin {
       menu.addItem(
         (item) => item.setTitle("\u6253\u5F00\u94FE\u63A5").setIcon("external-link").onClick(() => {
           const url = this.getShareLink(file);
-          window.open(url, "_blank");
+          activeWindow.open(url, "_blank");
         })
       );
       menu.addItem(
         (item) => item.setTitle("\u5185\u5BB9\u66F4\u65B0").setIcon("refresh-cw").onClick(() => this.updateNote(file))
       );
       menu.addItem(
-        (item) => item.setTitle("\u505C\u6B62\u5206\u4EAB").setIcon("eye-off").onClick(() => this.unpublishNote(file))
+        (item) => item.setTitle("\u505C\u6B62\u5206\u4EAB").setIcon("eye-off").onClick(() => {
+          new ShareModal(this.app, this, file, "unpublish", (subNotes) => {
+            this.doUnpublish(file, subNotes);
+          }).open();
+        })
       );
       menu.addSeparator();
       menu.addItem(
         (item) => item.setTitle("\u5BFC\u51FA\u5230\u672C\u5730").setIcon("download").onClick(async () => {
           var _a;
-          await this.exportFile(file, false);
+          await this.exportFile(file);
           (_a = this.currentToast) == null ? void 0 : _a.setSuccess("\u5BFC\u51FA\u6210\u529F");
         })
       );
@@ -28768,93 +28892,122 @@ var ShareOnlinePlugin = class extends import_obsidian4.Plugin {
     menu.showAtMouseEvent(event);
   }
   // ── Actions ──────────────────────────────────────────────────────────
-  async publishNote(file) {
-    var _a;
-    const url = await this.exportFile(file, true);
-    if (url) {
+  async doPublish(file, subNotes, existingName, successText = "\u53D1\u5E03\u6210\u529F\uFF0C\u94FE\u63A5\u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F", copyToClipboard = true) {
+    var _a, _b, _c;
+    (_a = this.currentToast) == null ? void 0 : _a.dismiss();
+    this.currentToast = new ExportToast("\u4E0A\u4F20\u4E2D...");
+    try {
+      const result = await prepareExport(this.app, this.app.vault, file, existingName);
+      const subFolderMap = /* @__PURE__ */ new Map();
+      let mainHtml = result.html;
+      for (const sn of subNotes) {
+        if (sn.shareLink) {
+          const noteName = this.extractNoteName(sn.shareLink);
+          subFolderMap.set(sn.file.basename, noteName);
+          subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), noteName);
+        } else {
+          const subResult = await prepareExport(this.app, this.app.vault, sn.file);
+          subFolderMap.set(sn.file.basename, subResult.noteName);
+          subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), subResult.noteName);
+          const subUrl = await uploadSubNoteToOss(
+            this.settings,
+            this.app.vault,
+            subResult.noteName,
+            subResult.html,
+            subResult.images
+          );
+          await this.setShareLink(sn.file, subUrl);
+        }
+      }
+      mainHtml = rewriteInternalLinks(mainHtml, subFolderMap);
+      const url = await uploadToOss(
+        this.settings,
+        this.app.vault,
+        result.noteName,
+        mainHtml,
+        result.images
+      );
       await this.setShareLink(file, url);
       this.updateStatusBar();
-      await navigator.clipboard.writeText(url);
-      (_a = this.currentToast) == null ? void 0 : _a.setSuccess("\u53D1\u5E03\u6210\u529F\uFF0C\u94FE\u63A5\u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F");
+      if (copyToClipboard) {
+        await navigator.clipboard.writeText(url);
+      }
+      (_b = this.currentToast) == null ? void 0 : _b.setSuccess(successText);
+    } catch (err) {
+      (_c = this.currentToast) == null ? void 0 : _c.setError(`\u53D1\u5E03\u5931\u8D25\uFF1A${err.message}`);
+      console.error(err);
     }
+  }
+  async doUnpublish(file, subNotesToDelete) {
+    var _a, _b, _c;
+    (_a = this.currentToast) == null ? void 0 : _a.dismiss();
+    this.currentToast = new ExportToast("\u505C\u6B62\u5206\u4EAB\u4E2D...");
+    try {
+      for (const sn of subNotesToDelete) {
+        const snName = this.extractNoteName(sn.shareLink);
+        try {
+          await deleteFromOss(this.settings, snName);
+          await this.removeShareLink(sn.file);
+        } catch (err) {
+          console.error(`\u5220\u9664\u4E8C\u7EA7\u7B14\u8BB0\u5931\u8D25 (${sn.file.basename}):`, err);
+          new import_obsidian5.Notice(`\u5220\u9664 ${sn.file.basename} \u5931\u8D25\uFF0C\u5DF2\u4FDD\u7559\u5176\u5206\u4EAB\u94FE\u63A5`);
+        }
+      }
+      const existingUrl = this.getShareLink(file);
+      if (existingUrl) {
+        const existingName = this.extractNoteName(existingUrl);
+        await deleteFromOss(this.settings, existingName);
+      }
+      await this.removeShareLink(file);
+      this.updateStatusBar();
+      (_b = this.currentToast) == null ? void 0 : _b.setSuccess("\u5DF2\u505C\u6B62\u5206\u4EAB");
+    } catch (err) {
+      (_c = this.currentToast) == null ? void 0 : _c.setError(`\u505C\u6B62\u5206\u4EAB\u5931\u8D25\uFF1A${err.message}`);
+      console.error(err);
+    }
+  }
+  extractNoteName(url) {
+    var _a;
+    const parts = url.split("/");
+    const last = parts[parts.length - 1];
+    return last === "index.html" ? (_a = parts[parts.length - 2]) != null ? _a : "" : last.replace(/\.html$/i, "");
   }
   async updateNote(file) {
-    var _a;
     const existingUrl = this.getShareLink(file);
-    const existingName = existingUrl ? existingUrl.split("/").slice(-2, -1)[0] : void 0;
-    const url = await this.exportFile(file, true, existingName);
-    if (url) {
-      await this.setShareLink(file, url);
-      this.updateStatusBar();
-      (_a = this.currentToast) == null ? void 0 : _a.setSuccess("\u66F4\u65B0\u6210\u529F");
-    }
-  }
-  async unpublishNote(file) {
-    const existingUrl = this.getShareLink(file);
-    if (existingUrl) {
-      const existingName = existingUrl.split("/").slice(-2, -1)[0];
-      try {
-        await deleteFromOss(this.settings, existingName);
-      } catch (err) {
-        console.error("\u5220\u9664 OSS \u6587\u4EF6\u5931\u8D25\uFF1A", err);
-      }
-    }
-    await this.removeShareLink(file);
-    this.updateStatusBar();
-    new import_obsidian4.Notice("\u5DF2\u505C\u6B62\u5206\u4EAB");
+    const existingName = existingUrl ? this.extractNoteName(existingUrl) : void 0;
+    const subNotes = this.settings.includeLinkedNotes ? collectLinkedNotesWithStatus(this.app, file) : [];
+    await this.doPublish(file, subNotes, existingName, "\u66F4\u65B0\u6210\u529F", false);
   }
   async exportCurrentNote(toOss = false) {
     var _a;
     const file = this.app.workspace.getActiveFile();
-    if (!file) {
-      new import_obsidian4.Notice("\u6CA1\u6709\u6253\u5F00\u7684\u7B14\u8BB0");
+    if (!this.isMarkdown(file)) {
+      new import_obsidian5.Notice("\u53EA\u80FD\u53D1\u5E03 Markdown \u7B14\u8BB0");
       return;
     }
-    await this.exportFile(file, toOss);
-    (_a = this.currentToast) == null ? void 0 : _a.setSuccess(toOss ? "\u4E0A\u4F20\u6210\u529F" : "\u5BFC\u51FA\u6210\u529F");
+    if (toOss) {
+      const subNotes = this.settings.includeLinkedNotes ? collectLinkedNotesWithStatus(this.app, file) : [];
+      await this.doPublish(file, subNotes, void 0, "\u4E0A\u4F20\u6210\u529F", false);
+    } else {
+      await this.exportFile(file);
+      (_a = this.currentToast) == null ? void 0 : _a.setSuccess("\u5BFC\u51FA\u6210\u529F");
+    }
   }
-  async exportFile(file, toOss = false, existingName) {
+  async exportFile(file) {
     var _a, _b;
     (_a = this.currentToast) == null ? void 0 : _a.dismiss();
-    this.currentToast = new ExportToast(toOss ? "\u4E0A\u4F20\u4E2D..." : "\u5BFC\u51FA\u4E2D...");
+    this.currentToast = new ExportToast("\u5BFC\u51FA\u4E2D...");
     try {
-      if (toOss) {
-        const result = await prepareExport(this.app, this.app.vault, file, existingName);
-        const subFolderMap = /* @__PURE__ */ new Map();
-        let mainHtml = result.html;
-        if (this.settings.includeLinkedNotes) {
-          const linkedFiles = collectLinkedNotes(this.app, file);
-          for (const linkedFile of linkedFiles) {
-            const subResult = await prepareExport(this.app, this.app.vault, linkedFile);
-            subFolderMap.set(linkedFile.basename, subResult.noteName);
-            subFolderMap.set(linkedFile.path.replace(/\.md$/i, ""), subResult.noteName);
-            await uploadSubNoteToOss(
-              this.settings,
-              this.app.vault,
-              result.noteName,
-              subResult.noteName,
-              subResult.html,
-              subResult.css,
-              subResult.images
-            );
-          }
-        }
-        mainHtml = rewriteInternalLinks(mainHtml, subFolderMap);
-        return await uploadToOss(this.settings, this.app.vault, result.noteName, mainHtml, result.css, result.images);
-      } else {
-        await exportToLocal(
-          this.app,
-          this.app.vault,
-          file,
-          this.settings.exportPath || DEFAULT_SETTINGS.exportPath,
-          this.settings.includeLinkedNotes
-        );
-        return "";
-      }
+      await exportToLocal(
+        this.app,
+        this.app.vault,
+        file,
+        this.settings.exportPath || DEFAULT_SETTINGS.exportPath,
+        this.settings.includeLinkedNotes
+      );
     } catch (err) {
       (_b = this.currentToast) == null ? void 0 : _b.setError(`\u5BFC\u51FA\u5931\u8D25\uFF1A${err.message}`);
       console.error(err);
-      return "";
     }
   }
   onunload() {
