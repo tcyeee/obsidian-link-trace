@@ -26881,7 +26881,8 @@ var DEFAULT_SETTINGS = {
   ossAccessKeyId: "",
   ossAccessKeySecret: "",
   ossPrefix: "notes",
-  ossDomain: ""
+  ossDomain: "",
+  pageLinkLength: 3
 };
 var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
   constructor(app, plugin) {
@@ -26898,6 +26899,22 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
         await this.plugin.saveSettings();
       })
     );
+    new import_obsidian.Setting(containerEl).setName("\u9875\u9762\u540D\u79F0\u957F\u5EA6").setDesc("\u751F\u6210\u5206\u4EAB\u94FE\u63A5\u65F6\u7684\u8DEF\u5F84\u957F\u5EA6\uFF0C\u8D8A\u957F\u78B0\u649E\u6982\u7387\u8D8A\u4F4E").addDropdown((dropdown) => {
+      const capacities = {
+        2: "\u7EA6 1,296 \u4E2A\u552F\u4E00\u9875\u9762",
+        3: "\u7EA6 46,656 \u4E2A\u552F\u4E00\u9875\u9762",
+        4: "\u7EA6 1,679,616 \u4E2A\u552F\u4E00\u9875\u9762",
+        5: "\u7EA6 60,466,176 \u4E2A\u552F\u4E00\u9875\u9762",
+        6: "\u7EA6 2,176,782,336 \u4E2A\u552F\u4E00\u9875\u9762"
+      };
+      for (const len of [2, 3, 4, 5, 6]) {
+        dropdown.addOption(String(len), `${len} \u2014 ${capacities[len]}`);
+      }
+      dropdown.setValue(String(this.plugin.settings.pageLinkLength)).onChange(async (value) => {
+        this.plugin.settings.pageLinkLength = parseInt(value, 10);
+        await this.plugin.saveSettings();
+      });
+    });
     new import_obsidian.Setting(containerEl).setName("\u672C\u5730\u5BFC\u51FA").setHeading();
     new import_obsidian.Setting(containerEl).setName("\u5BFC\u51FA\u8DEF\u5F84").setDesc("\u7B14\u8BB0\u5BFC\u51FA\u7684\u76EE\u6807\u6587\u4EF6\u5939\uFF0C\u9ED8\u8BA4\u4E3A\u684C\u9762").addText(
       (text) => text.setPlaceholder(DEFAULT_SETTINGS.exportPath).setValue(this.plugin.settings.exportPath).onChange(async (value) => {
@@ -28497,22 +28514,22 @@ function rewriteInternalLinks(html, subFolderMap, addExtension = true) {
     return `<a${newAttrs}>`;
   });
 }
-async function prepareExport(app, vault, file, existingName) {
+async function prepareExport(app, vault, file, existingName, pageLinkLength = 3) {
   const raw = await vault.read(file);
   const { html: htmlBody, css, images } = await renderNote(app, file, raw);
-  const folderName = existingName != null ? existingName : Math.random().toString(36).slice(2, 9);
+  const folderName = existingName != null ? existingName : Math.random().toString(36).slice(2, 2 + pageLinkLength);
   const html = buildHtml(file.basename, htmlBody, css).replace(/src="images\//g, `src="${folderName}/images/`);
   return { noteName: folderName, html, css, images };
 }
-async function exportToLocal(app, vault, file, exportRoot, includeLinkedNotes = false) {
-  const result = await prepareExport(app, vault, file);
+async function exportToLocal(app, vault, file, exportRoot, includeLinkedNotes = false, pageLinkLength = 3) {
+  const result = await prepareExport(app, vault, file, void 0, pageLinkLength);
   const subFolderMap = /* @__PURE__ */ new Map();
   let mainHtml = result.html;
   if (includeLinkedNotes) {
     const linkedFiles = collectLinkedNotes(app, file);
     const subResults = [];
     for (const linkedFile of linkedFiles) {
-      const subResult = await prepareExport(app, vault, linkedFile);
+      const subResult = await prepareExport(app, vault, linkedFile, void 0, pageLinkLength);
       subFolderMap.set(linkedFile.basename, subResult.noteName);
       subFolderMap.set(linkedFile.path.replace(/\.md$/i, ""), subResult.noteName);
       subResults.push({ subResult });
@@ -28908,7 +28925,7 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
     (_a = this.currentToast) == null ? void 0 : _a.dismiss();
     this.currentToast = new ExportToast("\u4E0A\u4F20\u4E2D...");
     try {
-      const result = await prepareExport(this.app, this.app.vault, file, existingName);
+      const result = await prepareExport(this.app, this.app.vault, file, existingName, this.settings.pageLinkLength);
       const subFolderMap = /* @__PURE__ */ new Map();
       let mainHtml = result.html;
       for (const sn of subNotes) {
@@ -28917,7 +28934,7 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
           subFolderMap.set(sn.file.basename, noteName);
           subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), noteName);
         } else {
-          const subResult = await prepareExport(this.app, this.app.vault, sn.file);
+          const subResult = await prepareExport(this.app, this.app.vault, sn.file, void 0, this.settings.pageLinkLength);
           subFolderMap.set(sn.file.basename, subResult.noteName);
           subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), subResult.noteName);
           const subUrl = await uploadSubNoteToOss(
@@ -29014,7 +29031,8 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
         this.app.vault,
         file,
         this.settings.exportPath || DEFAULT_SETTINGS.exportPath,
-        this.settings.includeLinkedNotes
+        this.settings.includeLinkedNotes,
+        this.settings.pageLinkLength
       );
     } catch (err) {
       (_b = this.currentToast) == null ? void 0 : _b.setError(`\u5BFC\u51FA\u5931\u8D25\uFF1A${err.message}`);
