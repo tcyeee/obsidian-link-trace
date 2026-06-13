@@ -77,8 +77,8 @@ function collectImages(
       const absPath = decodeURIComponent(src.replace(/^app:\/\/local/, ""));
       if (!absPath.startsWith(vaultBasePath)) return;
       const relPath = absPath.slice(vaultBasePath.length).replace(/^[/\\]/, "");
-      const imgFile = app.vault.getAbstractFileByPath(relPath) as TFile | null;
-      if (!imgFile) return;
+      const imgFile = app.vault.getAbstractFileByPath(relPath);
+      if (!(imgFile instanceof TFile)) return;
       const name = registerImage(imgFile, images);
       img.setAttribute("src", `images/${name}`);
       img.removeAttribute("srcset");
@@ -621,7 +621,6 @@ export function buildCss(): string {
 *, *::before, *::after { box-sizing: border-box; }
 
 /* ── Page ── */
-*, *::before, *::after { box-sizing: border-box; }
 body {
   margin: 0;
   padding: 2rem 1rem;

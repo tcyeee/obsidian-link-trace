@@ -383,11 +383,10 @@ function renderCards(
     if (imgFmKey) {
       const raw = String(fm[imgFmKey] ?? "").replace(/^\//, "");
       if (raw) {
-        const imgFile = (
+        const imgFile =
           app.vault.getAbstractFileByPath(raw) ??
-          app.metadataCache.getFirstLinkpathDest(raw, baseFile.path)
-        ) as TFile | null;
-        if (imgFile) {
+          app.metadataCache.getFirstLinkpathDest(raw, baseFile.path);
+        if (imgFile instanceof TFile) {
           const src = images
             ? `images/${registerImage(imgFile, images)}`
             : `app://local/${encodeURIComponent(imgFile.path)}`;

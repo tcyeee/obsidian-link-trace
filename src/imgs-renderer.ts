@@ -106,13 +106,12 @@ export function processImgsBlocks(
     if (config.shadow) gallery.dataset.shadow = "true";
 
     for (const vaultPath of paths) {
-      const imgFile = (
+      const imgFile =
         app.vault.getAbstractFileByPath(vaultPath) ??
-        app.metadataCache.getFirstLinkpathDest(vaultPath, sourceFile.path)
-      ) as TFile | null;
+        app.metadataCache.getFirstLinkpathDest(vaultPath, sourceFile.path);
 
       const img = createEl("img");
-      if (imgFile) {
+      if (imgFile instanceof TFile) {
         const name = registerImage(imgFile, images);
         img.setAttribute("src", `images/${name}`);
         img.setAttribute("alt", imgFile.name);
