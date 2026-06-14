@@ -43,3 +43,18 @@ export function parseStatsResponse(json: unknown): PageViewStats | null {
 	if (typeof pv?.value !== "number" || typeof uv?.value !== "number") return null;
 	return { pageviews: pv.value, visitors: uv.value };
 }
+
+/** 注入判定所需的设置子集。 */
+type InjectSettings = Pick<
+	ShareOnlineSettings,
+	"analyticsEnabled" | "umamiScriptUrl" | "umamiWebsiteId"
+>;
+
+/** 启用且 scriptUrl/websiteId 均非空时返回注入配置，否则 undefined。 */
+export function getAnalyticsInjectConfig(s: InjectSettings): UmamiInjectConfig | undefined {
+	if (!s.analyticsEnabled) return undefined;
+	const scriptUrl = s.umamiScriptUrl.trim();
+	const websiteId = s.umamiWebsiteId.trim();
+	if (!scriptUrl || !websiteId) return undefined;
+	return { scriptUrl, websiteId };
+}

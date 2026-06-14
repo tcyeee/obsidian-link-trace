@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { getUmamiScriptTag } from "./analytics";
 import { extractPathname } from "./analytics";
 import { parseStatsResponse } from "./analytics";
+import { getAnalyticsInjectConfig } from "./analytics";
 
 describe("getUmamiScriptTag", () => {
 	it("生成带 src 和 data-website-id 的 defer 脚本", () => {
@@ -53,5 +54,37 @@ describe("parseStatsResponse", () => {
 		expect(parseStatsResponse(null)).toBeNull();
 		expect(parseStatsResponse({})).toBeNull();
 		expect(parseStatsResponse({ pageviews: {} })).toBeNull();
+	});
+});
+
+describe("getAnalyticsInjectConfig", () => {
+	it("启用且字段齐全时返回注入配置", () => {
+		expect(
+			getAnalyticsInjectConfig({
+				analyticsEnabled: true,
+				umamiScriptUrl: "https://cloud.umami.is/script.js",
+				umamiWebsiteId: "abc-123",
+			})
+		).toEqual({ scriptUrl: "https://cloud.umami.is/script.js", websiteId: "abc-123" });
+	});
+
+	it("未启用返回 undefined", () => {
+		expect(
+			getAnalyticsInjectConfig({
+				analyticsEnabled: false,
+				umamiScriptUrl: "https://cloud.umami.is/script.js",
+				umamiWebsiteId: "abc-123",
+			})
+		).toBeUndefined();
+	});
+
+	it("启用但缺 websiteId 返回 undefined", () => {
+		expect(
+			getAnalyticsInjectConfig({
+				analyticsEnabled: true,
+				umamiScriptUrl: "https://cloud.umami.is/script.js",
+				umamiWebsiteId: "  ",
+			})
+		).toBeUndefined();
 	});
 });
