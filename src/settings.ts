@@ -14,6 +14,10 @@ export interface ShareOnlineSettings {
 	ossPrefix: string;
 	ossDomain: string;
 	pageLinkLength: number;
+	analyticsEnabled: boolean;
+	umamiScriptUrl: string;
+	umamiWebsiteId: string;
+	umamiApiKey: string;
 	language: Language;
 }
 
@@ -27,6 +31,10 @@ export const DEFAULT_SETTINGS: ShareOnlineSettings = {
 	ossPrefix: "notes",
 	ossDomain: "",
 	pageLinkLength: 3,
+	analyticsEnabled: false,
+	umamiScriptUrl: "https://cloud.umami.is/script.js",
+	umamiWebsiteId: "",
+	umamiApiKey: "",
 	language: "zh",
 };
 
@@ -244,5 +252,70 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 		const previewWrap = ossDetails.createDiv({ cls: "opal-url-preview" });
 		previewWrap.createSpan({ cls: "opal-url-preview-label", text: t("settings.urlPreview.label") });
 		previewEl = previewWrap.createSpan({ cls: "opal-url-preview-url", text: this.buildPreviewUrl() });
+
+		// ── 访问统计 / Analytics ─ collapsible ──
+		const analyticsDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
+		analyticsDetails.createEl("summary", {
+			cls: "opal-collapsible-heading",
+			text: t("settings.analytics.heading"),
+		});
+
+		const analyticsCallout = analyticsDetails.createDiv({ cls: "opal-oss-callout" });
+		const analyticsCalloutList = analyticsCallout.createEl("ul");
+		analyticsCalloutList.createEl("li", { text: t("settings.analytics.callout.item1") });
+		analyticsCalloutList.createEl("li", { text: t("settings.analytics.callout.item2") });
+
+		new Setting(analyticsDetails)
+			.setName(t("settings.analyticsEnabled.name"))
+			.setDesc(t("settings.analyticsEnabled.desc"))
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.analyticsEnabled)
+					.onChange(async (value) => {
+						this.plugin.settings.analyticsEnabled = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(analyticsDetails)
+			.setName(t("settings.umamiScriptUrl.name"))
+			.setDesc(t("settings.umamiScriptUrl.desc"))
+			.addText((text) =>
+				text
+					.setPlaceholder(DEFAULT_SETTINGS.umamiScriptUrl)
+					.setValue(this.plugin.settings.umamiScriptUrl)
+					.onChange(async (value) => {
+						this.plugin.settings.umamiScriptUrl =
+							value.trim() || DEFAULT_SETTINGS.umamiScriptUrl;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(analyticsDetails)
+			.setName(t("settings.umamiWebsiteId.name"))
+			.setDesc(t("settings.umamiWebsiteId.desc"))
+			.addText((text) =>
+				text
+					.setPlaceholder("xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx")
+					.setValue(this.plugin.settings.umamiWebsiteId)
+					.onChange(async (value) => {
+						this.plugin.settings.umamiWebsiteId = value.trim();
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(analyticsDetails)
+			.setName(t("settings.umamiApiKey.name"))
+			.setDesc(t("settings.umamiApiKey.desc"))
+			.addText((text) => {
+				text
+					.setPlaceholder("api_xxx")
+					.setValue(this.plugin.settings.umamiApiKey)
+					.onChange(async (value) => {
+						this.plugin.settings.umamiApiKey = value.trim();
+						await this.plugin.saveSettings();
+					});
+				text.inputEl.type = "password";
+			});
 	}
 }
