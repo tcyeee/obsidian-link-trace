@@ -99,6 +99,12 @@
 .opal-share-modal .opal-modal-note-item--skip .opal-modal-note-name {
   color: var(--text-muted);
 }
+.opal-share-modal .opal-modal-views {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
 .opal-share-modal .opal-modal-checkbox {
   flex-shrink: 0;
 }

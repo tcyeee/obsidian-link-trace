@@ -1,0 +1,75 @@
+// 纯函数模块：禁止 import obsidian，保证可被 vitest 直接单测。
+import type { ShareOnlineSettings } from "./settings";
+
+/** Umami 埋点脚本注入所需的最小配置。 */
+export interface UmamiInjectConfig {
+	scriptUrl: string;
+	websiteId: string;
+}
+
+/** 转义 HTML 属性值（双引号上下文）中的 & 与 " ；不处理 < >，故勿用于文本节点。 */
+function escapeAttr(value: string): string {
+	return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+}
+
+/** 生成 Umami 埋点 <script> 标签。 */
+export function getUmamiScriptTag(cfg: UmamiInjectConfig): string {
+	const src = escapeAttr(cfg.scriptUrl);
+	const id = escapeAttr(cfg.websiteId);
+	return `<script defer src="${src}" data-website-id="${id}"></script>`;
+}
+
+/** 从 share_link 完整 URL 提取 pathname（如 /notes/ab3）；非法返回 null。 */
+export function extractPathname(shareLink: string): string | null {
+	try {
+		return new URL(shareLink).pathname;
+	} catch {
+		return null;
+	}
+}
+
+/** 浏览量读取结果。 */
+export interface PageViewStats {
+	pageviews: number;
+	visitors: number;
+}
+
+/** 解析 Umami /websites/:id/stats 的响应；结构不符返回 null。 */
+export function parseStatsResponse(json: unknown): PageViewStats | null {
+	if (!json || typeof json !== "object") return null;
+	const obj = json as Record<string, unknown>;
+	const pv = obj.pageviews as Record<string, unknown> | undefined;
+	const uv = obj.visitors as Record<string, unknown> | undefined;
+	if (typeof pv?.value !== "number" || typeof uv?.value !== "number") return null;
+	return { pageviews: pv.value, visitors: uv.value };
+}
+
+/** 注入判定所需的设置子集。 */
+type InjectSettings = Pick<
+	ShareOnlineSettings,
+	"analyticsEnabled" | "umamiScriptUrl" | "umamiWebsiteId"
+>;
+
+/** 启用且 scriptUrl/websiteId 均非空时返回注入配置，否则 undefined。 */
+export function getAnalyticsInjectConfig(s: InjectSettings): UmamiInjectConfig | undefined {
+	if (!s.analyticsEnabled) return undefined;
+	const scriptUrl = s.umamiScriptUrl.trim();
+	const websiteId = s.umamiWebsiteId.trim();
+	if (!scriptUrl || !websiteId) return undefined;
+	return { scriptUrl, websiteId };
+}
+
+/** 读取浏览量所需的设置子集。 */
+type ReadSettings = Pick<
+	ShareOnlineSettings,
+	"analyticsEnabled" | "umamiApiKey" | "umamiWebsiteId"
+>;
+
+/**
+ * 是否具备读取浏览量的完整配置（启用 + apiKey + websiteId 均非空）。
+ * 与 getAnalyticsInjectConfig 对称：注入只需 scriptUrl，读取只需 apiKey。
+ * 用作 UI 与客户端共用的门槛，避免缺 apiKey 时白白闪一下“加载中”。
+ */
+export function canReadAnalytics(s: ReadSettings): boolean {
+	return s.analyticsEnabled && !!s.umamiApiKey.trim() && !!s.umamiWebsiteId.trim();
+}
