@@ -36,6 +36,8 @@ export async function fetchPageViews(
 			throw: false,
 		});
 		if (res.status < 200 || res.status >= 300) return null;
+		// res.json is a getter that throws on a non-JSON body (e.g. an HTML error
+		// page from a proxy); the outer catch turns that into a null result.
 		return parseStatsResponse(res.json);
 	} catch {
 		return null;
