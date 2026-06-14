@@ -7,7 +7,7 @@ export interface UmamiInjectConfig {
 	websiteId: string;
 }
 
-/** 转义 HTML 属性值中的双引号与 & ，防止配置串破坏标签结构。 */
+/** 转义 HTML 属性值（双引号上下文）中的 & 与 " ；不处理 < >，故勿用于文本节点。 */
 function escapeAttr(value: string): string {
 	return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
 }

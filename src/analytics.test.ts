@@ -1,8 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { getUmamiScriptTag } from "./analytics";
-import { extractPathname } from "./analytics";
-import { parseStatsResponse } from "./analytics";
-import { getAnalyticsInjectConfig } from "./analytics";
+import {
+	getUmamiScriptTag,
+	extractPathname,
+	parseStatsResponse,
+	getAnalyticsInjectConfig,
+} from "./analytics";
 
 describe("getUmamiScriptTag", () => {
 	it("生成带 src 和 data-website-id 的 defer 脚本", () => {
@@ -22,6 +24,15 @@ describe("getUmamiScriptTag", () => {
 		});
 		expect(tag).not.toContain('"onerror="');
 		expect(tag).toContain("&quot;");
+	});
+
+	it("对属性值中的 & 符号做转义，避免双重编码", () => {
+		const tag = getUmamiScriptTag({
+			scriptUrl: "https://x.com?a=1&b=2",
+			websiteId: "id",
+		});
+		expect(tag).toContain("a=1&amp;b=2");
+		expect(tag).not.toContain("&amp;amp;");
 	});
 });
 
@@ -84,6 +95,16 @@ describe("getAnalyticsInjectConfig", () => {
 				analyticsEnabled: true,
 				umamiScriptUrl: "https://cloud.umami.is/script.js",
 				umamiWebsiteId: "  ",
+			})
+		).toBeUndefined();
+	});
+
+	it("启用但缺 scriptUrl 返回 undefined", () => {
+		expect(
+			getAnalyticsInjectConfig({
+				analyticsEnabled: true,
+				umamiScriptUrl: "   ",
+				umamiWebsiteId: "abc-123",
 			})
 		).toBeUndefined();
 	});
