@@ -2,6 +2,7 @@ import { App, Modal, TFile, setIcon } from "obsidian";
 import type ShareOnlinePlugin from "../main";
 import { collectLinkedNotesWithStatus } from "./exporter";
 import { t } from "./i18n";
+import { fetchPageViews } from "./analytics-client";
 
 export type ShareMode = "publish" | "unpublish";
 
@@ -49,7 +50,8 @@ export class ShareModal extends Modal {
             cls: "opal-modal-section-label",
             text: this.mode === "publish" ? t("modal.mainNote") : t("modal.mainNote.stopping"),
         });
-        this.renderNoteItem(mainSection, this.file.basename + ".md", null);
+        const mainItem = this.renderNoteItem(mainSection, this.file.basename + ".md", null);
+        this.showViews(mainItem, this.mainShareLink());
 
         // Sub-notes section
         if (this.mode === "publish") {
@@ -106,6 +108,7 @@ export class ShareModal extends Modal {
             const item = this.renderNoteItem(section, sn.file.basename + ".md", badge);
             if (sn.shareLink) {
                 item.addClass("opal-modal-note-item--skip");
+                this.showViews(item, sn.shareLink);
             }
         }
     }
@@ -139,6 +142,39 @@ export class ShareModal extends Modal {
                 item.addClass("opal-modal-note-item--skip");
             }
         }
+    }
+
+    /** 当前主笔记的 share_link（未发布时为空串）。 */
+    private mainShareLink(): string {
+        return (
+            (this.app.metadataCache.getFileCache(this.file)?.frontmatter?.["share_link"] as
+                | string
+                | undefined) ?? ""
+        );
+    }
+
+    /**
+     * 异步在条目右侧展示浏览量。未启用统计或无链接则不渲染；
+     * 加载中显示占位，失败显示降级文案，绝不阻塞弹窗。
+     */
+    private showViews(item: HTMLElement, shareLink: string) {
+        if (!this.plugin.settings.analyticsEnabled || !shareLink) return;
+        const span = item.createSpan({
+            cls: "opal-modal-views",
+            text: t("modal.views.loading"),
+        });
+        fetchPageViews(this.plugin.settings, shareLink)
+            .then((stats) => {
+                span.setText(
+                    stats
+                        ? t("modal.views.value", {
+                              pv: String(stats.pageviews),
+                              uv: String(stats.visitors),
+                          })
+                        : t("modal.views.fail")
+                );
+            })
+            .catch(() => span.setText(t("modal.views.fail")));
     }
 
     onClose() {
