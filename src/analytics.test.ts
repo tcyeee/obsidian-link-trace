@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { getUmamiScriptTag } from "./analytics";
+import { extractPathname } from "./analytics";
 
 describe("getUmamiScriptTag", () => {
 	it("生成带 src 和 data-website-id 的 defer 脚本", () => {
@@ -19,5 +20,20 @@ describe("getUmamiScriptTag", () => {
 		});
 		expect(tag).not.toContain('"onerror="');
 		expect(tag).toContain("&quot;");
+	});
+});
+
+describe("extractPathname", () => {
+	it("从完整 URL 提取 pathname", () => {
+		expect(extractPathname("https://cdn.example.com/notes/ab3")).toBe("/notes/ab3");
+	});
+
+	it("忽略 query 与 hash", () => {
+		expect(extractPathname("https://x.com/notes/ab3?a=1#h")).toBe("/notes/ab3");
+	});
+
+	it("非法或空输入返回 null", () => {
+		expect(extractPathname("")).toBeNull();
+		expect(extractPathname("not a url")).toBeNull();
 	});
 });

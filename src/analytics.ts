@@ -18,3 +18,12 @@ export function getUmamiScriptTag(cfg: UmamiInjectConfig): string {
 	const id = escapeAttr(cfg.websiteId);
 	return `<script defer src="${src}" data-website-id="${id}"></script>`;
 }
+
+/** 从 share_link 完整 URL 提取 pathname（如 /notes/ab3）；非法返回 null。 */
+export function extractPathname(shareLink: string): string | null {
+	try {
+		return new URL(shareLink).pathname;
+	} catch {
+		return null;
+	}
+}
