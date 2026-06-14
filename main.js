@@ -17077,7 +17077,7 @@ var require_urllib = __commonJS({
     var util = require("util");
     var qs = require_lib2();
     var querystring = require("querystring");
-    var zlib = require("zlib");
+    var zlib2 = require("zlib");
     var ua = require_default_user_agent();
     var digestAuthHeader = require_digest_header();
     var ms = require_humanize_ms();
@@ -17641,7 +17641,7 @@ var require_urllib = __commonJS({
           case "gzip":
           case "deflate":
             debug("unzip %d length body", body2.length);
-            zlib.unzip(body2, function(err3, data) {
+            zlib2.unzip(body2, function(err3, data) {
               if (err3 && err3.name === "Error") {
                 err3.name = "UnzipError";
               }
@@ -25638,7 +25638,7 @@ __export(main_exports, {
   default: () => ShareOnlinePlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian6 = require("obsidian");
+var import_obsidian7 = require("obsidian");
 
 // src/settings.ts
 var import_obsidian = require("obsidian");
@@ -26499,11 +26499,19 @@ async function renderNote(app, file, rawContent) {
   });
   processImgsBlocks(app, file, el, images);
   collectImages(app, file, el, images);
+  el.querySelectorAll("img").forEach((img) => {
+    img.setAttribute("loading", "lazy");
+    img.setAttribute("decoding", "async");
+  });
   const html = el.innerHTML;
   activeDocument.body.removeChild(el);
   return { html, css: buildCss(), images };
 }
-function buildHtml(title, htmlBody, css) {
+var KATEX_CDN_BASE = "https://cdn.jsdelivr.net/npm/katex@0.16.9/dist";
+function containsMath(htmlBody) {
+  return /class="math-[di]"/.test(htmlBody);
+}
+function buildHtml(title, htmlBody, css, katexBase) {
   const svgCopy = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
   const svgCheck = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${THEME}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
   const calloutIcons = {
@@ -26539,13 +26547,18 @@ function buildHtml(title, htmlBody, css) {
   };
   const iconsJson = JSON.stringify(calloutIcons);
   const aliasJson = JSON.stringify(calloutAliases);
+  const base = katexBase != null ? katexBase : KATEX_CDN_BASE;
+  const hasMath = containsMath(htmlBody);
+  const katexCssTag = hasMath ? `
+  <link rel="stylesheet" href="${base}/katex.min.css">` : "";
+  const katexJsTag = hasMath ? `
+  <script src="${base}/katex.min.js"></script>` : "";
   return `<!DOCTYPE html>
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title}</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <title>${title}</title>${katexCssTag}
   <style>${css}</style>
 </head>
 <body>
@@ -26567,7 +26580,7 @@ function buildHtml(title, htmlBody, css) {
 ${htmlBody}
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+${katexJsTag}
   <script>
     (function() {
       var COPY_ICON  = '${svgCopy}';
@@ -27524,11 +27537,12 @@ function rewriteInternalLinks(html, subFolderMap, addExtension = true) {
     return `<a${newAttrs}>`;
   });
 }
-async function prepareExport(app, vault, file, noteName) {
+async function prepareExport(app, vault, file, noteName, katexBase) {
   const raw = await vault.read(file);
   const { html: htmlBody, css, images } = await renderNote(app, file, raw);
-  const html = buildHtml(file.basename, htmlBody, css).replace(/src="images\//g, `src="${noteName}/images/`);
-  return { noteName, html, css, images };
+  const hasMath = containsMath(htmlBody);
+  const html = buildHtml(file.basename, htmlBody, css, katexBase).replace(/src="images\//g, `src="${noteName}/images/`);
+  return { noteName, html, css, images, hasMath };
 }
 async function exportToLocal(app, vault, file, exportRoot, includeLinkedNotes = false, pageLinkLength = 3) {
   const usedNames = /* @__PURE__ */ new Set();
@@ -27677,7 +27691,50 @@ var ShareModal = class extends import_obsidian5.Modal {
 };
 
 // src/oss.ts
+var import_obsidian6 = require("obsidian");
 var import_ali_oss = __toESM(require_client());
+var zlib = __toESM(require("zlib"));
+var KATEX_VERSION = "0.16.9";
+var KATEX_CDN = `https://cdn.jsdelivr.net/npm/katex@${KATEX_VERSION}/dist`;
+var HTML_CACHE = "public, max-age=300";
+var IMAGE_CACHE = "public, max-age=86400";
+var IMMUTABLE_CACHE = "public, max-age=31536000, immutable";
+function publishBaseUrl(settings) {
+  const prefix = settings.ossPrefix.replace(/\/$/, "");
+  const origin = settings.ossDomain || `https://${settings.ossBucket}.${settings.ossRegion}.aliyuncs.com`;
+  return `${origin}/${prefix}`;
+}
+function katexBaseUrl(settings) {
+  return `${publishBaseUrl(settings)}/_assets/katex/${KATEX_VERSION}`;
+}
+async function ensureKatexAssets(settings) {
+  const client = makeClient(settings);
+  const prefix = settings.ossPrefix.replace(/\/$/, "");
+  const dir = `${prefix}/_assets/katex/${KATEX_VERSION}`;
+  const cssKey = `${dir}/katex.min.css`;
+  try {
+    await client.head(cssKey);
+    return;
+  } catch (e) {
+  }
+  const headers = { "Cache-Control": IMMUTABLE_CACHE };
+  const cssText = (await (0, import_obsidian6.requestUrl)({ url: `${KATEX_CDN}/katex.min.css` })).text;
+  const fonts = /* @__PURE__ */ new Set();
+  for (const m of cssText.matchAll(/url\(fonts\/([^)]+?\.woff2)\)/g)) fonts.add(m[1]);
+  for (const font of fonts) {
+    const data = (await (0, import_obsidian6.requestUrl)({ url: `${KATEX_CDN}/fonts/${font}` })).arrayBuffer;
+    await client.put(`${dir}/fonts/${font}`, Buffer.from(data), { mime: "font/woff2", headers });
+  }
+  const js = (await (0, import_obsidian6.requestUrl)({ url: `${KATEX_CDN}/katex.min.js` })).arrayBuffer;
+  await client.put(`${dir}/katex.min.js`, Buffer.from(js), {
+    mime: "application/javascript; charset=utf-8",
+    headers
+  });
+  await client.put(cssKey, Buffer.from(cssText, "utf-8"), {
+    mime: "text/css; charset=utf-8",
+    headers
+  });
+}
 function getMimeType(ext) {
   var _a;
   const map = {
@@ -27741,15 +27798,15 @@ async function uploadToOss(settings, vault, noteName, html, images) {
   const prefix = ossPrefix.replace(/\/$/, "");
   await client.put(
     `${prefix}/${noteName}`,
-    Buffer.from(html, "utf-8"),
-    { mime: "text/html; charset=utf-8" }
+    zlib.gzipSync(Buffer.from(html, "utf-8")),
+    { mime: "text/html; charset=utf-8", headers: { "Content-Encoding": "gzip", "Cache-Control": HTML_CACHE } }
   );
   for (const [exportName, imgFile] of images) {
     const data = await vault.readBinary(imgFile);
     await client.put(
       `${prefix}/${noteName}/images/${exportName}`,
       Buffer.from(data),
-      { mime: getMimeType(imgFile.extension) }
+      { mime: getMimeType(imgFile.extension), headers: { "Cache-Control": IMAGE_CACHE } }
     );
   }
   const base = settings.ossDomain || `https://${ossBucket}.${ossRegion}.aliyuncs.com`;
@@ -27762,13 +27819,16 @@ async function uploadSubNoteToOss(settings, vault, subFolderName, html, images) 
   }
   const client = makeClient(settings);
   const prefix = settings.ossPrefix.replace(/\/$/, "");
-  await client.put(`${prefix}/${subFolderName}`, Buffer.from(html, "utf-8"), { mime: "text/html; charset=utf-8" });
+  await client.put(`${prefix}/${subFolderName}`, zlib.gzipSync(Buffer.from(html, "utf-8")), {
+    mime: "text/html; charset=utf-8",
+    headers: { "Content-Encoding": "gzip", "Cache-Control": HTML_CACHE }
+  });
   for (const [exportName, imgFile] of images) {
     const data = await vault.readBinary(imgFile);
     await client.put(
       `${prefix}/${subFolderName}/images/${exportName}`,
       Buffer.from(data),
-      { mime: getMimeType(imgFile.extension) }
+      { mime: getMimeType(imgFile.extension), headers: { "Cache-Control": IMAGE_CACHE } }
     );
   }
   const base = settings.ossDomain || `https://${settings.ossBucket}.${settings.ossRegion}.aliyuncs.com`;
@@ -27816,7 +27876,7 @@ var ExportToast = class {
     window.clearTimeout(this.timer);
     this.el.empty();
     const iconEl = this.el.createDiv();
-    (0, import_obsidian6.setIcon)(iconEl, "check");
+    (0, import_obsidian7.setIcon)(iconEl, "check");
     this.el.createSpan({ text });
     this.timer = window.setTimeout(() => this.dismiss(), 2800);
   }
@@ -27826,7 +27886,7 @@ var ExportToast = class {
     window.clearTimeout(this.timer);
     this.el.empty();
     const iconEl = this.el.createDiv();
-    (0, import_obsidian6.setIcon)(iconEl, "x");
+    (0, import_obsidian7.setIcon)(iconEl, "x");
     this.el.createSpan({ text });
     this.timer = window.setTimeout(() => this.dismiss(), 4e3);
   }
@@ -27836,7 +27896,7 @@ var ExportToast = class {
     window.setTimeout(() => this.el.remove(), 250);
   }
 };
-var ShareOnlinePlugin = class extends import_obsidian6.Plugin {
+var ShareOnlinePlugin = class extends import_obsidian7.Plugin {
   constructor() {
     super(...arguments);
     this.currentToast = null;
@@ -27856,8 +27916,8 @@ var ShareOnlinePlugin = class extends import_obsidian6.Plugin {
     });
     this.statusBarEl = this.addStatusBarItem();
     this.statusBarEl.addClass("opal-status-bar-btn");
-    (0, import_obsidian6.setTooltip)(this.statusBarEl, t("statusbar.shareNote"));
-    (0, import_obsidian6.setIcon)(this.statusBarEl, "share-2");
+    (0, import_obsidian7.setTooltip)(this.statusBarEl, t("statusbar.shareNote"));
+    (0, import_obsidian7.setIcon)(this.statusBarEl, "share-2");
     this.updateStatusBar();
     this.statusBarEl.addEventListener("click", (e) => this.showShareMenu(e));
     this.registerEvent(
@@ -27907,16 +27967,16 @@ var ShareOnlinePlugin = class extends import_obsidian6.Plugin {
     this.statusBarEl.show();
     const published = !!this.getShareLink(file);
     this.statusBarEl.toggleClass("opal-status-published", published);
-    (0, import_obsidian6.setTooltip)(this.statusBarEl, published ? t("statusbar.published") : t("statusbar.shareNote"));
+    (0, import_obsidian7.setTooltip)(this.statusBarEl, published ? t("statusbar.published") : t("statusbar.shareNote"));
   }
   showShareMenu(event) {
     const file = this.app.workspace.getActiveFile();
     if (!this.isMarkdown(file)) {
-      new import_obsidian6.Notice(t("notice.onlyMarkdown.share"));
+      new import_obsidian7.Notice(t("notice.onlyMarkdown.share"));
       return;
     }
     const published = !!this.getShareLink(file);
-    const menu = new import_obsidian6.Menu();
+    const menu = new import_obsidian7.Menu();
     const ossReady = !!(this.settings.ossRegion && this.settings.ossBucket && this.settings.ossAccessKeyId && this.settings.ossAccessKeySecret);
     if (!published) {
       menu.addItem(
@@ -27971,7 +28031,14 @@ var ShareOnlinePlugin = class extends import_obsidian6.Plugin {
       const usedNames = await listPublishedNames(this.settings);
       const mainName = existingName != null ? existingName : generateUniqueName(usedNames, this.settings.pageLinkLength);
       usedNames.add(mainName);
-      const result = await prepareExport(this.app, this.app.vault, file, mainName);
+      const katexBase = katexBaseUrl(this.settings);
+      let katexProvisioned = false;
+      const ensureKatex = async () => {
+        if (katexProvisioned) return;
+        await ensureKatexAssets(this.settings);
+        katexProvisioned = true;
+      };
+      const result = await prepareExport(this.app, this.app.vault, file, mainName, katexBase);
       const subFolderMap = /* @__PURE__ */ new Map();
       let mainHtml = result.html;
       for (const sn of subNotes) {
@@ -27981,9 +28048,10 @@ var ShareOnlinePlugin = class extends import_obsidian6.Plugin {
           subFolderMap.set(sn.file.basename, noteName);
           subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), noteName);
         } else {
-          const subResult = await prepareExport(this.app, this.app.vault, sn.file, generateUniqueName(usedNames, this.settings.pageLinkLength));
+          const subResult = await prepareExport(this.app, this.app.vault, sn.file, generateUniqueName(usedNames, this.settings.pageLinkLength), katexBase);
           subFolderMap.set(sn.file.basename, subResult.noteName);
           subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), subResult.noteName);
+          if (subResult.hasMath) await ensureKatex();
           const subUrl = await uploadSubNoteToOss(
             this.settings,
             this.app.vault,
@@ -27995,6 +28063,7 @@ var ShareOnlinePlugin = class extends import_obsidian6.Plugin {
         }
       }
       mainHtml = rewriteInternalLinks(mainHtml, subFolderMap, false);
+      if (result.hasMath) await ensureKatex();
       const url = await uploadToOss(
         this.settings,
         this.app.vault,
@@ -28025,7 +28094,7 @@ var ShareOnlinePlugin = class extends import_obsidian6.Plugin {
           await this.removeShareLink(sn.file);
         } catch (err) {
           console.error(`\u5220\u9664\u4E8C\u7EA7\u7B14\u8BB0\u5931\u8D25 (${sn.file.basename}):`, err);
-          new import_obsidian6.Notice(t("notice.deleteSubFailed", { name: sn.file.basename }));
+          new import_obsidian7.Notice(t("notice.deleteSubFailed", { name: sn.file.basename }));
         }
       }
       const existingUrl = this.getShareLink(file);
@@ -28057,7 +28126,7 @@ var ShareOnlinePlugin = class extends import_obsidian6.Plugin {
     var _a;
     const file = this.app.workspace.getActiveFile();
     if (!this.isMarkdown(file)) {
-      new import_obsidian6.Notice(t("notice.onlyMarkdown.publish"));
+      new import_obsidian7.Notice(t("notice.onlyMarkdown.publish"));
       return;
     }
     if (toOss) {

@@ -2,7 +2,7 @@ import { Menu, Notice, Plugin, TFile, setIcon, setTooltip } from "obsidian";
 import { ShareOnlineSettings, DEFAULT_SETTINGS, ShareOnlineSettingTab } from "./src/settings";
 import { exportToLocal, prepareExport, generateUniqueName, collectLinkedNotesWithStatus, rewriteInternalLinks } from "./src/exporter";
 import { ShareModal } from "./src/share-modal";
-import { uploadToOss, uploadSubNoteToOss, deleteFromOss, listPublishedNames } from "./src/oss";
+import { uploadToOss, uploadSubNoteToOss, deleteFromOss, listPublishedNames, ensureKatexAssets, katexBaseUrl } from "./src/oss";
 import { t, setLanguage } from "./src/i18n";
 
 /* ── Export Toast ──────────────────────────────────────────────────────── */
@@ -238,7 +238,15 @@ export default class ShareOnlinePlugin extends Plugin {
 			const usedNames = await listPublishedNames(this.settings);
 			const mainName = existingName ?? generateUniqueName(usedNames, this.settings.pageLinkLength);
 			usedNames.add(mainName);
-			const result = await prepareExport(this.app, this.app.vault, file, mainName);
+			const katexBase = katexBaseUrl(this.settings);
+			// Self-hosted KaTeX is provisioned once, the first time a math page is published.
+			let katexProvisioned = false;
+			const ensureKatex = async () => {
+				if (katexProvisioned) return;
+				await ensureKatexAssets(this.settings);
+				katexProvisioned = true;
+			};
+			const result = await prepareExport(this.app, this.app.vault, file, mainName, katexBase);
 			const subFolderMap = new Map<string, string>();
 			let mainHtml = result.html;
 
@@ -250,9 +258,10 @@ export default class ShareOnlinePlugin extends Plugin {
 					subFolderMap.set(sn.file.basename, noteName);
 					subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), noteName);
 				} else {
-					const subResult = await prepareExport(this.app, this.app.vault, sn.file, generateUniqueName(usedNames, this.settings.pageLinkLength));
+					const subResult = await prepareExport(this.app, this.app.vault, sn.file, generateUniqueName(usedNames, this.settings.pageLinkLength), katexBase);
 					subFolderMap.set(sn.file.basename, subResult.noteName);
 					subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), subResult.noteName);
+					if (subResult.hasMath) await ensureKatex();
 					const subUrl = await uploadSubNoteToOss(
 						this.settings,
 						this.app.vault,
@@ -265,6 +274,7 @@ export default class ShareOnlinePlugin extends Plugin {
 			}
 
 			mainHtml = rewriteInternalLinks(mainHtml, subFolderMap, false);
+			if (result.hasMath) await ensureKatex();
 			const url = await uploadToOss(
 				this.settings,
 				this.app.vault,

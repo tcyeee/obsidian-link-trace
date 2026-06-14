@@ -1,6 +1,76 @@
-import { Vault, TFile } from "obsidian";
+import { Vault, TFile, requestUrl } from "obsidian";
 import type { ShareOnlineSettings } from "./settings";
 import OSS from "ali-oss";
+import * as zlib from "zlib";
+
+/** KaTeX version self-hosted to OSS. Embedded in the asset path so it can be
+ *  cached immutably and bumping the version provisions a fresh copy. */
+const KATEX_VERSION = "0.16.9";
+const KATEX_CDN = `https://cdn.jsdelivr.net/npm/katex@${KATEX_VERSION}/dist`;
+
+/** Cache headers: HTML changes on every republish, assets are content-stable. */
+const HTML_CACHE = "public, max-age=300";
+const IMAGE_CACHE = "public, max-age=86400";
+const IMMUTABLE_CACHE = "public, max-age=31536000, immutable";
+
+/** Origin + prefix that all published objects live under (no trailing slash). */
+function publishBaseUrl(settings: ShareOnlineSettings): string {
+	const prefix = settings.ossPrefix.replace(/\/$/, "");
+	const origin =
+		settings.ossDomain || `https://${settings.ossBucket}.${settings.ossRegion}.aliyuncs.com`;
+	return `${origin}/${prefix}`;
+}
+
+/** Public URL of the self-hosted KaTeX directory (hosts katex.min.css/js + fonts). */
+export function katexBaseUrl(settings: ShareOnlineSettings): string {
+	return `${publishBaseUrl(settings)}/_assets/katex/${KATEX_VERSION}`;
+}
+
+/**
+ * Make sure the self-hosted KaTeX assets exist in OSS, fetching them from the
+ * CDN once and re-uploading on first use. Idempotent: a HEAD check on the CSS
+ * (uploaded last, as the completion marker) short-circuits when already present.
+ */
+export async function ensureKatexAssets(settings: ShareOnlineSettings): Promise<void> {
+	const client = makeClient(settings);
+	const prefix = settings.ossPrefix.replace(/\/$/, "");
+	const dir = `${prefix}/_assets/katex/${KATEX_VERSION}`;
+	const cssKey = `${dir}/katex.min.css`;
+
+	try {
+		await client.head(cssKey);
+		return; // already provisioned
+	} catch {
+		/* not found — provision below */
+	}
+
+	const headers = { "Cache-Control": IMMUTABLE_CACHE };
+
+	// Fetch the CSS first so we can discover exactly which font files it needs.
+	const cssText = (await requestUrl({ url: `${KATEX_CDN}/katex.min.css` })).text;
+
+	// Every modern browser uses woff2, so the woff/ttf url() entries are never
+	// requested — only mirror the woff2 fonts the CSS actually references.
+	const fonts = new Set<string>();
+	for (const m of cssText.matchAll(/url\(fonts\/([^)]+?\.woff2)\)/g)) fonts.add(m[1]);
+	for (const font of fonts) {
+		const data = (await requestUrl({ url: `${KATEX_CDN}/fonts/${font}` })).arrayBuffer;
+		await client.put(`${dir}/fonts/${font}`, Buffer.from(data), { mime: "font/woff2", headers });
+	}
+
+	const js = (await requestUrl({ url: `${KATEX_CDN}/katex.min.js` })).arrayBuffer;
+	await client.put(`${dir}/katex.min.js`, Buffer.from(js), {
+		mime: "application/javascript; charset=utf-8",
+		headers,
+	});
+
+	// Upload the CSS last: it doubles as the "fully provisioned" marker for the
+	// HEAD check above, so a mid-way failure simply retries cleanly next time.
+	await client.put(cssKey, Buffer.from(cssText, "utf-8"), {
+		mime: "text/css; charset=utf-8",
+		headers,
+	});
+}
 
 function getMimeType(ext: string): string {
 	const map: Record<string, string> = {
@@ -82,11 +152,11 @@ export async function uploadToOss(
 	const client = makeClient(settings);
 	const prefix = ossPrefix.replace(/\/$/, "");
 
-	// CSS is inlined in the HTML; upload as a single flat file.
+	// CSS is inlined in the HTML; gzip it and upload as a single flat file.
 	await client.put(
 		`${prefix}/${noteName}`,
-		Buffer.from(html, "utf-8"),
-		{ mime: "text/html; charset=utf-8" }
+		zlib.gzipSync(Buffer.from(html, "utf-8")),
+		{ mime: "text/html; charset=utf-8", headers: { "Content-Encoding": "gzip", "Cache-Control": HTML_CACHE } }
 	);
 
 	// Images live in a peer folder: {prefix}/{noteName}/images/
@@ -95,7 +165,7 @@ export async function uploadToOss(
 		await client.put(
 			`${prefix}/${noteName}/images/${exportName}`,
 			Buffer.from(data),
-			{ mime: getMimeType(imgFile.extension) }
+			{ mime: getMimeType(imgFile.extension), headers: { "Cache-Control": IMAGE_CACHE } }
 		);
 	}
 
@@ -119,14 +189,17 @@ export async function uploadSubNoteToOss(
 	const prefix = settings.ossPrefix.replace(/\/$/, "");
 
 	// Sub-notes are flat alongside the parent note.
-	await client.put(`${prefix}/${subFolderName}`, Buffer.from(html, "utf-8"), { mime: "text/html; charset=utf-8" });
+	await client.put(`${prefix}/${subFolderName}`, zlib.gzipSync(Buffer.from(html, "utf-8")), {
+		mime: "text/html; charset=utf-8",
+		headers: { "Content-Encoding": "gzip", "Cache-Control": HTML_CACHE },
+	});
 
 	for (const [exportName, imgFile] of images) {
 		const data = await vault.readBinary(imgFile);
 		await client.put(
 			`${prefix}/${subFolderName}/images/${exportName}`,
 			Buffer.from(data),
-			{ mime: getMimeType(imgFile.extension) }
+			{ mime: getMimeType(imgFile.extension), headers: { "Cache-Control": IMAGE_CACHE } }
 		);
 	}
 

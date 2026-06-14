@@ -3,7 +3,7 @@ import { App, Vault, TFile } from "obsidian";
 // outside the vault; app.vault.adapter only resolves vault-relative paths.
 import * as fs from "fs";
 import * as path from "path";
-import { renderNote, buildHtml } from "./renderer";
+import { renderNote, buildHtml, containsMath } from "./renderer";
 
 /** Base36 alphabet size — names are drawn from [0-9a-z]. */
 const NAME_ALPHABET_SIZE = 36;
@@ -123,18 +123,22 @@ export interface ExportResult {
 	html: string;
 	css: string;
 	images: Map<string, TFile>;
+	/** True when the page references KaTeX (so its assets must be available). */
+	hasMath: boolean;
 }
 
 export async function prepareExport(
 	app: App,
 	vault: Vault,
 	file: TFile,
-	noteName: string
+	noteName: string,
+	katexBase?: string
 ): Promise<ExportResult> {
 	const raw = await vault.read(file);
 	const { html: htmlBody, css, images } = await renderNote(app, file, raw);
-	const html = buildHtml(file.basename, htmlBody, css).replace(/src="images\//g, `src="${noteName}/images/`);
-	return { noteName, html, css, images };
+	const hasMath = containsMath(htmlBody);
+	const html = buildHtml(file.basename, htmlBody, css, katexBase).replace(/src="images\//g, `src="${noteName}/images/`);
+	return { noteName, html, css, images, hasMath };
 }
 
 export async function exportToLocal(
