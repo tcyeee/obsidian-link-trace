@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { getUmamiScriptTag } from "./analytics";
 import { extractPathname } from "./analytics";
+import { parseStatsResponse } from "./analytics";
 
 describe("getUmamiScriptTag", () => {
 	it("生成带 src 和 data-website-id 的 defer 脚本", () => {
@@ -35,5 +36,22 @@ describe("extractPathname", () => {
 	it("非法或空输入返回 null", () => {
 		expect(extractPathname("")).toBeNull();
 		expect(extractPathname("not a url")).toBeNull();
+	});
+});
+
+describe("parseStatsResponse", () => {
+	it("提取 pageviews.value 与 visitors.value", () => {
+		const json = {
+			pageviews: { value: 123, prev: 0 },
+			visitors: { value: 45, prev: 0 },
+			visits: { value: 50 },
+		};
+		expect(parseStatsResponse(json)).toEqual({ pageviews: 123, visitors: 45 });
+	});
+
+	it("字段缺失或结构异常时返回 null", () => {
+		expect(parseStatsResponse(null)).toBeNull();
+		expect(parseStatsResponse({})).toBeNull();
+		expect(parseStatsResponse({ pageviews: {} })).toBeNull();
 	});
 });

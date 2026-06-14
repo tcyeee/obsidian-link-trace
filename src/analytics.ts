@@ -27,3 +27,19 @@ export function extractPathname(shareLink: string): string | null {
 		return null;
 	}
 }
+
+/** 浏览量读取结果。 */
+export interface PageViewStats {
+	pageviews: number;
+	visitors: number;
+}
+
+/** 解析 Umami /websites/:id/stats 的响应；结构不符返回 null。 */
+export function parseStatsResponse(json: unknown): PageViewStats | null {
+	if (!json || typeof json !== "object") return null;
+	const obj = json as Record<string, unknown>;
+	const pv = obj.pageviews as Record<string, unknown> | undefined;
+	const uv = obj.visitors as Record<string, unknown> | undefined;
+	if (typeof pv?.value !== "number" || typeof uv?.value !== "number") return null;
+	return { pageviews: pv.value, visitors: uv.value };
+}
