@@ -1,6 +1,7 @@
 import { App, TFile, MarkdownRenderer, Component, FileSystemAdapter } from "obsidian";
 import { renderBaseAsTable, resolveBaseEmbeds } from "./base-renderer";
 import { registerImage, processImgsBlocks } from "./imgs-renderer";
+import { getUmamiScriptTag, type UmamiInjectConfig } from "./analytics";
 
 const THEME = "#65A692";
 
@@ -267,7 +268,7 @@ export function containsMath(htmlBody: string): boolean {
  * falls back to the jsdelivr CDN. KaTeX assets are referenced only when the
  * page actually contains math, so math-free pages load nothing extra.
  */
-export function buildHtml(title: string, htmlBody: string, css: string, katexBase?: string): string {
+export function buildHtml(title: string, htmlBody: string, css: string, katexBase?: string, analytics?: UmamiInjectConfig): string {
   const svgCopy = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
   const svgCheck = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${THEME}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
 
@@ -307,13 +308,14 @@ export function buildHtml(title: string, htmlBody: string, css: string, katexBas
   const katexJsTag = hasMath
     ? `\n  <script src="${base}/katex.min.js"></script>`
     : "";
+  const analyticsTag = analytics ? `\n  ${getUmamiScriptTag(analytics)}` : "";
 
   return `<!DOCTYPE html>
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title}</title>${katexCssTag}
+  <title>${title}</title>${katexCssTag}${analyticsTag}
   <style>${css}</style>
 </head>
 <body>

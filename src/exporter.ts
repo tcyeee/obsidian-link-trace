@@ -4,6 +4,7 @@ import { App, Vault, TFile } from "obsidian";
 import * as fs from "fs";
 import * as path from "path";
 import { renderNote, buildHtml, containsMath } from "./renderer";
+import type { UmamiInjectConfig } from "./analytics";
 
 /** Base36 alphabet size — names are drawn from [0-9a-z]. */
 const NAME_ALPHABET_SIZE = 36;
@@ -132,12 +133,13 @@ export async function prepareExport(
 	vault: Vault,
 	file: TFile,
 	noteName: string,
-	katexBase?: string
+	katexBase?: string,
+	analytics?: UmamiInjectConfig
 ): Promise<ExportResult> {
 	const raw = await vault.read(file);
 	const { html: htmlBody, css, images } = await renderNote(app, file, raw);
 	const hasMath = containsMath(htmlBody);
-	const html = buildHtml(file.basename, htmlBody, css, katexBase).replace(/src="images\//g, `src="${noteName}/images/`);
+	const html = buildHtml(file.basename, htmlBody, css, katexBase, analytics).replace(/src="images\//g, `src="${noteName}/images/`);
 	return { noteName, html, css, images, hasMath };
 }
 
@@ -147,11 +149,12 @@ export async function exportToLocal(
 	file: TFile,
 	exportRoot: string,
 	includeLinkedNotes = false,
-	pageLinkLength = 3
+	pageLinkLength = 3,
+	analytics?: UmamiInjectConfig
 ): Promise<ExportResult> {
 	// All names generated in this export share one set so they never collide.
 	const usedNames = new Set<string>();
-	const result = await prepareExport(app, vault, file, generateUniqueName(usedNames, pageLinkLength));
+	const result = await prepareExport(app, vault, file, generateUniqueName(usedNames, pageLinkLength), undefined, analytics);
 
 	const subFolderMap = new Map<string, string>();
 	let mainHtml = result.html;
@@ -162,7 +165,7 @@ export async function exportToLocal(
 
 		// First pass: render all sub-notes and build the full map before writing anything.
 		for (const linkedFile of linkedFiles) {
-			const subResult = await prepareExport(app, vault, linkedFile, generateUniqueName(usedNames, pageLinkLength));
+			const subResult = await prepareExport(app, vault, linkedFile, generateUniqueName(usedNames, pageLinkLength), undefined, analytics);
 			subFolderMap.set(linkedFile.basename, subResult.noteName);
 			subFolderMap.set(linkedFile.path.replace(/\.md$/i, ""), subResult.noteName);
 			subResults.push({ subResult });

@@ -4,6 +4,7 @@ import { exportToLocal, prepareExport, generateUniqueName, collectLinkedNotesWit
 import { ShareModal } from "./src/share-modal";
 import { uploadToOss, uploadSubNoteToOss, deleteFromOss, listPublishedNames, ensureKatexAssets, katexBaseUrl } from "./src/oss";
 import { t, setLanguage } from "./src/i18n";
+import { getAnalyticsInjectConfig } from "./src/analytics";
 
 /* ── Export Toast ──────────────────────────────────────────────────────── */
 
@@ -239,6 +240,7 @@ export default class ShareOnlinePlugin extends Plugin {
 			const mainName = existingName ?? generateUniqueName(usedNames, this.settings.pageLinkLength);
 			usedNames.add(mainName);
 			const katexBase = katexBaseUrl(this.settings);
+			const analytics = getAnalyticsInjectConfig(this.settings);
 			// Self-hosted KaTeX is provisioned once, the first time a math page is published.
 			let katexProvisioned = false;
 			const ensureKatex = async () => {
@@ -246,7 +248,7 @@ export default class ShareOnlinePlugin extends Plugin {
 				await ensureKatexAssets(this.settings);
 				katexProvisioned = true;
 			};
-			const result = await prepareExport(this.app, this.app.vault, file, mainName, katexBase);
+			const result = await prepareExport(this.app, this.app.vault, file, mainName, katexBase, analytics);
 			const subFolderMap = new Map<string, string>();
 			let mainHtml = result.html;
 
@@ -258,7 +260,7 @@ export default class ShareOnlinePlugin extends Plugin {
 					subFolderMap.set(sn.file.basename, noteName);
 					subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), noteName);
 				} else {
-					const subResult = await prepareExport(this.app, this.app.vault, sn.file, generateUniqueName(usedNames, this.settings.pageLinkLength), katexBase);
+					const subResult = await prepareExport(this.app, this.app.vault, sn.file, generateUniqueName(usedNames, this.settings.pageLinkLength), katexBase, analytics);
 					subFolderMap.set(sn.file.basename, subResult.noteName);
 					subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), subResult.noteName);
 					if (subResult.hasMath) await ensureKatex();
@@ -371,7 +373,8 @@ export default class ShareOnlinePlugin extends Plugin {
 				file,
 				this.settings.exportPath || DEFAULT_SETTINGS.exportPath,
 				this.settings.includeLinkedNotes,
-				this.settings.pageLinkLength
+				this.settings.pageLinkLength,
+				getAnalyticsInjectConfig(this.settings)
 			);
 		} catch (err: unknown) {
 			this.currentToast?.setError(t("toast.exportFailed", { error: (err as Error).message }));
