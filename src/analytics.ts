@@ -58,3 +58,18 @@ export function getAnalyticsInjectConfig(s: InjectSettings): UmamiInjectConfig |
 	if (!scriptUrl || !websiteId) return undefined;
 	return { scriptUrl, websiteId };
 }
+
+/** 读取浏览量所需的设置子集。 */
+type ReadSettings = Pick<
+	ShareOnlineSettings,
+	"analyticsEnabled" | "umamiApiKey" | "umamiWebsiteId"
+>;
+
+/**
+ * 是否具备读取浏览量的完整配置（启用 + apiKey + websiteId 均非空）。
+ * 与 getAnalyticsInjectConfig 对称：注入只需 scriptUrl，读取只需 apiKey。
+ * 用作 UI 与客户端共用的门槛，避免缺 apiKey 时白白闪一下“加载中”。
+ */
+export function canReadAnalytics(s: ReadSettings): boolean {
+	return s.analyticsEnabled && !!s.umamiApiKey.trim() && !!s.umamiWebsiteId.trim();
+}

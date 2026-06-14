@@ -3,6 +3,7 @@ import type ShareOnlinePlugin from "../main";
 import { collectLinkedNotesWithStatus } from "./exporter";
 import { t } from "./i18n";
 import { fetchPageViews } from "./analytics-client";
+import { canReadAnalytics } from "./analytics";
 
 export type ShareMode = "publish" | "unpublish";
 
@@ -51,7 +52,7 @@ export class ShareModal extends Modal {
             text: this.mode === "publish" ? t("modal.mainNote") : t("modal.mainNote.stopping"),
         });
         const mainItem = this.renderNoteItem(mainSection, this.file.basename + ".md", null);
-        this.showViews(mainItem, this.mainShareLink());
+        this.showViews(mainItem, this.plugin.getShareLink(this.file));
 
         // Sub-notes section
         if (this.mode === "publish") {
@@ -138,33 +139,28 @@ export class ShareModal extends Modal {
             const iconEl = item.createDiv({ cls: "opal-modal-note-icon" });
             setIcon(iconEl, "file-text");
             item.createSpan({ text: sn.file.basename + ".md", cls: "opal-modal-note-name" });
-            if (!sn.shareLink) {
+            if (sn.shareLink) {
+                this.showViews(item, sn.shareLink);
+            } else {
                 item.addClass("opal-modal-note-item--skip");
             }
         }
     }
 
-    /** 当前主笔记的 share_link（未发布时为空串）。 */
-    private mainShareLink(): string {
-        return (
-            (this.app.metadataCache.getFileCache(this.file)?.frontmatter?.["share_link"] as
-                | string
-                | undefined) ?? ""
-        );
-    }
-
     /**
-     * 异步在条目右侧展示浏览量。未启用统计或无链接则不渲染；
-     * 加载中显示占位，失败显示降级文案，绝不阻塞弹窗。
+     * 异步在条目右侧展示浏览量。读取配置不全（未启用/缺 apiKey/缺 websiteId）
+     * 或无链接则不渲染；加载中显示占位，失败显示降级文案，绝不阻塞弹窗。
+     * 弹窗在请求返回前关闭时，span 已脱离 DOM，用 isConnected 跳过写入。
      */
     private showViews(item: HTMLElement, shareLink: string) {
-        if (!this.plugin.settings.analyticsEnabled || !shareLink) return;
+        if (!shareLink || !canReadAnalytics(this.plugin.settings)) return;
         const span = item.createSpan({
             cls: "opal-modal-views",
             text: t("modal.views.loading"),
         });
-        fetchPageViews(this.plugin.settings, shareLink)
+        void fetchPageViews(this.plugin.settings, shareLink)
             .then((stats) => {
+                if (!span.isConnected) return;
                 span.setText(
                     stats
                         ? t("modal.views.value", {
@@ -174,7 +170,9 @@ export class ShareModal extends Modal {
                         : t("modal.views.fail")
                 );
             })
-            .catch(() => span.setText(t("modal.views.fail")));
+            .catch(() => {
+                if (span.isConnected) span.setText(t("modal.views.fail"));
+            });
     }
 
     onClose() {

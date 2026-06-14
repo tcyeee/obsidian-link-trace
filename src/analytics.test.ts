@@ -4,6 +4,7 @@ import {
 	extractPathname,
 	parseStatsResponse,
 	getAnalyticsInjectConfig,
+	canReadAnalytics,
 } from "./analytics";
 
 describe("getUmamiScriptTag", () => {
@@ -107,5 +108,47 @@ describe("getAnalyticsInjectConfig", () => {
 				umamiWebsiteId: "abc-123",
 			})
 		).toBeUndefined();
+	});
+});
+
+describe("canReadAnalytics", () => {
+	it("启用且 apiKey/websiteId 均非空时为 true", () => {
+		expect(
+			canReadAnalytics({
+				analyticsEnabled: true,
+				umamiApiKey: "api_xxx",
+				umamiWebsiteId: "abc-123",
+			})
+		).toBe(true);
+	});
+
+	it("未启用为 false", () => {
+		expect(
+			canReadAnalytics({
+				analyticsEnabled: false,
+				umamiApiKey: "api_xxx",
+				umamiWebsiteId: "abc-123",
+			})
+		).toBe(false);
+	});
+
+	it("缺 apiKey（仅空白）为 false", () => {
+		expect(
+			canReadAnalytics({
+				analyticsEnabled: true,
+				umamiApiKey: "   ",
+				umamiWebsiteId: "abc-123",
+			})
+		).toBe(false);
+	});
+
+	it("缺 websiteId（仅空白）为 false", () => {
+		expect(
+			canReadAnalytics({
+				analyticsEnabled: true,
+				umamiApiKey: "api_xxx",
+				umamiWebsiteId: "",
+			})
+		).toBe(false);
 	});
 });

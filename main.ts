@@ -103,7 +103,7 @@ export default class ShareOnlinePlugin extends Plugin {
 
 	// ── Frontmatter helpers ───────────────────────────────────────────────
 
-	private getShareLink(file: TFile): string {
+	getShareLink(file: TFile): string {
 		return (this.app.metadataCache.getFileCache(file)?.frontmatter?.["share_link"] as string | undefined) ?? "";
 	}
 
