@@ -194,47 +194,107 @@ details[open] > .opal-collapsible-heading::before {
 
 /* ── Share banner (in-editor, never exported) ── */
 .opal-share-banner {
-  margin: 8px 0 14px 0;
-  padding: 10px 14px;
-  border-radius: 6px;
-  border-left: 3px solid var(--interactive-accent);
+  margin: 8px 0 16px 0;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--background-modifier-border);
   background: var(--background-secondary);
   font-size: 13px;
 }
-.opal-share-banner--stale {
-  border-left-color: var(--text-warning);
+.opal-share-banner-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 11px;
 }
-.opal-share-banner-row {
+.opal-share-banner-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+.opal-share-banner-icon svg {
+  width: 16px;
+  height: 16px;
+}
+.opal-share-banner--fresh .opal-share-banner-icon {
+  color: var(--text-success);
+  background: var(--background-modifier-success);
+}
+.opal-share-banner--stale .opal-share-banner-icon {
+  color: var(--interactive-accent);
+  background: var(--background-modifier-hover);
+}
+.opal-share-banner-headtext {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.opal-share-banner-title {
+  font-weight: 600;
+  color: var(--text-normal);
+}
+.opal-share-banner-subline {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.opal-share-banner-badge {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+.opal-share-banner--fresh .opal-share-banner-badge {
+  color: var(--text-success);
+  background: var(--background-modifier-success);
+}
+.opal-share-banner--stale .opal-share-banner-badge {
+  color: var(--text-warning);
+  background: var(--background-modifier-hover);
+}
+.opal-share-banner-urlrow {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 3px 0;
-}
-.opal-share-banner-label {
-  color: var(--text-muted);
-  flex-shrink: 0;
+  padding: 7px 10px;
+  border-radius: 7px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
 }
 .opal-share-banner-url {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .opal-share-banner-copy {
   display: flex;
+  flex-shrink: 0;
   cursor: pointer;
   color: var(--text-muted);
-  flex-shrink: 0;
 }
 .opal-share-banner-copy:hover {
   color: var(--text-normal);
 }
-.opal-share-banner-time {
-  color: var(--text-muted);
+.opal-share-banner-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 11px;
 }
-.opal-share-banner--stale .opal-share-banner-status {
-  color: var(--text-warning);
+.opal-share-banner-hint {
+  font-size: 12px;
+  color: var(--text-muted);
 }
 .opal-share-banner-update {
   margin-left: auto;
+  flex-shrink: 0;
   cursor: pointer;
 }
