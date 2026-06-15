@@ -9,7 +9,11 @@ var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __commonJS = (cb, mod) => function __require() {
-  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+  try {
+    return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+  } catch (e) {
+    throw mod = 0, e;
+  }
 };
 var __export = (target, all) => {
   for (var name in all)
@@ -10232,7 +10236,7 @@ var require_shams = __commonJS({
         return true;
       }
       var obj = {};
-      var sym = Symbol("test");
+      var sym = /* @__PURE__ */ Symbol("test");
       var symObj = Object(sym);
       if (typeof sym === "string") {
         return false;
@@ -10291,7 +10295,7 @@ var require_has_symbols = __commonJS({
       if (typeof origSymbol("foo") !== "symbol") {
         return false;
       }
-      if (typeof Symbol("bar") !== "symbol") {
+      if (typeof /* @__PURE__ */ Symbol("bar") !== "symbol") {
         return false;
       }
       return hasSymbolSham();
@@ -17069,11 +17073,11 @@ var require_urllib = __commonJS({
     var http = require("http");
     var https = require("https");
     var urlutil = require("url");
-    var URL = urlutil.URL;
+    var URL2 = urlutil.URL;
     var util = require("util");
     var qs = require_lib2();
     var querystring = require("querystring");
-    var zlib = require("zlib");
+    var zlib2 = require("zlib");
     var ua = require_default_user_agent();
     var digestAuthHeader = require_digest_header();
     var ms = require_humanize_ms();
@@ -17177,8 +17181,8 @@ var require_urllib = __commonJS({
         if (!PROTO_RE.test(url)) {
           url = "http://" + url;
         }
-        if (URL) {
-          parsedUrl = urlutil.parse(new URL(url).href);
+        if (URL2) {
+          parsedUrl = urlutil.parse(new URL2(url).href);
         } else {
           parsedUrl = urlutil.parse(url);
         }
@@ -17637,7 +17641,7 @@ var require_urllib = __commonJS({
           case "gzip":
           case "deflate":
             debug("unzip %d length body", body2.length);
-            zlib.unzip(body2, function(err3, data) {
+            zlib2.unzip(body2, function(err3, data) {
               if (err3 && err3.name === "Error") {
                 err3.name = "UnzipError";
               }
@@ -25634,7 +25638,7 @@ __export(main_exports, {
   default: () => ShareOnlinePlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian5 = require("obsidian");
+var import_obsidian9 = require("obsidian");
 
 // src/settings.ts
 var import_obsidian = require("obsidian");
@@ -25667,10 +25671,25 @@ var zh = {
   "settings.ossDomain.name": "\u81EA\u5B9A\u4E49\u57DF\u540D",
   "settings.ossDomain.desc": "\u66FF\u6362\u9ED8\u8BA4\u7684 OSS \u57DF\u540D\uFF0C\u7559\u7A7A\u5219\u4F7F\u7528\u9ED8\u8BA4\u3002\u4F8B\u5982 https://cdn.example.com",
   "settings.urlPreview.label": "\u9884\u89C8\uFF1A",
+  "settings.analytics.heading": "\u8BBF\u95EE\u7EDF\u8BA1",
+  "settings.analytics.callout.item1": "\u57FA\u4E8E Umami Cloud \u514D\u8D39\u6863\uFF0C\u9700\u5148\u5728 cloud.umami.is \u6CE8\u518C\u7AD9\u70B9\u5E76\u83B7\u53D6 Website ID \u4E0E API Key",
+  "settings.analytics.callout.item2": "\u811A\u672C\u7531 cloud.umami.is \u63D0\u4F9B\uFF0C\u56FD\u5185\u8BBF\u5BA2\u52A0\u8F7D\u53EF\u80FD\u4E0D\u7A33\u5B9A\uFF0C\u7EDF\u8BA1\u6216\u6709\u9057\u6F0F",
+  "settings.analyticsEnabled.name": "\u542F\u7528\u8BBF\u95EE\u7EDF\u8BA1",
+  "settings.analyticsEnabled.desc": "\u5728\u53D1\u5E03/\u5BFC\u51FA\u7684\u9875\u9762\u4E2D\u5D4C\u5165 Umami \u57CB\u70B9\u811A\u672C",
+  "settings.umamiScriptUrl.name": "\u57CB\u70B9\u811A\u672C\u5730\u5740",
+  "settings.umamiScriptUrl.desc": "Umami \u7684 script.js \u5730\u5740\uFF0CCloud \u9ED8\u8BA4 https://cloud.umami.is/script.js",
+  "settings.umamiWebsiteId.name": "Website ID",
+  "settings.umamiWebsiteId.desc": "Umami \u540E\u53F0\u7AD9\u70B9\u7684 UUID\uFF08\u7528\u4F5C data-website-id\uFF09",
+  "settings.umamiApiKey.name": "API Key",
+  "settings.umamiApiKey.desc": "\u7528\u4E8E\u8BFB\u53D6\u6D4F\u89C8\u91CF\u7684 Umami Cloud API Key",
+  "modal.views.loading": "\u6D4F\u89C8 \u2026",
+  "modal.views.value": "\u{1F441} \u6D4F\u89C8 {pv} \xB7 \u8BBF\u5BA2 {uv}",
+  "modal.views.fail": "\u{1F441} \u2014",
   "cmd.exportLocal": "\u5BFC\u51FA\u5230\u672C\u5730",
   "cmd.exportOss": "\u5BFC\u51FA\u5230 OSS",
   "statusbar.shareNote": "\u5206\u4EAB\u7B14\u8BB0",
   "statusbar.published": "\u5DF2\u53D1\u5E03 \u2014 \u70B9\u51FB\u7BA1\u7406",
+  "statusbar.stale": "\u5185\u5BB9\u6709\u66F4\u65B0 \u2014 \u70B9\u51FB\u7BA1\u7406",
   "toast.uploading": "\u4E0A\u4F20\u4E2D...",
   "toast.uploadSuccess": "\u4E0A\u4F20\u6210\u529F",
   "toast.exporting": "\u5BFC\u51FA\u4E2D...",
@@ -25700,7 +25719,17 @@ var zh = {
   "modal.badge.willUpload": "\u5C06\u88AB\u4E0A\u4F20",
   "modal.btn.cancel": "\u53D6\u6D88",
   "modal.btn.confirmPublish": "\u786E\u8BA4\u53D1\u5E03",
-  "modal.btn.confirmUnpublish": "\u786E\u8BA4\u505C\u6B62\u5206\u4EAB"
+  "modal.btn.confirmUnpublish": "\u786E\u8BA4\u505C\u6B62\u5206\u4EAB",
+  "popover.title": "\u5DF2\u53D1\u5E03\u5230\u7F51\u7EDC",
+  "popover.published": "\u53D1\u5E03\u4E8E {time}",
+  "popover.badge.fresh": "\u5DF2\u662F\u6700\u65B0",
+  "popover.badge.stale": "\u5F85\u66F4\u65B0",
+  "popover.hint.stale": "\u5185\u5BB9\u5DF2\u4FEE\u6539\uFF0C\u5EFA\u8BAE\u91CD\u65B0\u53D1\u5E03",
+  "popover.btn.update": "\u91CD\u65B0\u53D1\u5E03",
+  "popover.copied": "\u94FE\u63A5\u5DF2\u590D\u5236",
+  "popover.copy": "\u590D\u5236\u94FE\u63A5",
+  "popover.unpublished.title": "\u5C1A\u672A\u53D1\u5E03",
+  "popover.unpublished.subline": "\u53D1\u5E03\u540E\u53EF\u83B7\u5F97\u5206\u4EAB\u94FE\u63A5"
 };
 var en = {
   "settings.language": "\u8BED\u8A00 / Language",
@@ -25727,10 +25756,25 @@ var en = {
   "settings.ossDomain.name": "Custom Domain",
   "settings.ossDomain.desc": "Replace the default OSS domain. Leave empty for default. e.g. https://cdn.example.com",
   "settings.urlPreview.label": "Preview: ",
+  "settings.analytics.heading": "Analytics",
+  "settings.analytics.callout.item1": "Uses the free Umami Cloud tier \u2014 register a site at cloud.umami.is to get the Website ID and API Key",
+  "settings.analytics.callout.item2": "The script is served from cloud.umami.is; loading may be unreliable for mainland-China visitors, so counts can be undercounted",
+  "settings.analyticsEnabled.name": "Enable analytics",
+  "settings.analyticsEnabled.desc": "Embed the Umami tracking script into published/exported pages",
+  "settings.umamiScriptUrl.name": "Tracking script URL",
+  "settings.umamiScriptUrl.desc": "Umami script.js URL; Cloud default is https://cloud.umami.is/script.js",
+  "settings.umamiWebsiteId.name": "Website ID",
+  "settings.umamiWebsiteId.desc": "The Umami site UUID (used as data-website-id)",
+  "settings.umamiApiKey.name": "API Key",
+  "settings.umamiApiKey.desc": "Umami Cloud API Key used to read page views",
+  "modal.views.loading": "Views \u2026",
+  "modal.views.value": "\u{1F441} {pv} views \xB7 {uv} visitors",
+  "modal.views.fail": "\u{1F441} \u2014",
   "cmd.exportLocal": "Export to local",
   "cmd.exportOss": "Export to OSS",
   "statusbar.shareNote": "Share note",
   "statusbar.published": "Published \u2014 click to manage",
+  "statusbar.stale": "Content changed \u2014 click to manage",
   "toast.uploading": "Uploading...",
   "toast.uploadSuccess": "Upload successful",
   "toast.exporting": "Exporting...",
@@ -25760,7 +25804,17 @@ var en = {
   "modal.badge.willUpload": "Will be uploaded",
   "modal.btn.cancel": "Cancel",
   "modal.btn.confirmPublish": "Confirm Publish",
-  "modal.btn.confirmUnpublish": "Confirm Stop Sharing"
+  "modal.btn.confirmUnpublish": "Confirm Stop Sharing",
+  "popover.title": "Published online",
+  "popover.published": "Published {time}",
+  "popover.badge.fresh": "Up to date",
+  "popover.badge.stale": "Needs update",
+  "popover.hint.stale": "Content changed \u2014 re-publish recommended",
+  "popover.btn.update": "Re-publish",
+  "popover.copied": "Link copied",
+  "popover.copy": "Copy link",
+  "popover.unpublished.title": "Not published yet",
+  "popover.unpublished.subline": "Publish to get a shareable link"
 };
 var translations = { zh, en };
 var currentLanguage = "zh";
@@ -25813,6 +25867,10 @@ var DEFAULT_SETTINGS = {
   ossPrefix: "notes",
   ossDomain: "",
   pageLinkLength: 3,
+  analyticsEnabled: false,
+  umamiScriptUrl: "https://cloud.umami.is/script.js",
+  umamiWebsiteId: "",
+  umamiApiKey: "",
   language: "zh"
 };
 var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
@@ -25943,6 +26001,40 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
     const previewWrap = ossDetails.createDiv({ cls: "opal-url-preview" });
     previewWrap.createSpan({ cls: "opal-url-preview-label", text: t("settings.urlPreview.label") });
     previewEl = previewWrap.createSpan({ cls: "opal-url-preview-url", text: this.buildPreviewUrl() });
+    const analyticsDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
+    analyticsDetails.createEl("summary", {
+      cls: "opal-collapsible-heading",
+      text: t("settings.analytics.heading")
+    });
+    const analyticsCallout = analyticsDetails.createDiv({ cls: "opal-oss-callout" });
+    const analyticsCalloutList = analyticsCallout.createEl("ul");
+    analyticsCalloutList.createEl("li", { text: t("settings.analytics.callout.item1") });
+    analyticsCalloutList.createEl("li", { text: t("settings.analytics.callout.item2") });
+    new import_obsidian.Setting(analyticsDetails).setName(t("settings.analyticsEnabled.name")).setDesc(t("settings.analyticsEnabled.desc")).addToggle(
+      (toggle) => toggle.setValue(this.plugin.settings.analyticsEnabled).onChange(async (value) => {
+        this.plugin.settings.analyticsEnabled = value;
+        await this.plugin.saveSettings();
+      })
+    );
+    new import_obsidian.Setting(analyticsDetails).setName(t("settings.umamiScriptUrl.name")).setDesc(t("settings.umamiScriptUrl.desc")).addText(
+      (text) => text.setPlaceholder(DEFAULT_SETTINGS.umamiScriptUrl).setValue(this.plugin.settings.umamiScriptUrl).onChange(async (value) => {
+        this.plugin.settings.umamiScriptUrl = value.trim() || DEFAULT_SETTINGS.umamiScriptUrl;
+        await this.plugin.saveSettings();
+      })
+    );
+    new import_obsidian.Setting(analyticsDetails).setName(t("settings.umamiWebsiteId.name")).setDesc(t("settings.umamiWebsiteId.desc")).addText(
+      (text) => text.setPlaceholder("xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx").setValue(this.plugin.settings.umamiWebsiteId).onChange(async (value) => {
+        this.plugin.settings.umamiWebsiteId = value.trim();
+        await this.plugin.saveSettings();
+      })
+    );
+    new import_obsidian.Setting(analyticsDetails).setName(t("settings.umamiApiKey.name")).setDesc(t("settings.umamiApiKey.desc")).addText((text) => {
+      text.setPlaceholder("api_xxx").setValue(this.plugin.settings.umamiApiKey).onChange(async (value) => {
+        this.plugin.settings.umamiApiKey = value.trim();
+        await this.plugin.saveSettings();
+      });
+      text.inputEl.type = "password";
+    });
   }
 };
 
@@ -25951,12 +26043,13 @@ var fs = __toESM(require("fs"));
 var path2 = __toESM(require("path"));
 
 // src/renderer.ts
-var import_obsidian3 = require("obsidian");
+var import_obsidian4 = require("obsidian");
 
 // src/base-renderer.ts
-var import_obsidian2 = require("obsidian");
+var import_obsidian3 = require("obsidian");
 
 // src/imgs-renderer.ts
+var import_obsidian2 = require("obsidian");
 function registerImage(imgFile, images) {
   for (const [name2, f] of images) {
     if (f.path === imgFile.path) return name2;
@@ -26010,7 +26103,7 @@ function processImgsBlocks(app, sourceFile, el, images) {
     for (const vaultPath of paths) {
       const imgFile = (_c = app.vault.getAbstractFileByPath(vaultPath)) != null ? _c : app.metadataCache.getFirstLinkpathDest(vaultPath, sourceFile.path);
       const img = createEl("img");
-      if (imgFile) {
+      if (imgFile instanceof import_obsidian2.TFile) {
         const name = registerImage(imgFile, images);
         img.setAttribute("src", `images/${name}`);
         img.setAttribute("alt", imgFile.name);
@@ -26185,7 +26278,7 @@ async function renderBaseAsTable(app, baseFile, images) {
   const raw = await app.vault.read(baseFile);
   let config;
   try {
-    config = (0, import_obsidian2.parseYaml)(raw);
+    config = (0, import_obsidian3.parseYaml)(raw);
   } catch (e) {
     return `<div class="base-error">\u65E0\u6CD5\u89E3\u6790 ${baseFile.name}</div>`;
   }
@@ -26279,7 +26372,7 @@ function renderCards(app, baseFile, config, view, matched, formulas, properties,
       const raw = String((_c2 = fm[imgFmKey]) != null ? _c2 : "").replace(/^\//, "");
       if (raw) {
         const imgFile = (_d2 = app.vault.getAbstractFileByPath(raw)) != null ? _d2 : app.metadataCache.getFirstLinkpathDest(raw, baseFile.path);
-        if (imgFile) {
+        if (imgFile instanceof import_obsidian3.TFile) {
           const src = images ? `images/${registerImage(imgFile, images)}` : `app://local/${encodeURIComponent(imgFile.path)}`;
           bannerHtml = `<img class="base-card-banner" src="${src}" alt="${escapeHtml(imgFile.name)}" style="height:${imgHeight}px">`;
         }
@@ -26324,6 +26417,53 @@ function resolveBaseEmbeds(content) {
   );
 }
 
+// src/analytics.ts
+function escapeAttr(value) {
+  return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+}
+function getUmamiScriptTag(cfg) {
+  const src = escapeAttr(cfg.scriptUrl);
+  const id = escapeAttr(cfg.websiteId);
+  return `<script defer src="${src}" data-website-id="${id}"></script>`;
+}
+function extractPathname(shareLink) {
+  try {
+    return new URL(shareLink).pathname;
+  } catch (e) {
+    return null;
+  }
+}
+function parseStatsResponse(json) {
+  if (!json || typeof json !== "object") return null;
+  const obj = json;
+  const pv = obj.pageviews;
+  const uv = obj.visitors;
+  if (typeof (pv == null ? void 0 : pv.value) !== "number" || typeof (uv == null ? void 0 : uv.value) !== "number") return null;
+  return { pageviews: pv.value, visitors: uv.value };
+}
+function getAnalyticsInjectConfig(s) {
+  if (!s.analyticsEnabled) return void 0;
+  const scriptUrl = s.umamiScriptUrl.trim();
+  const websiteId = s.umamiWebsiteId.trim();
+  if (!scriptUrl || !websiteId) return void 0;
+  return { scriptUrl, websiteId };
+}
+function canReadAnalytics(s) {
+  return s.analyticsEnabled && !!s.umamiApiKey.trim() && !!s.umamiWebsiteId.trim();
+}
+
+// src/note-hash.ts
+function stripFrontmatter(raw) {
+  return raw.replace(/^---[\s\S]*?---\n?/, "");
+}
+function hashBody(body) {
+  let h = 5381;
+  for (let i = 0; i < body.length; i++) {
+    h = (h << 5) + h + body.charCodeAt(i) | 0;
+  }
+  return (h >>> 0).toString(36);
+}
+
 // src/renderer.ts
 var THEME = "#65A692";
 function extractMath(content) {
@@ -26349,7 +26489,7 @@ function extractMath(content) {
   return { processed, entries };
 }
 function collectImages(app, sourceFile, el, images = /* @__PURE__ */ new Map()) {
-  const vaultBasePath = app.vault.adapter instanceof import_obsidian3.FileSystemAdapter ? app.vault.adapter.getBasePath() : "";
+  const vaultBasePath = app.vault.adapter instanceof import_obsidian4.FileSystemAdapter ? app.vault.adapter.getBasePath() : "";
   el.querySelectorAll(".internal-embed").forEach((embed) => {
     var _a;
     const imgEl = embed.querySelector("img");
@@ -26370,7 +26510,7 @@ function collectImages(app, sourceFile, el, images = /* @__PURE__ */ new Map()) 
       if (!absPath.startsWith(vaultBasePath)) return;
       const relPath = absPath.slice(vaultBasePath.length).replace(/^[/\\]/, "");
       const imgFile = app.vault.getAbstractFileByPath(relPath);
-      if (!imgFile) return;
+      if (!(imgFile instanceof import_obsidian4.TFile)) return;
       const name = registerImage(imgFile, images);
       img.setAttribute("src", `images/${name}`);
       img.removeAttribute("srcset");
@@ -26417,15 +26557,15 @@ function restorePluginCodeLangs(el) {
 }
 async function renderNote(app, file, rawContent) {
   var _a, _b, _c;
-  let content = rawContent.replace(/^---[\s\S]*?---\n?/, "");
+  let content = stripFrontmatter(rawContent);
   content = resolveBaseEmbeds(content);
   content = protectPluginCodeBlocks(content);
   const { processed, entries } = extractMath(content);
   const el = createDiv({ cls: "markdown-preview-view markdown-rendered opal-render-scratch" });
   activeDocument.body.appendChild(el);
-  const component = new import_obsidian3.Component();
+  const component = new import_obsidian4.Component();
   component.load();
-  await import_obsidian3.MarkdownRenderer.render(app, processed, el, file.path, component);
+  await import_obsidian4.MarkdownRenderer.render(app, processed, el, file.path, component);
   await new Promise((resolve) => {
     const start = Date.now();
     const check = () => {
@@ -26494,11 +26634,19 @@ async function renderNote(app, file, rawContent) {
   });
   processImgsBlocks(app, file, el, images);
   collectImages(app, file, el, images);
+  el.querySelectorAll("img").forEach((img) => {
+    img.setAttribute("loading", "lazy");
+    img.setAttribute("decoding", "async");
+  });
   const html = el.innerHTML;
   activeDocument.body.removeChild(el);
   return { html, css: buildCss(), images };
 }
-function buildHtml(title, htmlBody, css) {
+var KATEX_CDN_BASE = "https://cdn.jsdelivr.net/npm/katex@0.16.9/dist";
+function containsMath(htmlBody) {
+  return /class="math-[di]"/.test(htmlBody);
+}
+function buildHtml(title, htmlBody, css, katexBase, analytics) {
   const svgCopy = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
   const svgCheck = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${THEME}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
   const calloutIcons = {
@@ -26534,13 +26682,20 @@ function buildHtml(title, htmlBody, css) {
   };
   const iconsJson = JSON.stringify(calloutIcons);
   const aliasJson = JSON.stringify(calloutAliases);
+  const base = katexBase != null ? katexBase : KATEX_CDN_BASE;
+  const hasMath = containsMath(htmlBody);
+  const katexCssTag = hasMath ? `
+  <link rel="stylesheet" href="${base}/katex.min.css">` : "";
+  const katexJsTag = hasMath ? `
+  <script src="${base}/katex.min.js"></script>` : "";
+  const analyticsTag = analytics ? `
+  ${getUmamiScriptTag(analytics)}` : "";
   return `<!DOCTYPE html>
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title}</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <title>${title}</title>${katexCssTag}${analyticsTag}
   <style>${css}</style>
 </head>
 <body>
@@ -26562,7 +26717,7 @@ function buildHtml(title, htmlBody, css) {
 ${htmlBody}
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+${katexJsTag}
   <script>
     (function() {
       var COPY_ICON  = '${svgCopy}';
@@ -26876,7 +27031,6 @@ function buildCss() {
 *, *::before, *::after { box-sizing: border-box; }
 
 /* \u2500\u2500 Page \u2500\u2500 */
-*, *::before, *::after { box-sizing: border-box; }
 body {
   margin: 0;
   padding: 2rem 1rem;
@@ -27520,22 +27674,23 @@ function rewriteInternalLinks(html, subFolderMap, addExtension = true) {
     return `<a${newAttrs}>`;
   });
 }
-async function prepareExport(app, vault, file, noteName) {
+async function prepareExport(app, vault, file, noteName, katexBase, analytics) {
   const raw = await vault.read(file);
   const { html: htmlBody, css, images } = await renderNote(app, file, raw);
-  const html = buildHtml(file.basename, htmlBody, css).replace(/src="images\//g, `src="${noteName}/images/`);
-  return { noteName, html, css, images };
+  const hasMath = containsMath(htmlBody);
+  const html = buildHtml(file.basename, htmlBody, css, katexBase, analytics).replace(/src="images\//g, `src="${noteName}/images/`);
+  return { noteName, html, css, images, hasMath };
 }
-async function exportToLocal(app, vault, file, exportRoot, includeLinkedNotes = false, pageLinkLength = 3) {
+async function exportToLocal(app, vault, file, exportRoot, includeLinkedNotes = false, pageLinkLength = 3, analytics) {
   const usedNames = /* @__PURE__ */ new Set();
-  const result = await prepareExport(app, vault, file, generateUniqueName(usedNames, pageLinkLength));
+  const result = await prepareExport(app, vault, file, generateUniqueName(usedNames, pageLinkLength), void 0, analytics);
   const subFolderMap = /* @__PURE__ */ new Map();
   let mainHtml = result.html;
   if (includeLinkedNotes) {
     const linkedFiles = collectLinkedNotes(app, file);
     const subResults = [];
     for (const linkedFile of linkedFiles) {
-      const subResult = await prepareExport(app, vault, linkedFile, generateUniqueName(usedNames, pageLinkLength));
+      const subResult = await prepareExport(app, vault, linkedFile, generateUniqueName(usedNames, pageLinkLength), void 0, analytics);
       subFolderMap.set(linkedFile.basename, subResult.noteName);
       subFolderMap.set(linkedFile.path.replace(/\.md$/i, ""), subResult.noteName);
       subResults.push({ subResult });
@@ -27567,8 +27722,37 @@ async function exportToLocal(app, vault, file, exportRoot, includeLinkedNotes = 
 }
 
 // src/share-modal.ts
-var import_obsidian4 = require("obsidian");
-var ShareModal = class extends import_obsidian4.Modal {
+var import_obsidian6 = require("obsidian");
+
+// src/analytics-client.ts
+var import_obsidian5 = require("obsidian");
+var UMAMI_API_BASE = "https://api.umami.is/v1";
+var STATS_START_AT = Date.parse("2020-01-01T00:00:00Z");
+async function fetchPageViews(settings, shareLink) {
+  if (!canReadAnalytics(settings)) return null;
+  const apiKey = settings.umamiApiKey.trim();
+  const websiteId = settings.umamiWebsiteId.trim();
+  const urlPath = extractPathname(shareLink);
+  if (!urlPath) return null;
+  const endAt = Date.now();
+  const query = `?startAt=${STATS_START_AT}&endAt=${endAt}&url=${encodeURIComponent(urlPath)}`;
+  const url = `${UMAMI_API_BASE}/websites/${encodeURIComponent(websiteId)}/stats${query}`;
+  try {
+    const res = await (0, import_obsidian5.requestUrl)({
+      url,
+      method: "GET",
+      headers: { "x-umami-api-key": apiKey, accept: "application/json" },
+      throw: false
+    });
+    if (res.status < 200 || res.status >= 300) return null;
+    return parseStatsResponse(res.json);
+  } catch (e) {
+    return null;
+  }
+}
+
+// src/share-modal.ts
+var ShareModal = class extends import_obsidian6.Modal {
   constructor(app, plugin, file, mode, onConfirm) {
     super(app);
     this.subNotes = [];
@@ -27592,7 +27776,8 @@ var ShareModal = class extends import_obsidian4.Modal {
       cls: "opal-modal-section-label",
       text: this.mode === "publish" ? t("modal.mainNote") : t("modal.mainNote.stopping")
     });
-    this.renderNoteItem(mainSection, this.file.basename + ".md", null);
+    const mainItem = this.renderNoteItem(mainSection, this.file.basename + ".md", null);
+    this.showViews(mainItem, this.plugin.getShareLink(this.file));
     if (this.mode === "publish") {
       this.renderPublishSubNotes(contentEl);
     } else {
@@ -27616,7 +27801,7 @@ var ShareModal = class extends import_obsidian4.Modal {
   renderNoteItem(parent, label, badge) {
     const item = parent.createDiv({ cls: "opal-modal-note-item" });
     const iconEl = item.createDiv({ cls: "opal-modal-note-icon" });
-    (0, import_obsidian4.setIcon)(iconEl, "file-text");
+    (0, import_obsidian6.setIcon)(iconEl, "file-text");
     item.createSpan({ text: label, cls: "opal-modal-note-name" });
     if (badge) {
       item.createSpan({ text: badge, cls: "opal-modal-badge" });
@@ -27635,6 +27820,7 @@ var ShareModal = class extends import_obsidian4.Modal {
       const item = this.renderNoteItem(section, sn.file.basename + ".md", badge);
       if (sn.shareLink) {
         item.addClass("opal-modal-note-item--skip");
+        this.showViews(item, sn.shareLink);
       }
     }
   }
@@ -27660,12 +27846,37 @@ var ShareModal = class extends import_obsidian4.Modal {
         item.createDiv({ cls: "opal-modal-checkbox-placeholder" });
       }
       const iconEl = item.createDiv({ cls: "opal-modal-note-icon" });
-      (0, import_obsidian4.setIcon)(iconEl, "file-text");
+      (0, import_obsidian6.setIcon)(iconEl, "file-text");
       item.createSpan({ text: sn.file.basename + ".md", cls: "opal-modal-note-name" });
-      if (!sn.shareLink) {
+      if (sn.shareLink) {
+        this.showViews(item, sn.shareLink);
+      } else {
         item.addClass("opal-modal-note-item--skip");
       }
     }
+  }
+  /**
+   * 异步在条目右侧展示浏览量。读取配置不全（未启用/缺 apiKey/缺 websiteId）
+   * 或无链接则不渲染；加载中显示占位，失败显示降级文案，绝不阻塞弹窗。
+   * 弹窗在请求返回前关闭时，span 已脱离 DOM，用 isConnected 跳过写入。
+   */
+  showViews(item, shareLink) {
+    if (!shareLink || !canReadAnalytics(this.plugin.settings)) return;
+    const span = item.createSpan({
+      cls: "opal-modal-views",
+      text: t("modal.views.loading")
+    });
+    void fetchPageViews(this.plugin.settings, shareLink).then((stats) => {
+      if (!span.isConnected) return;
+      span.setText(
+        stats ? t("modal.views.value", {
+          pv: String(stats.pageviews),
+          uv: String(stats.visitors)
+        }) : t("modal.views.fail")
+      );
+    }).catch(() => {
+      if (span.isConnected) span.setText(t("modal.views.fail"));
+    });
   }
   onClose() {
     this.contentEl.empty();
@@ -27673,7 +27884,50 @@ var ShareModal = class extends import_obsidian4.Modal {
 };
 
 // src/oss.ts
+var import_obsidian7 = require("obsidian");
 var import_ali_oss = __toESM(require_client());
+var zlib = __toESM(require("zlib"));
+var KATEX_VERSION = "0.16.9";
+var KATEX_CDN = `https://cdn.jsdelivr.net/npm/katex@${KATEX_VERSION}/dist`;
+var HTML_CACHE = "public, max-age=300";
+var IMAGE_CACHE = "public, max-age=86400";
+var IMMUTABLE_CACHE = "public, max-age=31536000, immutable";
+function publishBaseUrl(settings) {
+  const prefix = settings.ossPrefix.replace(/\/$/, "");
+  const origin = settings.ossDomain || `https://${settings.ossBucket}.${settings.ossRegion}.aliyuncs.com`;
+  return `${origin}/${prefix}`;
+}
+function katexBaseUrl(settings) {
+  return `${publishBaseUrl(settings)}/_assets/katex/${KATEX_VERSION}`;
+}
+async function ensureKatexAssets(settings) {
+  const client = makeClient(settings);
+  const prefix = settings.ossPrefix.replace(/\/$/, "");
+  const dir = `${prefix}/_assets/katex/${KATEX_VERSION}`;
+  const cssKey = `${dir}/katex.min.css`;
+  try {
+    await client.head(cssKey);
+    return;
+  } catch (e) {
+  }
+  const headers = { "Cache-Control": IMMUTABLE_CACHE };
+  const cssText = (await (0, import_obsidian7.requestUrl)({ url: `${KATEX_CDN}/katex.min.css` })).text;
+  const fonts = /* @__PURE__ */ new Set();
+  for (const m of cssText.matchAll(/url\(fonts\/([^)]+?\.woff2)\)/g)) fonts.add(m[1]);
+  for (const font of fonts) {
+    const data = (await (0, import_obsidian7.requestUrl)({ url: `${KATEX_CDN}/fonts/${font}` })).arrayBuffer;
+    await client.put(`${dir}/fonts/${font}`, Buffer.from(data), { mime: "font/woff2", headers });
+  }
+  const js = (await (0, import_obsidian7.requestUrl)({ url: `${KATEX_CDN}/katex.min.js` })).arrayBuffer;
+  await client.put(`${dir}/katex.min.js`, Buffer.from(js), {
+    mime: "application/javascript; charset=utf-8",
+    headers
+  });
+  await client.put(cssKey, Buffer.from(cssText, "utf-8"), {
+    mime: "text/css; charset=utf-8",
+    headers
+  });
+}
 function getMimeType(ext) {
   var _a;
   const map = {
@@ -27737,15 +27991,15 @@ async function uploadToOss(settings, vault, noteName, html, images) {
   const prefix = ossPrefix.replace(/\/$/, "");
   await client.put(
     `${prefix}/${noteName}`,
-    Buffer.from(html, "utf-8"),
-    { mime: "text/html; charset=utf-8" }
+    zlib.gzipSync(Buffer.from(html, "utf-8")),
+    { mime: "text/html; charset=utf-8", headers: { "Content-Encoding": "gzip", "Cache-Control": HTML_CACHE } }
   );
   for (const [exportName, imgFile] of images) {
     const data = await vault.readBinary(imgFile);
     await client.put(
       `${prefix}/${noteName}/images/${exportName}`,
       Buffer.from(data),
-      { mime: getMimeType(imgFile.extension) }
+      { mime: getMimeType(imgFile.extension), headers: { "Cache-Control": IMAGE_CACHE } }
     );
   }
   const base = settings.ossDomain || `https://${ossBucket}.${ossRegion}.aliyuncs.com`;
@@ -27758,13 +28012,16 @@ async function uploadSubNoteToOss(settings, vault, subFolderName, html, images) 
   }
   const client = makeClient(settings);
   const prefix = settings.ossPrefix.replace(/\/$/, "");
-  await client.put(`${prefix}/${subFolderName}`, Buffer.from(html, "utf-8"), { mime: "text/html; charset=utf-8" });
+  await client.put(`${prefix}/${subFolderName}`, zlib.gzipSync(Buffer.from(html, "utf-8")), {
+    mime: "text/html; charset=utf-8",
+    headers: { "Content-Encoding": "gzip", "Cache-Control": HTML_CACHE }
+  });
   for (const [exportName, imgFile] of images) {
     const data = await vault.readBinary(imgFile);
     await client.put(
       `${prefix}/${subFolderName}/images/${exportName}`,
       Buffer.from(data),
-      { mime: getMimeType(imgFile.extension) }
+      { mime: getMimeType(imgFile.extension), headers: { "Cache-Control": IMAGE_CACHE } }
     );
   }
   const base = settings.ossDomain || `https://${settings.ossBucket}.${settings.ossRegion}.aliyuncs.com`;
@@ -27795,6 +28052,211 @@ async function deleteFromOss(settings, noteName) {
   }
 }
 
+// src/share-popover.ts
+var import_obsidian8 = require("obsidian");
+var POPOVER_CLASS = "opal-share-popover";
+var SharePopover = class {
+  constructor(plugin) {
+    this.plugin = plugin;
+    this.el = null;
+  }
+  isOpen() {
+    return !!this.el;
+  }
+  /** Toggle the card relative to the given anchor (the status-bar icon). */
+  async toggle(anchor) {
+    if (this.el) {
+      this.close();
+      return;
+    }
+    await this.open(anchor);
+  }
+  close() {
+    if (this.onDocPointerDown) {
+      activeDocument.removeEventListener("pointerdown", this.onDocPointerDown, true);
+    }
+    if (this.onKeyDown) {
+      activeDocument.removeEventListener("keydown", this.onKeyDown, true);
+    }
+    this.onDocPointerDown = void 0;
+    this.onKeyDown = void 0;
+    const el = this.el;
+    this.el = null;
+    if (!el) return;
+    el.classList.remove("is-visible");
+    window.setTimeout(() => el.remove(), 150);
+  }
+  async open(anchor) {
+    const file = this.plugin.app.workspace.getActiveFile();
+    if (!file || file.extension !== "md") return;
+    const card = createDiv({ cls: POPOVER_CLASS });
+    const shareLink = this.plugin.getShareLink(file);
+    if (shareLink) {
+      const stale = await this.plugin.isStale(file);
+      this.renderPublished(card, file, shareLink, stale);
+    } else {
+      this.renderUnpublished(card, file);
+    }
+    activeDocument.body.appendChild(card);
+    this.el = card;
+    this.position(card, anchor);
+    window.requestAnimationFrame(() => card.classList.add("is-visible"));
+    this.onDocPointerDown = (e) => {
+      const target = e.target;
+      if (card.contains(target) || anchor.contains(target)) return;
+      this.close();
+    };
+    this.onKeyDown = (e) => {
+      if (e.key === "Escape") this.close();
+    };
+    window.setTimeout(() => {
+      if (!this.el) return;
+      activeDocument.addEventListener("pointerdown", this.onDocPointerDown, true);
+      activeDocument.addEventListener("keydown", this.onKeyDown, true);
+    }, 0);
+  }
+  /**
+   * Anchor the card next to the status-bar icon, flipping above/below based on
+   * available space and clamping into the viewport. The status bar's position
+   * varies by theme, so we never assume it sits at the bottom.
+   */
+  position(card, anchor) {
+    const rect = anchor.getBoundingClientRect();
+    const gap = 8;
+    const margin = 8;
+    const vw = activeWindow.innerWidth;
+    const vh = activeWindow.innerHeight;
+    const cw = card.offsetWidth;
+    const ch = card.offsetHeight;
+    let left = rect.left;
+    if (left + cw + margin > vw) left = vw - cw - margin;
+    if (left < margin) left = margin;
+    const spaceAbove = rect.top;
+    const spaceBelow = vh - rect.bottom;
+    let top = spaceAbove >= ch + gap || spaceAbove >= spaceBelow ? rect.top - gap - ch : rect.bottom + gap;
+    if (top + ch + margin > vh) top = vh - ch - margin;
+    if (top < margin) top = margin;
+    card.setCssProps({
+      "--opal-popover-left": `${Math.round(left)}px`,
+      "--opal-popover-top": `${Math.round(top)}px`
+    });
+  }
+  renderPublished(card, file, shareLink, stale) {
+    var _a, _b, _c;
+    card.addClass(stale ? `${POPOVER_CLASS}--stale` : `${POPOVER_CLASS}--fresh`);
+    const header = card.createDiv({ cls: "opal-share-popover-header" });
+    const icon = header.createDiv({ cls: "opal-share-popover-icon" });
+    (0, import_obsidian8.setIcon)(icon, "globe");
+    const headText = header.createDiv({ cls: "opal-share-popover-headtext" });
+    headText.createDiv({ cls: "opal-share-popover-title", text: t("popover.title") });
+    const shareTime = (_c = (_b = (_a = this.plugin.app.metadataCache.getFileCache(file)) == null ? void 0 : _a.frontmatter) == null ? void 0 : _b["share_time"]) != null ? _c : "";
+    const publishedAt = shareTime ? new Date(shareTime) : null;
+    if (publishedAt && !isNaN(publishedAt.getTime())) {
+      headText.createDiv({
+        cls: "opal-share-popover-subline",
+        text: t("popover.published", { time: publishedAt.toLocaleString() })
+      });
+    }
+    header.createSpan({
+      cls: "opal-share-popover-badge",
+      text: stale ? t("popover.badge.stale") : t("popover.badge.fresh")
+    });
+    const urlRow = card.createDiv({ cls: "opal-share-popover-urlrow" });
+    const link = urlRow.createEl("a", {
+      cls: "opal-share-popover-url",
+      text: shareLink,
+      href: shareLink
+    });
+    link.setAttr("target", "_blank");
+    link.setAttr("rel", "noopener");
+    const copyBtn = urlRow.createDiv({ cls: "opal-share-popover-copy" });
+    (0, import_obsidian8.setIcon)(copyBtn, "copy");
+    (0, import_obsidian8.setTooltip)(copyBtn, t("popover.copy"));
+    copyBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      void navigator.clipboard.writeText(shareLink).then(() => new import_obsidian8.Notice(t("popover.copied")));
+    });
+    if (stale) {
+      const hint = card.createDiv({ cls: "opal-share-popover-hint" });
+      hint.createSpan({ text: t("popover.hint.stale") });
+      const updateBtn = hint.createEl("button", {
+        cls: "opal-share-popover-republish mod-cta",
+        text: t("popover.btn.update")
+      });
+      updateBtn.addEventListener("click", () => {
+        this.close();
+        void this.plugin.updateFromUi(file);
+      });
+    }
+    const actions = card.createDiv({ cls: "opal-share-popover-actions" });
+    this.iconAction(actions, "external-link", t("menu.openLink"), () => {
+      this.close();
+      this.plugin.openShareLink(file);
+    });
+    if (!stale) {
+      this.iconAction(actions, "refresh-cw", t("menu.update"), () => {
+        this.close();
+        void this.plugin.updateFromUi(file);
+      });
+    }
+    this.iconAction(actions, "download", t("menu.exportLocal"), () => {
+      this.close();
+      void this.plugin.exportFromUi(file);
+    });
+    this.iconAction(
+      actions,
+      "eye-off",
+      t("menu.unpublish"),
+      () => {
+        this.close();
+        this.plugin.unpublishFromUi(file);
+      },
+      true
+    );
+  }
+  renderUnpublished(card, file) {
+    card.addClass(`${POPOVER_CLASS}--unpublished`);
+    const header = card.createDiv({ cls: "opal-share-popover-header" });
+    const icon = header.createDiv({ cls: "opal-share-popover-icon" });
+    (0, import_obsidian8.setIcon)(icon, "globe");
+    const headText = header.createDiv({ cls: "opal-share-popover-headtext" });
+    headText.createDiv({ cls: "opal-share-popover-title", text: t("popover.unpublished.title") });
+    headText.createDiv({
+      cls: "opal-share-popover-subline",
+      text: t("popover.unpublished.subline")
+    });
+    const actions = card.createDiv({
+      cls: "opal-share-popover-actions opal-share-popover-actions--text"
+    });
+    const ossReady = this.plugin.isOssReady();
+    const publishBtn = actions.createEl("button", {
+      cls: "opal-share-popover-textbtn mod-cta",
+      text: t("menu.publish")
+    });
+    publishBtn.disabled = !ossReady;
+    publishBtn.addEventListener("click", () => {
+      if (!ossReady) return;
+      this.close();
+      this.plugin.publishFromUi(file);
+    });
+    const exportBtn = actions.createEl("button", {
+      cls: "opal-share-popover-textbtn",
+      text: t("menu.exportLocal")
+    });
+    exportBtn.addEventListener("click", () => {
+      this.close();
+      void this.plugin.exportFromUi(file);
+    });
+  }
+  iconAction(parent, icon, tooltip, onClick, danger = false) {
+    const btn = parent.createDiv({ cls: "opal-share-popover-action" });
+    if (danger) btn.addClass("opal-share-popover-action--danger");
+    (0, import_obsidian8.setIcon)(btn, icon);
+    (0, import_obsidian8.setTooltip)(btn, tooltip);
+    btn.addEventListener("click", onClick);
+  }
+};
+
 // main.ts
 var ExportToast = class {
   constructor(loadingText = t("toast.uploading")) {
@@ -27812,7 +28274,7 @@ var ExportToast = class {
     window.clearTimeout(this.timer);
     this.el.empty();
     const iconEl = this.el.createDiv();
-    (0, import_obsidian5.setIcon)(iconEl, "check");
+    (0, import_obsidian9.setIcon)(iconEl, "check");
     this.el.createSpan({ text });
     this.timer = window.setTimeout(() => this.dismiss(), 2800);
   }
@@ -27822,7 +28284,7 @@ var ExportToast = class {
     window.clearTimeout(this.timer);
     this.el.empty();
     const iconEl = this.el.createDiv();
-    (0, import_obsidian5.setIcon)(iconEl, "x");
+    (0, import_obsidian9.setIcon)(iconEl, "x");
     this.el.createSpan({ text });
     this.timer = window.setTimeout(() => this.dismiss(), 4e3);
   }
@@ -27832,7 +28294,7 @@ var ExportToast = class {
     window.setTimeout(() => this.el.remove(), 250);
   }
 };
-var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
+var ShareOnlinePlugin = class extends import_obsidian9.Plugin {
   constructor() {
     super(...arguments);
     this.currentToast = null;
@@ -27840,6 +28302,7 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
   async onload() {
     await this.loadSettings();
     this.addSettingTab(new ShareOnlineSettingTab(this.app, this));
+    this.sharePopover = new SharePopover(this);
     this.addCommand({
       id: "export-current-note-to-desktop",
       name: t("cmd.exportLocal"),
@@ -27852,18 +28315,30 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
     });
     this.statusBarEl = this.addStatusBarItem();
     this.statusBarEl.addClass("opal-status-bar-btn");
-    (0, import_obsidian5.setTooltip)(this.statusBarEl, t("statusbar.shareNote"));
-    (0, import_obsidian5.setIcon)(this.statusBarEl, "share-2");
-    this.updateStatusBar();
-    this.statusBarEl.addEventListener("click", (e) => this.showShareMenu(e));
+    (0, import_obsidian9.setTooltip)(this.statusBarEl, t("statusbar.shareNote"));
+    (0, import_obsidian9.setIcon)(this.statusBarEl, "share-2");
+    void this.updateStatusBar();
+    this.statusBarEl.addEventListener("click", () => void this.sharePopover.toggle(this.statusBarEl));
     this.registerEvent(
-      this.app.workspace.on("active-leaf-change", () => this.updateStatusBar())
+      this.app.workspace.on("active-leaf-change", () => {
+        this.sharePopover.close();
+        void this.updateStatusBar();
+      })
     );
     this.registerEvent(
       this.app.metadataCache.on("changed", (changedFile) => {
         const active = this.app.workspace.getActiveFile();
-        if (active && changedFile.path === active.path) this.updateStatusBar();
+        if (active && changedFile.path === active.path) {
+          void this.updateStatusBar();
+        }
       })
+    );
+    this.registerEvent(
+      this.app.workspace.on("layout-change", () => this.sharePopover.close())
+    );
+    const debouncedStatusRefresh = (0, import_obsidian9.debounce)(() => void this.updateStatusBar(), 500, true);
+    this.registerEvent(
+      this.app.workspace.on("editor-change", () => debouncedStatusRefresh())
     );
   }
   async loadSettings() {
@@ -27878,14 +28353,21 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
     var _a, _b, _c;
     return (_c = (_b = (_a = this.app.metadataCache.getFileCache(file)) == null ? void 0 : _a.frontmatter) == null ? void 0 : _b["share_link"]) != null ? _c : "";
   }
-  async setShareLink(file, url) {
+  async setShareMeta(file, url) {
+    const raw = await this.app.vault.read(file);
+    const hash = hashBody(stripFrontmatter(raw));
+    const time = (/* @__PURE__ */ new Date()).toISOString();
     await this.app.fileManager.processFrontMatter(file, (fm) => {
       fm["share_link"] = url;
+      fm["share_time"] = time;
+      fm["share_hash"] = hash;
     });
   }
-  async removeShareLink(file) {
+  async removeShareMeta(file) {
     await this.app.fileManager.processFrontMatter(file, (fm) => {
       delete fm["share_link"];
+      delete fm["share_time"];
+      delete fm["share_hash"];
     });
   }
   // ── File type helper ──────────────────────────────────────────────────
@@ -27894,7 +28376,8 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
     return !!file && file.extension === "md";
   }
   // ── Status bar ───────────────────────────────────────────────────────
-  updateStatusBar() {
+  async updateStatusBar() {
+    var _a;
     const file = this.app.workspace.getActiveFile();
     if (!this.isMarkdown(file)) {
       this.statusBarEl.hide();
@@ -27902,61 +28385,48 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
     }
     this.statusBarEl.show();
     const published = !!this.getShareLink(file);
-    this.statusBarEl.toggleClass("opal-status-published", published);
-    (0, import_obsidian5.setTooltip)(this.statusBarEl, published ? t("statusbar.published") : t("statusbar.shareNote"));
+    const stale = published ? await this.isStale(file) : false;
+    if (((_a = this.app.workspace.getActiveFile()) == null ? void 0 : _a.path) !== file.path) return;
+    this.statusBarEl.toggleClass("opal-status-published", published && !stale);
+    this.statusBarEl.toggleClass("opal-status-stale", published && stale);
+    (0, import_obsidian9.setTooltip)(
+      this.statusBarEl,
+      !published ? t("statusbar.shareNote") : stale ? t("statusbar.stale") : t("statusbar.published")
+    );
   }
-  showShareMenu(event) {
-    const file = this.app.workspace.getActiveFile();
-    if (!this.isMarkdown(file)) {
-      new import_obsidian5.Notice(t("notice.onlyMarkdown.share"));
-      return;
-    }
-    const published = !!this.getShareLink(file);
-    const menu = new import_obsidian5.Menu();
-    const ossReady = !!(this.settings.ossRegion && this.settings.ossBucket && this.settings.ossAccessKeyId && this.settings.ossAccessKeySecret);
-    if (!published) {
-      menu.addItem(
-        (item) => item.setTitle(t("menu.publish")).setIcon("upload-cloud").setDisabled(!ossReady).onClick(() => {
-          if (!ossReady) return;
-          new ShareModal(this.app, this, file, "publish", (subNotes) => {
-            void this.doPublish(file, subNotes);
-          }).open();
-        })
-      );
-      menu.addItem(
-        (item) => item.setTitle(t("menu.exportLocal")).setIcon("download").onClick(async () => {
-          var _a;
-          await this.exportFile(file);
-          (_a = this.currentToast) == null ? void 0 : _a.setSuccess(t("toast.exportSuccess"));
-        })
-      );
-    } else {
-      menu.addItem(
-        (item) => item.setTitle(t("menu.openLink")).setIcon("external-link").onClick(() => {
-          const url = this.getShareLink(file);
-          activeWindow.open(url, "_blank");
-        })
-      );
-      menu.addItem(
-        (item) => item.setTitle(t("menu.update")).setIcon("refresh-cw").onClick(() => this.updateNote(file))
-      );
-      menu.addItem(
-        (item) => item.setTitle(t("menu.unpublish")).setIcon("eye-off").onClick(() => {
-          new ShareModal(this.app, this, file, "unpublish", (subNotes) => {
-            void this.doUnpublish(file, subNotes);
-          }).open();
-        })
-      );
-      menu.addSeparator();
-      menu.addItem(
-        (item) => item.setTitle(t("menu.exportLocal")).setIcon("download").onClick(async () => {
-          var _a;
-          await this.exportFile(file);
-          (_a = this.currentToast) == null ? void 0 : _a.setSuccess(t("toast.exportSuccess"));
-        })
-      );
-    }
-    menu.showAtPosition({ x: event.clientX + 12, y: event.clientY + 28 });
+  /** True when the OSS credentials needed to publish are all present. */
+  isOssReady() {
+    return !!(this.settings.ossRegion && this.settings.ossBucket && this.settings.ossAccessKeyId && this.settings.ossAccessKeySecret);
+  }
+  /** True when the note's current body differs from the published snapshot. */
+  async isStale(file) {
+    var _a, _b, _c, _d;
+    const shareHash = (_c = (_b = (_a = this.app.metadataCache.getFileCache(file)) == null ? void 0 : _a.frontmatter) == null ? void 0 : _b["share_hash"]) != null ? _c : "";
+    if (!shareHash) return true;
+    const view = this.app.workspace.getActiveViewOfType(import_obsidian9.MarkdownView);
+    const raw = ((_d = view == null ? void 0 : view.file) == null ? void 0 : _d.path) === file.path && view.editor ? view.editor.getValue() : await this.app.vault.cachedRead(file);
+    return hashBody(stripFrontmatter(raw)) !== shareHash;
+  }
+  // ── Popover-driven actions ─────────────────────────────────────────────
+  openShareLink(file) {
+    const url = this.getShareLink(file);
+    if (url) activeWindow.open(url, "_blank");
+  }
+  publishFromUi(file) {
+    if (!this.isOssReady()) return;
+    new ShareModal(this.app, this, file, "publish", (subNotes) => {
+      void this.doPublish(file, subNotes);
+    }).open();
+  }
+  unpublishFromUi(file) {
+    new ShareModal(this.app, this, file, "unpublish", (subNotes) => {
+      void this.doUnpublish(file, subNotes);
+    }).open();
+  }
+  async exportFromUi(file) {
+    var _a;
+    await this.exportFile(file);
+    (_a = this.currentToast) == null ? void 0 : _a.setSuccess(t("toast.exportSuccess"));
   }
   // ── Actions ──────────────────────────────────────────────────────────
   async doPublish(file, subNotes, existingName, successText = t("toast.publishSuccess"), copyToClipboard = true) {
@@ -27967,7 +28437,15 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
       const usedNames = await listPublishedNames(this.settings);
       const mainName = existingName != null ? existingName : generateUniqueName(usedNames, this.settings.pageLinkLength);
       usedNames.add(mainName);
-      const result = await prepareExport(this.app, this.app.vault, file, mainName);
+      const katexBase = katexBaseUrl(this.settings);
+      const analytics = getAnalyticsInjectConfig(this.settings);
+      let katexProvisioned = false;
+      const ensureKatex = async () => {
+        if (katexProvisioned) return;
+        await ensureKatexAssets(this.settings);
+        katexProvisioned = true;
+      };
+      const result = await prepareExport(this.app, this.app.vault, file, mainName, katexBase, analytics);
       const subFolderMap = /* @__PURE__ */ new Map();
       let mainHtml = result.html;
       for (const sn of subNotes) {
@@ -27977,9 +28455,10 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
           subFolderMap.set(sn.file.basename, noteName);
           subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), noteName);
         } else {
-          const subResult = await prepareExport(this.app, this.app.vault, sn.file, generateUniqueName(usedNames, this.settings.pageLinkLength));
+          const subResult = await prepareExport(this.app, this.app.vault, sn.file, generateUniqueName(usedNames, this.settings.pageLinkLength), katexBase, analytics);
           subFolderMap.set(sn.file.basename, subResult.noteName);
           subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), subResult.noteName);
+          if (subResult.hasMath) await ensureKatex();
           const subUrl = await uploadSubNoteToOss(
             this.settings,
             this.app.vault,
@@ -27987,10 +28466,11 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
             subResult.html,
             subResult.images
           );
-          await this.setShareLink(sn.file, subUrl);
+          await this.setShareMeta(sn.file, subUrl);
         }
       }
       mainHtml = rewriteInternalLinks(mainHtml, subFolderMap, false);
+      if (result.hasMath) await ensureKatex();
       const url = await uploadToOss(
         this.settings,
         this.app.vault,
@@ -27998,8 +28478,8 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
         mainHtml,
         result.images
       );
-      await this.setShareLink(file, url);
-      this.updateStatusBar();
+      await this.setShareMeta(file, url);
+      void this.updateStatusBar();
       if (copyToClipboard) {
         await navigator.clipboard.writeText(url);
       }
@@ -28018,10 +28498,10 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
         const snName = this.extractNoteName(sn.shareLink);
         try {
           await deleteFromOss(this.settings, snName);
-          await this.removeShareLink(sn.file);
+          await this.removeShareMeta(sn.file);
         } catch (err) {
           console.error(`\u5220\u9664\u4E8C\u7EA7\u7B14\u8BB0\u5931\u8D25 (${sn.file.basename}):`, err);
-          new import_obsidian5.Notice(t("notice.deleteSubFailed", { name: sn.file.basename }));
+          new import_obsidian9.Notice(t("notice.deleteSubFailed", { name: sn.file.basename }));
         }
       }
       const existingUrl = this.getShareLink(file);
@@ -28029,8 +28509,8 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
         const existingName = this.extractNoteName(existingUrl);
         await deleteFromOss(this.settings, existingName);
       }
-      await this.removeShareLink(file);
-      this.updateStatusBar();
+      await this.removeShareMeta(file);
+      void this.updateStatusBar();
       (_b = this.currentToast) == null ? void 0 : _b.setSuccess(t("toast.stopped"));
     } catch (err) {
       (_c = this.currentToast) == null ? void 0 : _c.setError(t("toast.stopFailed", { error: err.message }));
@@ -28049,11 +28529,14 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
     const subNotes = this.settings.includeLinkedNotes ? collectLinkedNotesWithStatus(this.app, file) : [];
     await this.doPublish(file, subNotes, existingName, t("toast.updateSuccess"), false);
   }
+  async updateFromUi(file) {
+    await this.updateNote(file);
+  }
   async exportCurrentNote(toOss = false) {
     var _a;
     const file = this.app.workspace.getActiveFile();
     if (!this.isMarkdown(file)) {
-      new import_obsidian5.Notice(t("notice.onlyMarkdown.publish"));
+      new import_obsidian9.Notice(t("notice.onlyMarkdown.publish"));
       return;
     }
     if (toOss) {
@@ -28075,7 +28558,8 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
         file,
         this.settings.exportPath || DEFAULT_SETTINGS.exportPath,
         this.settings.includeLinkedNotes,
-        this.settings.pageLinkLength
+        this.settings.pageLinkLength,
+        getAnalyticsInjectConfig(this.settings)
       );
     } catch (err) {
       (_b = this.currentToast) == null ? void 0 : _b.setError(t("toast.exportFailed", { error: err.message }));
@@ -28083,8 +28567,9 @@ var ShareOnlinePlugin = class extends import_obsidian5.Plugin {
     }
   }
   onunload() {
-    var _a;
-    (_a = this.currentToast) == null ? void 0 : _a.dismiss();
+    var _a, _b;
+    (_a = this.sharePopover) == null ? void 0 : _a.close();
+    (_b = this.currentToast) == null ? void 0 : _b.dismiss();
   }
 };
 /*! Bundled license information:

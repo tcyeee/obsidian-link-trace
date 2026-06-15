@@ -45,6 +45,9 @@
 .opal-status-bar-btn.opal-status-published svg {
   color: #65a692;
 }
+.opal-status-bar-btn.opal-status-stale svg {
+  color: var(--color-orange);
+}
 
 /* ── Offscreen render scratch pad ── */
 .opal-render-scratch {
@@ -98,6 +101,12 @@
 }
 .opal-share-modal .opal-modal-note-item--skip .opal-modal-note-name {
   color: var(--text-muted);
+}
+.opal-share-modal .opal-modal-views {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .opal-share-modal .opal-modal-checkbox {
   flex-shrink: 0;
@@ -184,4 +193,164 @@ details[open] > .opal-collapsible-heading::before {
   justify-content: flex-end;
   gap: 8px;
   margin-top: 20px;
+}
+
+/* ── Share popover (anchored above the status-bar icon) ── */
+.opal-share-popover {
+  position: fixed;
+  left: var(--opal-popover-left, 0);
+  top: var(--opal-popover-top, 0);
+  /* Menu layer — below Obsidian's tooltip layer (70) so action tooltips show. */
+  z-index: var(--layer-menu);
+  width: 320px;
+  max-width: calc(100vw - 16px);
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  box-shadow: var(--shadow-l);
+  font-size: 13px;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+.opal-share-popover.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.opal-share-popover-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 11px;
+}
+.opal-share-popover-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+.opal-share-popover-icon svg {
+  width: 16px;
+  height: 16px;
+}
+.opal-share-popover--fresh .opal-share-popover-icon {
+  color: var(--color-green);
+  background: rgba(var(--color-green-rgb), 0.15);
+}
+.opal-share-popover--stale .opal-share-popover-icon {
+  color: var(--color-orange);
+  background: rgba(var(--color-orange-rgb), 0.15);
+}
+.opal-share-popover--unpublished .opal-share-popover-icon {
+  color: var(--text-muted);
+  background: var(--background-modifier-hover);
+}
+.opal-share-popover-headtext {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.opal-share-popover-title {
+  font-weight: 600;
+  color: var(--text-normal);
+}
+.opal-share-popover-subline {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.opal-share-popover-badge {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+.opal-share-popover--fresh .opal-share-popover-badge {
+  color: var(--color-green);
+  background: rgba(var(--color-green-rgb), 0.15);
+}
+.opal-share-popover--stale .opal-share-popover-badge {
+  color: var(--color-orange);
+  background: rgba(var(--color-orange-rgb), 0.15);
+}
+.opal-share-popover-urlrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 7px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+}
+.opal-share-popover-url {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.opal-share-popover-copy {
+  display: flex;
+  flex-shrink: 0;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+.opal-share-popover-copy:hover {
+  color: var(--text-normal);
+}
+.opal-share-popover-hint {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 11px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.opal-share-popover-republish {
+  margin-left: auto;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.opal-share-popover-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 11px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+.opal-share-popover-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+.opal-share-popover-action svg {
+  width: 16px;
+  height: 16px;
+}
+.opal-share-popover-action:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+.opal-share-popover-action--danger:hover {
+  background: rgba(var(--color-red-rgb), 0.15);
+  color: var(--color-red);
+}
+.opal-share-popover-actions--text {
+  gap: 8px;
+}
+.opal-share-popover-textbtn {
+  flex: 1;
+  cursor: pointer;
 }

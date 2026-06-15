@@ -15,6 +15,13 @@ declare module "ali-oss" {
 
   interface OSSPutOptions {
     mime?: string;
+    headers?: Record<string, string>;
+  }
+
+  interface OSSHeadResult {
+    status: number;
+    meta: Record<string, string> | null;
+    res: { headers: Record<string, string> };
   }
 
   interface OSSDeleteMultiOptions {
@@ -33,6 +40,7 @@ declare module "ali-oss" {
     constructor(config: OSSConfig);
     list(params: OSSListParams, options?: object): Promise<OSSListResult>;
     put(key: string, data: Buffer, options?: OSSPutOptions): Promise<void>;
+    head(key: string): Promise<OSSHeadResult>;
     delete(key: string): Promise<void>;
     deleteMulti(keys: string[], options?: OSSDeleteMultiOptions): Promise<void>;
   }

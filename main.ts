@@ -1,9 +1,12 @@
-import { Menu, Notice, Plugin, TFile, setIcon, setTooltip } from "obsidian";
+import { MarkdownView, Notice, Plugin, TFile, debounce, setIcon, setTooltip } from "obsidian";
 import { ShareOnlineSettings, DEFAULT_SETTINGS, ShareOnlineSettingTab } from "./src/settings";
 import { exportToLocal, prepareExport, generateUniqueName, collectLinkedNotesWithStatus, rewriteInternalLinks } from "./src/exporter";
 import { ShareModal } from "./src/share-modal";
-import { uploadToOss, uploadSubNoteToOss, deleteFromOss, listPublishedNames } from "./src/oss";
+import { uploadToOss, uploadSubNoteToOss, deleteFromOss, listPublishedNames, ensureKatexAssets, katexBaseUrl } from "./src/oss";
 import { t, setLanguage } from "./src/i18n";
+import { getAnalyticsInjectConfig } from "./src/analytics";
+import { hashBody, stripFrontmatter } from "./src/note-hash";
+import { SharePopover } from "./src/share-popover";
 
 /* ── Export Toast ──────────────────────────────────────────────────────── */
 
@@ -51,12 +54,14 @@ class ExportToast {
 
 export default class ShareOnlinePlugin extends Plugin {
 	settings: ShareOnlineSettings;
+	sharePopover: SharePopover;
 	private statusBarEl: HTMLElement;
 	private currentToast: ExportToast | null = null;
 
 	async onload() {
 		await this.loadSettings();
 		this.addSettingTab(new ShareOnlineSettingTab(this.app, this));
+		this.sharePopover = new SharePopover(this);
 
 		this.addCommand({
 			id: "export-current-note-to-desktop",
@@ -75,19 +80,34 @@ export default class ShareOnlinePlugin extends Plugin {
 		this.statusBarEl.addClass("opal-status-bar-btn");
 		setTooltip(this.statusBarEl, t("statusbar.shareNote"));
 		setIcon(this.statusBarEl, "share-2");
-		this.updateStatusBar();
+		void this.updateStatusBar();
 
-		this.statusBarEl.addEventListener("click", (e) => this.showShareMenu(e));
+		this.statusBarEl.addEventListener("click", () => void this.sharePopover.toggle(this.statusBarEl));
 
 		this.registerEvent(
-			this.app.workspace.on("active-leaf-change", () => this.updateStatusBar())
+			this.app.workspace.on("active-leaf-change", () => {
+				this.sharePopover.close();
+				void this.updateStatusBar();
+			})
 		);
 
 		this.registerEvent(
 			this.app.metadataCache.on("changed", (changedFile) => {
 				const active = this.app.workspace.getActiveFile();
-				if (active && changedFile.path === active.path) this.updateStatusBar();
+				if (active && changedFile.path === active.path) {
+					void this.updateStatusBar();
+				}
 			})
+		);
+
+		this.registerEvent(
+			this.app.workspace.on("layout-change", () => this.sharePopover.close())
+		);
+
+		// Reflect stale state on the status-bar icon while the note is edited.
+		const debouncedStatusRefresh = debounce(() => void this.updateStatusBar(), 500, true);
+		this.registerEvent(
+			this.app.workspace.on("editor-change", () => debouncedStatusRefresh())
 		);
 	}
 
@@ -102,19 +122,26 @@ export default class ShareOnlinePlugin extends Plugin {
 
 	// ── Frontmatter helpers ───────────────────────────────────────────────
 
-	private getShareLink(file: TFile): string {
+	getShareLink(file: TFile): string {
 		return (this.app.metadataCache.getFileCache(file)?.frontmatter?.["share_link"] as string | undefined) ?? "";
 	}
 
-	private async setShareLink(file: TFile, url: string): Promise<void> {
+	private async setShareMeta(file: TFile, url: string): Promise<void> {
+		const raw = await this.app.vault.read(file);
+		const hash = hashBody(stripFrontmatter(raw));
+		const time = new Date().toISOString();
 		await this.app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
 			fm["share_link"] = url;
+			fm["share_time"] = time;
+			fm["share_hash"] = hash;
 		});
 	}
 
-	private async removeShareLink(file: TFile): Promise<void> {
+	private async removeShareMeta(file: TFile): Promise<void> {
 		await this.app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
 			delete fm["share_link"];
+			delete fm["share_time"];
+			delete fm["share_hash"];
 		});
 	}
 
@@ -127,7 +154,7 @@ export default class ShareOnlinePlugin extends Plugin {
 
 	// ── Status bar ───────────────────────────────────────────────────────
 
-	private updateStatusBar() {
+	private async updateStatusBar(): Promise<void> {
 		const file = this.app.workspace.getActiveFile();
 		// Only Markdown notes can be shared — hide the icon for anything else
 		if (!this.isMarkdown(file)) {
@@ -136,88 +163,64 @@ export default class ShareOnlinePlugin extends Plugin {
 		}
 		this.statusBarEl.show();
 		const published = !!this.getShareLink(file);
-		this.statusBarEl.toggleClass("opal-status-published", published);
-		setTooltip(this.statusBarEl, published ? t("statusbar.published") : t("statusbar.shareNote"));
+		const stale = published ? await this.isStale(file) : false;
+		// Active file may have changed during the async read — re-check before painting.
+		if (this.app.workspace.getActiveFile()?.path !== file.path) return;
+		this.statusBarEl.toggleClass("opal-status-published", published && !stale);
+		this.statusBarEl.toggleClass("opal-status-stale", published && stale);
+		setTooltip(
+			this.statusBarEl,
+			!published ? t("statusbar.shareNote") : stale ? t("statusbar.stale") : t("statusbar.published")
+		);
 	}
 
-	private showShareMenu(event: MouseEvent) {
-		const file = this.app.workspace.getActiveFile();
-		if (!this.isMarkdown(file)) {
-			new Notice(t("notice.onlyMarkdown.share"));
-			return;
-		}
-
-		const published = !!this.getShareLink(file);
-		const menu = new Menu();
-
-		const ossReady = !!(
+	/** True when the OSS credentials needed to publish are all present. */
+	isOssReady(): boolean {
+		return !!(
 			this.settings.ossRegion &&
 			this.settings.ossBucket &&
 			this.settings.ossAccessKeyId &&
 			this.settings.ossAccessKeySecret
 		);
+	}
 
-		if (!published) {
-			menu.addItem((item) =>
-				item
-					.setTitle(t("menu.publish"))
-					.setIcon("upload-cloud")
-					.setDisabled(!ossReady)
-					.onClick(() => {
-						if (!ossReady) return;
-						new ShareModal(this.app, this, file, "publish", (subNotes) => {
-							void this.doPublish(file, subNotes);
-						}).open();
-					})
-			);
-			menu.addItem((item) =>
-				item
-					.setTitle(t("menu.exportLocal"))
-					.setIcon("download")
-					.onClick(async () => {
-						await this.exportFile(file);
-						this.currentToast?.setSuccess(t("toast.exportSuccess"));
-					})
-			);
-		} else {
-			menu.addItem((item) =>
-				item
-					.setTitle(t("menu.openLink"))
-					.setIcon("external-link")
-					.onClick(() => {
-						const url = this.getShareLink(file);
-						activeWindow.open(url, "_blank");
-					})
-			);
-			menu.addItem((item) =>
-				item
-					.setTitle(t("menu.update"))
-					.setIcon("refresh-cw")
-					.onClick(() => this.updateNote(file))
-			);
-			menu.addItem((item) =>
-				item
-					.setTitle(t("menu.unpublish"))
-					.setIcon("eye-off")
-					.onClick(() => {
-						new ShareModal(this.app, this, file, "unpublish", (subNotes) => {
-							void this.doUnpublish(file, subNotes);
-						}).open();
-					})
-			);
-			menu.addSeparator();
-			menu.addItem((item) =>
-				item
-					.setTitle(t("menu.exportLocal"))
-					.setIcon("download")
-					.onClick(async () => {
-						await this.exportFile(file);
-						this.currentToast?.setSuccess(t("toast.exportSuccess"));
-					})
-			);
-		}
+	/** True when the note's current body differs from the published snapshot. */
+	async isStale(file: TFile): Promise<boolean> {
+		const shareHash =
+			(this.app.metadataCache.getFileCache(file)?.frontmatter?.["share_hash"] as string | undefined) ?? "";
+		if (!shareHash) return true;
+		// Prefer the live editor so staleness updates while typing; fall back to disk.
+		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+		const raw =
+			view?.file?.path === file.path && view.editor
+				? view.editor.getValue()
+				: await this.app.vault.cachedRead(file);
+		return hashBody(stripFrontmatter(raw)) !== shareHash;
+	}
 
-		menu.showAtPosition({ x: event.clientX + 12, y: event.clientY + 28 });
+	// ── Popover-driven actions ─────────────────────────────────────────────
+
+	openShareLink(file: TFile): void {
+		const url = this.getShareLink(file);
+		if (url) activeWindow.open(url, "_blank");
+	}
+
+	publishFromUi(file: TFile): void {
+		if (!this.isOssReady()) return;
+		new ShareModal(this.app, this, file, "publish", (subNotes) => {
+			void this.doPublish(file, subNotes);
+		}).open();
+	}
+
+	unpublishFromUi(file: TFile): void {
+		new ShareModal(this.app, this, file, "unpublish", (subNotes) => {
+			void this.doUnpublish(file, subNotes);
+		}).open();
+	}
+
+	async exportFromUi(file: TFile): Promise<void> {
+		await this.exportFile(file);
+		this.currentToast?.setSuccess(t("toast.exportSuccess"));
 	}
 
 	// ── Actions ──────────────────────────────────────────────────────────
@@ -238,7 +241,16 @@ export default class ShareOnlinePlugin extends Plugin {
 			const usedNames = await listPublishedNames(this.settings);
 			const mainName = existingName ?? generateUniqueName(usedNames, this.settings.pageLinkLength);
 			usedNames.add(mainName);
-			const result = await prepareExport(this.app, this.app.vault, file, mainName);
+			const katexBase = katexBaseUrl(this.settings);
+			const analytics = getAnalyticsInjectConfig(this.settings);
+			// Self-hosted KaTeX is provisioned once, the first time a math page is published.
+			let katexProvisioned = false;
+			const ensureKatex = async () => {
+				if (katexProvisioned) return;
+				await ensureKatexAssets(this.settings);
+				katexProvisioned = true;
+			};
+			const result = await prepareExport(this.app, this.app.vault, file, mainName, katexBase, analytics);
 			const subFolderMap = new Map<string, string>();
 			let mainHtml = result.html;
 
@@ -250,9 +262,10 @@ export default class ShareOnlinePlugin extends Plugin {
 					subFolderMap.set(sn.file.basename, noteName);
 					subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), noteName);
 				} else {
-					const subResult = await prepareExport(this.app, this.app.vault, sn.file, generateUniqueName(usedNames, this.settings.pageLinkLength));
+					const subResult = await prepareExport(this.app, this.app.vault, sn.file, generateUniqueName(usedNames, this.settings.pageLinkLength), katexBase, analytics);
 					subFolderMap.set(sn.file.basename, subResult.noteName);
 					subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), subResult.noteName);
+					if (subResult.hasMath) await ensureKatex();
 					const subUrl = await uploadSubNoteToOss(
 						this.settings,
 						this.app.vault,
@@ -260,11 +273,12 @@ export default class ShareOnlinePlugin extends Plugin {
 						subResult.html,
 						subResult.images
 					);
-					await this.setShareLink(sn.file, subUrl);
+					await this.setShareMeta(sn.file, subUrl);
 				}
 			}
 
 			mainHtml = rewriteInternalLinks(mainHtml, subFolderMap, false);
+			if (result.hasMath) await ensureKatex();
 			const url = await uploadToOss(
 				this.settings,
 				this.app.vault,
@@ -272,8 +286,8 @@ export default class ShareOnlinePlugin extends Plugin {
 				mainHtml,
 				result.images
 			);
-			await this.setShareLink(file, url);
-			this.updateStatusBar();
+			await this.setShareMeta(file, url);
+			void this.updateStatusBar();
 			if (copyToClipboard) {
 				await navigator.clipboard.writeText(url);
 			}
@@ -296,7 +310,7 @@ export default class ShareOnlinePlugin extends Plugin {
 				const snName = this.extractNoteName(sn.shareLink);
 				try {
 					await deleteFromOss(this.settings, snName);
-					await this.removeShareLink(sn.file);
+					await this.removeShareMeta(sn.file);
 				} catch (err: unknown) {
 					console.error(`删除二级笔记失败 (${sn.file.basename}):`, err);
 					new Notice(t("notice.deleteSubFailed", { name: sn.file.basename }));
@@ -309,8 +323,8 @@ export default class ShareOnlinePlugin extends Plugin {
 				const existingName = this.extractNoteName(existingUrl);
 				await deleteFromOss(this.settings, existingName);
 			}
-			await this.removeShareLink(file);
-			this.updateStatusBar();
+			await this.removeShareMeta(file);
+			void this.updateStatusBar();
 			this.currentToast?.setSuccess(t("toast.stopped"));
 		} catch (err: unknown) {
 			this.currentToast?.setError(t("toast.stopFailed", { error: (err as Error).message }));
@@ -332,6 +346,10 @@ export default class ShareOnlinePlugin extends Plugin {
 			? collectLinkedNotesWithStatus(this.app, file)
 			: [];
 		await this.doPublish(file, subNotes, existingName, t("toast.updateSuccess"), false);
+	}
+
+	async updateFromUi(file: TFile): Promise<void> {
+		await this.updateNote(file);
 	}
 
 	private async exportCurrentNote(toOss = false) {
@@ -361,7 +379,8 @@ export default class ShareOnlinePlugin extends Plugin {
 				file,
 				this.settings.exportPath || DEFAULT_SETTINGS.exportPath,
 				this.settings.includeLinkedNotes,
-				this.settings.pageLinkLength
+				this.settings.pageLinkLength,
+				getAnalyticsInjectConfig(this.settings)
 			);
 		} catch (err: unknown) {
 			this.currentToast?.setError(t("toast.exportFailed", { error: (err as Error).message }));
@@ -370,6 +389,7 @@ export default class ShareOnlinePlugin extends Plugin {
 	}
 
 	onunload() {
+		this.sharePopover?.close();
 		this.currentToast?.dismiss();
 	}
 }

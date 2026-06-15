@@ -32,11 +32,27 @@ const zh: Translations = {
 	"settings.ossDomain.desc": "替换默认的 OSS 域名，留空则使用默认。例如 https://cdn.example.com",
 	"settings.urlPreview.label": "预览：",
 
+	"settings.analytics.heading": "访问统计",
+	"settings.analytics.callout.item1": "基于 Umami Cloud 免费档，需先在 cloud.umami.is 注册站点并获取 Website ID 与 API Key",
+	"settings.analytics.callout.item2": "脚本由 cloud.umami.is 提供，国内访客加载可能不稳定，统计或有遗漏",
+	"settings.analyticsEnabled.name": "启用访问统计",
+	"settings.analyticsEnabled.desc": "在发布/导出的页面中嵌入 Umami 埋点脚本",
+	"settings.umamiScriptUrl.name": "埋点脚本地址",
+	"settings.umamiScriptUrl.desc": "Umami 的 script.js 地址，Cloud 默认 https://cloud.umami.is/script.js",
+	"settings.umamiWebsiteId.name": "Website ID",
+	"settings.umamiWebsiteId.desc": "Umami 后台站点的 UUID（用作 data-website-id）",
+	"settings.umamiApiKey.name": "API Key",
+	"settings.umamiApiKey.desc": "用于读取浏览量的 Umami Cloud API Key",
+	"modal.views.loading": "浏览 …",
+	"modal.views.value": "👁 浏览 {pv} · 访客 {uv}",
+	"modal.views.fail": "👁 —",
+
 	"cmd.exportLocal": "导出到本地",
 	"cmd.exportOss": "导出到 OSS",
 
 	"statusbar.shareNote": "分享笔记",
 	"statusbar.published": "已发布 — 点击管理",
+	"statusbar.stale": "内容有更新 — 点击管理",
 
 	"toast.uploading": "上传中...",
 	"toast.uploadSuccess": "上传成功",
@@ -71,6 +87,17 @@ const zh: Translations = {
 	"modal.btn.cancel": "取消",
 	"modal.btn.confirmPublish": "确认发布",
 	"modal.btn.confirmUnpublish": "确认停止分享",
+
+	"popover.title": "已发布到网络",
+	"popover.published": "发布于 {time}",
+	"popover.badge.fresh": "已是最新",
+	"popover.badge.stale": "待更新",
+	"popover.hint.stale": "内容已修改，建议重新发布",
+	"popover.btn.update": "重新发布",
+	"popover.copied": "链接已复制",
+	"popover.copy": "复制链接",
+	"popover.unpublished.title": "尚未发布",
+	"popover.unpublished.subline": "发布后可获得分享链接",
 };
 
 const en: Translations = {
@@ -103,11 +130,27 @@ const en: Translations = {
 	"settings.ossDomain.desc": "Replace the default OSS domain. Leave empty for default. e.g. https://cdn.example.com",
 	"settings.urlPreview.label": "Preview: ",
 
+	"settings.analytics.heading": "Analytics",
+	"settings.analytics.callout.item1": "Uses the free Umami Cloud tier — register a site at cloud.umami.is to get the Website ID and API Key",
+	"settings.analytics.callout.item2": "The script is served from cloud.umami.is; loading may be unreliable for mainland-China visitors, so counts can be undercounted",
+	"settings.analyticsEnabled.name": "Enable analytics",
+	"settings.analyticsEnabled.desc": "Embed the Umami tracking script into published/exported pages",
+	"settings.umamiScriptUrl.name": "Tracking script URL",
+	"settings.umamiScriptUrl.desc": "Umami script.js URL; Cloud default is https://cloud.umami.is/script.js",
+	"settings.umamiWebsiteId.name": "Website ID",
+	"settings.umamiWebsiteId.desc": "The Umami site UUID (used as data-website-id)",
+	"settings.umamiApiKey.name": "API Key",
+	"settings.umamiApiKey.desc": "Umami Cloud API Key used to read page views",
+	"modal.views.loading": "Views …",
+	"modal.views.value": "👁 {pv} views · {uv} visitors",
+	"modal.views.fail": "👁 —",
+
 	"cmd.exportLocal": "Export to local",
 	"cmd.exportOss": "Export to OSS",
 
 	"statusbar.shareNote": "Share note",
 	"statusbar.published": "Published — click to manage",
+	"statusbar.stale": "Content changed — click to manage",
 
 	"toast.uploading": "Uploading...",
 	"toast.uploadSuccess": "Upload successful",
@@ -142,6 +185,17 @@ const en: Translations = {
 	"modal.btn.cancel": "Cancel",
 	"modal.btn.confirmPublish": "Confirm Publish",
 	"modal.btn.confirmUnpublish": "Confirm Stop Sharing",
+
+	"popover.title": "Published online",
+	"popover.published": "Published {time}",
+	"popover.badge.fresh": "Up to date",
+	"popover.badge.stale": "Needs update",
+	"popover.hint.stale": "Content changed — re-publish recommended",
+	"popover.btn.update": "Re-publish",
+	"popover.copied": "Link copied",
+	"popover.copy": "Copy link",
+	"popover.unpublished.title": "Not published yet",
+	"popover.unpublished.subline": "Publish to get a shareable link",
 };
 
 const translations: Record<Language, Translations> = { zh, en };

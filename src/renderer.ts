@@ -1,6 +1,8 @@
 import { App, TFile, MarkdownRenderer, Component, FileSystemAdapter } from "obsidian";
 import { renderBaseAsTable, resolveBaseEmbeds } from "./base-renderer";
 import { registerImage, processImgsBlocks } from "./imgs-renderer";
+import { getUmamiScriptTag, type UmamiInjectConfig } from "./analytics";
+import { stripFrontmatter } from "./note-hash";
 
 const THEME = "#65A692";
 
@@ -77,8 +79,8 @@ function collectImages(
       const absPath = decodeURIComponent(src.replace(/^app:\/\/local/, ""));
       if (!absPath.startsWith(vaultBasePath)) return;
       const relPath = absPath.slice(vaultBasePath.length).replace(/^[/\\]/, "");
-      const imgFile = app.vault.getAbstractFileByPath(relPath) as TFile | null;
-      if (!imgFile) return;
+      const imgFile = app.vault.getAbstractFileByPath(relPath);
+      if (!(imgFile instanceof TFile)) return;
       const name = registerImage(imgFile, images);
       img.setAttribute("src", `images/${name}`);
       img.removeAttribute("srcset");
@@ -142,7 +144,7 @@ export async function renderNote(
   file: TFile,
   rawContent: string
 ): Promise<{ html: string; css: string; images: Map<string, TFile> }> {
-  let content = rawContent.replace(/^---[\s\S]*?---\n?/, "");
+  let content = stripFrontmatter(rawContent);
   content = resolveBaseEmbeds(content);
   content = protectPluginCodeBlocks(content);
   const { processed, entries } = extractMath(content);
@@ -239,13 +241,35 @@ export async function renderNote(
   processImgsBlocks(app, file, el, images);
   collectImages(app, file, el, images);
 
+  // Defer off-screen image loading so the first screen paints without waiting
+  // on every image (covers vault, gallery and any external <img>).
+  el.querySelectorAll("img").forEach((img) => {
+    img.setAttribute("loading", "lazy");
+    img.setAttribute("decoding", "async");
+  });
+
   const html = el.innerHTML;
   activeDocument.body.removeChild(el);
   return { html, css: buildCss(), images };
 }
 
 /* ── HTML builder ──────────────────────────────────────────────────────── */
-export function buildHtml(title: string, htmlBody: string, css: string): string {
+
+/** jsdelivr fallback, used for local export where no OSS base is available. */
+const KATEX_CDN_BASE = "https://cdn.jsdelivr.net/npm/katex@0.16.9/dist";
+
+/** True if the rendered body contains KaTeX math placeholders. */
+export function containsMath(htmlBody: string): boolean {
+  return /class="math-[di]"/.test(htmlBody);
+}
+
+/**
+ * Build the full HTML page. `katexBase` is the directory that hosts
+ * katex.min.css / katex.min.js (e.g. a self-hosted OSS path); when omitted it
+ * falls back to the jsdelivr CDN. KaTeX assets are referenced only when the
+ * page actually contains math, so math-free pages load nothing extra.
+ */
+export function buildHtml(title: string, htmlBody: string, css: string, katexBase?: string, analytics?: UmamiInjectConfig): string {
   const svgCopy = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
   const svgCheck = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${THEME}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
 
@@ -277,13 +301,22 @@ export function buildHtml(title: string, htmlBody: string, css: string): string 
   const iconsJson = JSON.stringify(calloutIcons);
   const aliasJson = JSON.stringify(calloutAliases);
 
+  const base = katexBase ?? KATEX_CDN_BASE;
+  const hasMath = containsMath(htmlBody);
+  const katexCssTag = hasMath
+    ? `\n  <link rel="stylesheet" href="${base}/katex.min.css">`
+    : "";
+  const katexJsTag = hasMath
+    ? `\n  <script src="${base}/katex.min.js"></script>`
+    : "";
+  const analyticsTag = analytics ? `\n  ${getUmamiScriptTag(analytics)}` : "";
+
   return `<!DOCTYPE html>
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title}</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <title>${title}</title>${katexCssTag}${analyticsTag}
   <style>${css}</style>
 </head>
 <body>
@@ -305,7 +338,7 @@ export function buildHtml(title: string, htmlBody: string, css: string): string 
 ${htmlBody}
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+${katexJsTag}
   <script>
     (function() {
       var COPY_ICON  = '${svgCopy}';
@@ -621,7 +654,6 @@ export function buildCss(): string {
 *, *::before, *::after { box-sizing: border-box; }
 
 /* ── Page ── */
-*, *::before, *::after { box-sizing: border-box; }
 body {
   margin: 0;
   padding: 2rem 1rem;
