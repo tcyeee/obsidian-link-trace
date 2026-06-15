@@ -2,6 +2,7 @@ import { App, TFile, MarkdownRenderer, Component, FileSystemAdapter } from "obsi
 import { renderBaseAsTable, resolveBaseEmbeds } from "./base-renderer";
 import { registerImage, processImgsBlocks } from "./imgs-renderer";
 import { getUmamiScriptTag, type UmamiInjectConfig } from "./analytics";
+import { stripFrontmatter } from "./note-hash";
 
 const THEME = "#65A692";
 
@@ -143,7 +144,7 @@ export async function renderNote(
   file: TFile,
   rawContent: string
 ): Promise<{ html: string; css: string; images: Map<string, TFile> }> {
-  let content = rawContent.replace(/^---[\s\S]*?---\n?/, "");
+  let content = stripFrontmatter(rawContent);
   content = resolveBaseEmbeds(content);
   content = protectPluginCodeBlocks(content);
   const { processed, entries } = extractMath(content);
