@@ -1,8 +1,17 @@
-import { Notice, TFile, setIcon, setTooltip } from "obsidian";
+import { TFile, setIcon, setTooltip } from "obsidian";
 import type ShareOnlinePlugin from "../main";
 import { t } from "./i18n";
 
 const POPOVER_CLASS = "opal-share-popover";
+
+/** Format a date as 24-hour local time, e.g. "2026-06-15 18:54:15". */
+function formatDateTime(d: Date): string {
+	const pad = (n: number) => String(n).padStart(2, "0");
+	return (
+		`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ` +
+		`${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+	);
+}
 
 /**
  * A self-managed floating card anchored above the status-bar share icon.
@@ -129,12 +138,6 @@ export class SharePopover {
 				| string
 				| undefined) ?? "";
 		const publishedAt = shareTime ? new Date(shareTime) : null;
-		if (publishedAt && !isNaN(publishedAt.getTime())) {
-			headText.createDiv({
-				cls: "opal-share-popover-subline",
-				text: t("popover.published", { time: publishedAt.toLocaleString() }),
-			});
-		}
 		header.createSpan({
 			cls: "opal-share-popover-badge",
 			text: stale ? t("popover.badge.stale") : t("popover.badge.fresh"),
@@ -152,10 +155,31 @@ export class SharePopover {
 		const copyBtn = urlRow.createDiv({ cls: "opal-share-popover-copy" });
 		setIcon(copyBtn, "copy");
 		setTooltip(copyBtn, t("popover.copy"));
+		let copiedTimer = 0;
 		copyBtn.addEventListener("click", (e) => {
 			e.preventDefault();
-			void navigator.clipboard.writeText(shareLink).then(() => new Notice(t("popover.copied")));
+			void navigator.clipboard.writeText(shareLink).then(() => {
+				// In-panel feedback: swap to a check icon and tint green, then revert.
+				copyBtn.addClass("is-copied");
+				setIcon(copyBtn, "check");
+				setTooltip(copyBtn, t("popover.copied"));
+				window.clearTimeout(copiedTimer);
+				copiedTimer = window.setTimeout(() => {
+					if (!copyBtn.isConnected) return;
+					copyBtn.removeClass("is-copied");
+					setIcon(copyBtn, "copy");
+					setTooltip(copyBtn, t("popover.copy"));
+				}, 1500);
+			});
 		});
+
+		// Published time below the link, in 24-hour format (e.g. 2026-06-15 18:54:15)
+		if (publishedAt && !isNaN(publishedAt.getTime())) {
+			card.createDiv({
+				cls: "opal-share-popover-published",
+				text: t("popover.published", { time: formatDateTime(publishedAt) }),
+			});
+		}
 
 		// Stale hint + emphasized re-publish
 		if (stale) {

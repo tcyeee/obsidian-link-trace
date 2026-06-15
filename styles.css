@@ -304,6 +304,15 @@ details[open] > .opal-collapsible-heading::before {
 .opal-share-popover-copy:hover {
   color: var(--text-normal);
 }
+.opal-share-popover-copy.is-copied,
+.opal-share-popover-copy.is-copied:hover {
+  color: var(--text-success);
+}
+.opal-share-popover-published {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
 .opal-share-popover-hint {
   display: flex;
   align-items: center;

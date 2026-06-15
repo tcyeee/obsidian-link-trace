@@ -28055,6 +28055,10 @@ async function deleteFromOss(settings, noteName) {
 // src/share-popover.ts
 var import_obsidian8 = require("obsidian");
 var POPOVER_CLASS = "opal-share-popover";
+function formatDateTime(d) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
 var SharePopover = class {
   constructor(plugin) {
     this.plugin = plugin;
@@ -28151,12 +28155,6 @@ var SharePopover = class {
     headText.createDiv({ cls: "opal-share-popover-title", text: t("popover.title") });
     const shareTime = (_c = (_b = (_a = this.plugin.app.metadataCache.getFileCache(file)) == null ? void 0 : _a.frontmatter) == null ? void 0 : _b["share_time"]) != null ? _c : "";
     const publishedAt = shareTime ? new Date(shareTime) : null;
-    if (publishedAt && !isNaN(publishedAt.getTime())) {
-      headText.createDiv({
-        cls: "opal-share-popover-subline",
-        text: t("popover.published", { time: publishedAt.toLocaleString() })
-      });
-    }
     header.createSpan({
       cls: "opal-share-popover-badge",
       text: stale ? t("popover.badge.stale") : t("popover.badge.fresh")
@@ -28172,10 +28170,28 @@ var SharePopover = class {
     const copyBtn = urlRow.createDiv({ cls: "opal-share-popover-copy" });
     (0, import_obsidian8.setIcon)(copyBtn, "copy");
     (0, import_obsidian8.setTooltip)(copyBtn, t("popover.copy"));
+    let copiedTimer = 0;
     copyBtn.addEventListener("click", (e) => {
       e.preventDefault();
-      void navigator.clipboard.writeText(shareLink).then(() => new import_obsidian8.Notice(t("popover.copied")));
+      void navigator.clipboard.writeText(shareLink).then(() => {
+        copyBtn.addClass("is-copied");
+        (0, import_obsidian8.setIcon)(copyBtn, "check");
+        (0, import_obsidian8.setTooltip)(copyBtn, t("popover.copied"));
+        window.clearTimeout(copiedTimer);
+        copiedTimer = window.setTimeout(() => {
+          if (!copyBtn.isConnected) return;
+          copyBtn.removeClass("is-copied");
+          (0, import_obsidian8.setIcon)(copyBtn, "copy");
+          (0, import_obsidian8.setTooltip)(copyBtn, t("popover.copy"));
+        }, 1500);
+      });
     });
+    if (publishedAt && !isNaN(publishedAt.getTime())) {
+      card.createDiv({
+        cls: "opal-share-popover-published",
+        text: t("popover.published", { time: formatDateTime(publishedAt) })
+      });
+    }
     if (stale) {
       const hint = card.createDiv({ cls: "opal-share-popover-hint" });
       hint.createSpan({ text: t("popover.hint.stale") });
