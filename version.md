@@ -5,6 +5,16 @@
 
 ---
 
+## Version 0.1.6
+
+- Added Umami Cloud analytics: published pages can track page views, and view counts show in the share modal
+- Added a status-bar share popover — click the status-bar icon to publish, update, unpublish, export, or open the link from one card
+- Added stale detection: the status-bar icon flags when a published note has changed since it was last shared, with a one-click update
+
+- 新增 Umami Cloud 分析：已发布页面可统计访问量，分享弹窗中展示浏览次数
+- 新增状态栏分享卡片——点击状态栏图标即可在一个卡片内发布、更新、停止分享、导出或打开链接
+- 新增过期检测：已发布笔记内容变动后，状态栏图标会提示，并支持一键更新
+
 ## Version 0.1.5
 
 - Fixed Shell Execution submission-bot warning by stubbing transitive `address` and `win-release` dependencies of ali-oss with implementations that avoid `child_process`
