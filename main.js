@@ -25721,11 +25721,12 @@ var zh = {
   "modal.btn.cancel": "\u53D6\u6D88",
   "modal.btn.confirmPublish": "\u786E\u8BA4\u53D1\u5E03",
   "modal.btn.confirmUnpublish": "\u786E\u8BA4\u505C\u6B62\u5206\u4EAB",
-  "banner.url.label": "\u5206\u4EAB\u94FE\u63A5",
-  "banner.time.label": "\u53D1\u5E03\u4E8E",
-  "banner.status.fresh": "\u7EBF\u4E0A\u7248\u672C\u5DF2\u662F\u6700\u65B0",
-  "banner.status.stale": "\u7EBF\u4E0A\u7248\u672C\u5DF2\u6EDE\u540E",
-  "banner.btn.update": "\u66F4\u65B0",
+  "banner.title": "\u5DF2\u53D1\u5E03\u5230\u7F51\u7EDC",
+  "banner.published": "\u53D1\u5E03\u4E8E {time}",
+  "banner.badge.fresh": "\u5DF2\u662F\u6700\u65B0",
+  "banner.badge.stale": "\u5F85\u66F4\u65B0",
+  "banner.hint.stale": "\u5185\u5BB9\u5DF2\u4FEE\u6539\uFF0C\u5EFA\u8BAE\u91CD\u65B0\u53D1\u5E03",
+  "banner.btn.update": "\u91CD\u65B0\u53D1\u5E03",
   "banner.copied": "\u94FE\u63A5\u5DF2\u590D\u5236",
   "banner.copy": "\u590D\u5236\u94FE\u63A5"
 };
@@ -25804,11 +25805,12 @@ var en = {
   "modal.btn.cancel": "Cancel",
   "modal.btn.confirmPublish": "Confirm Publish",
   "modal.btn.confirmUnpublish": "Confirm Stop Sharing",
-  "banner.url.label": "Share link",
-  "banner.time.label": "Published",
-  "banner.status.fresh": "Online version is up to date",
-  "banner.status.stale": "Online version is outdated",
-  "banner.btn.update": "Update",
+  "banner.title": "Published online",
+  "banner.published": "Published {time}",
+  "banner.badge.fresh": "Up to date",
+  "banner.badge.stale": "Needs update",
+  "banner.hint.stale": "Content changed \u2014 re-publish recommended",
+  "banner.btn.update": "Re-publish",
   "banner.copied": "Link copied",
   "banner.copy": "Copy link"
 };
@@ -28059,6 +28061,10 @@ async function deleteFromOss(settings, noteName) {
 // src/share-banner.ts
 var import_obsidian8 = require("obsidian");
 var BANNER_CLASS = "opal-share-banner";
+function resolveBannerMount(contentEl) {
+  var _a, _b;
+  return (_b = (_a = contentEl.querySelector(".markdown-preview-sizer")) != null ? _a : contentEl.querySelector(".cm-sizer")) != null ? _b : contentEl;
+}
 var ShareBanner = class {
   constructor(plugin) {
     this.plugin = plugin;
@@ -28091,9 +28097,24 @@ var ShareBanner = class {
   }
   render(view, file, shareLink, shareTime, stale) {
     const banner = createDiv({ cls: BANNER_CLASS });
-    if (stale) banner.addClass(`${BANNER_CLASS}--stale`);
-    const urlRow = banner.createDiv({ cls: "opal-share-banner-row" });
-    urlRow.createSpan({ cls: "opal-share-banner-label", text: t("banner.url.label") });
+    banner.addClass(stale ? `${BANNER_CLASS}--stale` : `${BANNER_CLASS}--fresh`);
+    const header = banner.createDiv({ cls: "opal-share-banner-header" });
+    const icon = header.createDiv({ cls: "opal-share-banner-icon" });
+    (0, import_obsidian8.setIcon)(icon, "globe");
+    const headText = header.createDiv({ cls: "opal-share-banner-headtext" });
+    headText.createDiv({ cls: "opal-share-banner-title", text: t("banner.title") });
+    const publishedAt = shareTime ? new Date(shareTime) : null;
+    if (publishedAt && !isNaN(publishedAt.getTime())) {
+      headText.createDiv({
+        cls: "opal-share-banner-subline",
+        text: t("banner.published", { time: publishedAt.toLocaleString() })
+      });
+    }
+    header.createSpan({
+      cls: "opal-share-banner-badge",
+      text: stale ? t("banner.badge.stale") : t("banner.badge.fresh")
+    });
+    const urlRow = banner.createDiv({ cls: "opal-share-banner-urlrow" });
     const link = urlRow.createEl("a", {
       cls: "opal-share-banner-url",
       text: shareLink,
@@ -28109,22 +28130,10 @@ var ShareBanner = class {
       await navigator.clipboard.writeText(shareLink);
       new import_obsidian8.Notice(t("banner.copied"));
     });
-    const publishedAt = shareTime ? new Date(shareTime) : null;
-    if (publishedAt && !isNaN(publishedAt.getTime())) {
-      const timeRow = banner.createDiv({ cls: "opal-share-banner-row" });
-      timeRow.createSpan({ cls: "opal-share-banner-label", text: t("banner.time.label") });
-      timeRow.createSpan({
-        cls: "opal-share-banner-time",
-        text: publishedAt.toLocaleString()
-      });
-    }
-    const statusRow = banner.createDiv({ cls: "opal-share-banner-row" });
-    statusRow.createSpan({
-      cls: "opal-share-banner-status",
-      text: stale ? t("banner.status.stale") : t("banner.status.fresh")
-    });
     if (stale) {
-      const updateBtn = statusRow.createEl("button", {
+      const footer = banner.createDiv({ cls: "opal-share-banner-footer" });
+      footer.createSpan({ cls: "opal-share-banner-hint", text: t("banner.hint.stale") });
+      const updateBtn = footer.createEl("button", {
         cls: "opal-share-banner-update",
         text: t("banner.btn.update")
       });
@@ -28132,7 +28141,7 @@ var ShareBanner = class {
         void this.plugin.updateNoteFromBanner(file);
       });
     }
-    view.contentEl.prepend(banner);
+    resolveBannerMount(view.contentEl).prepend(banner);
   }
 };
 
