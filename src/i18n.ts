@@ -15,6 +15,8 @@ const zh: Translations = {
 
 	"settings.includeLinked.name": "包含二级笔记",
 	"settings.includeLinked.desc": "导出单个笔记时，同时导出该笔记中链接的所有二级笔记",
+	"settings.shareBanner.name": "在分享的笔记中显示提示框",
+	"settings.shareBanner.desc": "已分享的笔记在 Obsidian 中顶部显示提示框（含链接、发布时间、滞后提醒）。该提示框只存在于编辑器，不会写入文件，也不会被导出。",
 	"settings.pageLinkLength.name": "页面名称长度",
 	"settings.pageLinkLength.desc": "生成分享链接时的路径长度，越长碰撞概率越低",
 
@@ -101,6 +103,8 @@ const en: Translations = {
 
 	"settings.includeLinked.name": "Include Linked Notes",
 	"settings.includeLinked.desc": "When exporting a note, also export all linked sub-notes",
+	"settings.shareBanner.name": "Show banner on shared notes",
+	"settings.shareBanner.desc": "Shared notes show a banner at the top inside Obsidian (link, publish time, stale warning). The banner lives only in the editor — it is never written to the file or exported.",
 	"settings.pageLinkLength.name": "Page Name Length",
 	"settings.pageLinkLength.desc": "Length of the share link path; longer means fewer collisions",
 
