@@ -72,11 +72,28 @@ export class ShareBanner {
 		stale: boolean
 	): void {
 		const banner = createDiv({ cls: BANNER_CLASS });
-		if (stale) banner.addClass(`${BANNER_CLASS}--stale`);
+		banner.addClass(stale ? `${BANNER_CLASS}--stale` : `${BANNER_CLASS}--fresh`);
 
-		// URL row
-		const urlRow = banner.createDiv({ cls: "opal-share-banner-row" });
-		urlRow.createSpan({ cls: "opal-share-banner-label", text: t("banner.url.label") });
+		// Header: icon avatar + title/time + status badge
+		const header = banner.createDiv({ cls: "opal-share-banner-header" });
+		const icon = header.createDiv({ cls: "opal-share-banner-icon" });
+		setIcon(icon, "globe");
+		const headText = header.createDiv({ cls: "opal-share-banner-headtext" });
+		headText.createDiv({ cls: "opal-share-banner-title", text: t("banner.title") });
+		const publishedAt = shareTime ? new Date(shareTime) : null;
+		if (publishedAt && !isNaN(publishedAt.getTime())) {
+			headText.createDiv({
+				cls: "opal-share-banner-subline",
+				text: t("banner.published", { time: publishedAt.toLocaleString() }),
+			});
+		}
+		header.createSpan({
+			cls: "opal-share-banner-badge",
+			text: stale ? t("banner.badge.stale") : t("banner.badge.fresh"),
+		});
+
+		// URL row: framed link + copy button
+		const urlRow = banner.createDiv({ cls: "opal-share-banner-urlrow" });
 		const link = urlRow.createEl("a", {
 			cls: "opal-share-banner-url",
 			text: shareLink,
@@ -93,25 +110,11 @@ export class ShareBanner {
 			new Notice(t("banner.copied"));
 		});
 
-		// Time row
-		const publishedAt = shareTime ? new Date(shareTime) : null;
-		if (publishedAt && !isNaN(publishedAt.getTime())) {
-			const timeRow = banner.createDiv({ cls: "opal-share-banner-row" });
-			timeRow.createSpan({ cls: "opal-share-banner-label", text: t("banner.time.label") });
-			timeRow.createSpan({
-				cls: "opal-share-banner-time",
-				text: publishedAt.toLocaleString(),
-			});
-		}
-
-		// Status row
-		const statusRow = banner.createDiv({ cls: "opal-share-banner-row" });
-		statusRow.createSpan({
-			cls: "opal-share-banner-status",
-			text: stale ? t("banner.status.stale") : t("banner.status.fresh"),
-		});
+		// Footer: hint + re-publish, only when stale
 		if (stale) {
-			const updateBtn = statusRow.createEl("button", {
+			const footer = banner.createDiv({ cls: "opal-share-banner-footer" });
+			footer.createSpan({ cls: "opal-share-banner-hint", text: t("banner.hint.stale") });
+			const updateBtn = footer.createEl("button", {
 				cls: "opal-share-banner-update",
 				text: t("banner.btn.update"),
 			});
@@ -120,6 +123,6 @@ export class ShareBanner {
 			});
 		}
 
-		view.contentEl.prepend(banner);
+		resolveBannerMount(view.contentEl).prepend(banner);
 	}
 }
