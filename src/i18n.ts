@@ -88,6 +88,13 @@ const zh: Translations = {
 	"modal.btn.cancel": "取消",
 	"modal.btn.confirmPublish": "确认发布",
 	"modal.btn.confirmUnpublish": "确认停止分享",
+
+	"banner.url.label": "分享链接",
+	"banner.time.label": "发布于",
+	"banner.status.fresh": "线上版本已是最新",
+	"banner.status.stale": "线上版本已滞后",
+	"banner.btn.update": "更新",
+	"banner.copied": "链接已复制",
 };
 
 const en: Translations = {
@@ -176,6 +183,13 @@ const en: Translations = {
 	"modal.btn.cancel": "Cancel",
 	"modal.btn.confirmPublish": "Confirm Publish",
 	"modal.btn.confirmUnpublish": "Confirm Stop Sharing",
+
+	"banner.url.label": "Share link",
+	"banner.time.label": "Published",
+	"banner.status.fresh": "Online version is up to date",
+	"banner.status.stale": "Online version is outdated",
+	"banner.btn.update": "Update",
+	"banner.copied": "Link copied",
 };
 
 const translations: Record<Language, Translations> = { zh, en };
