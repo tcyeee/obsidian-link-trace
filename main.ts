@@ -5,6 +5,7 @@ import { ShareModal } from "./src/share-modal";
 import { uploadToOss, uploadSubNoteToOss, deleteFromOss, listPublishedNames, ensureKatexAssets, katexBaseUrl } from "./src/oss";
 import { t, setLanguage } from "./src/i18n";
 import { getAnalyticsInjectConfig } from "./src/analytics";
+import { hashBody, stripFrontmatter } from "./src/note-hash";
 
 /* ── Export Toast ──────────────────────────────────────────────────────── */
 
@@ -107,15 +108,22 @@ export default class ShareOnlinePlugin extends Plugin {
 		return (this.app.metadataCache.getFileCache(file)?.frontmatter?.["share_link"] as string | undefined) ?? "";
 	}
 
-	private async setShareLink(file: TFile, url: string): Promise<void> {
+	private async setShareMeta(file: TFile, url: string): Promise<void> {
+		const raw = await this.app.vault.read(file);
+		const hash = hashBody(stripFrontmatter(raw));
+		const time = new Date().toISOString();
 		await this.app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
 			fm["share_link"] = url;
+			fm["share_time"] = time;
+			fm["share_hash"] = hash;
 		});
 	}
 
-	private async removeShareLink(file: TFile): Promise<void> {
+	private async removeShareMeta(file: TFile): Promise<void> {
 		await this.app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
 			delete fm["share_link"];
+			delete fm["share_time"];
+			delete fm["share_hash"];
 		});
 	}
 
@@ -271,7 +279,7 @@ export default class ShareOnlinePlugin extends Plugin {
 						subResult.html,
 						subResult.images
 					);
-					await this.setShareLink(sn.file, subUrl);
+					await this.setShareMeta(sn.file, subUrl);
 				}
 			}
 
@@ -284,7 +292,7 @@ export default class ShareOnlinePlugin extends Plugin {
 				mainHtml,
 				result.images
 			);
-			await this.setShareLink(file, url);
+			await this.setShareMeta(file, url);
 			this.updateStatusBar();
 			if (copyToClipboard) {
 				await navigator.clipboard.writeText(url);
@@ -308,7 +316,7 @@ export default class ShareOnlinePlugin extends Plugin {
 				const snName = this.extractNoteName(sn.shareLink);
 				try {
 					await deleteFromOss(this.settings, snName);
-					await this.removeShareLink(sn.file);
+					await this.removeShareMeta(sn.file);
 				} catch (err: unknown) {
 					console.error(`删除二级笔记失败 (${sn.file.basename}):`, err);
 					new Notice(t("notice.deleteSubFailed", { name: sn.file.basename }));
@@ -321,7 +329,7 @@ export default class ShareOnlinePlugin extends Plugin {
 				const existingName = this.extractNoteName(existingUrl);
 				await deleteFromOss(this.settings, existingName);
 			}
-			await this.removeShareLink(file);
+			await this.removeShareMeta(file);
 			this.updateStatusBar();
 			this.currentToast?.setSuccess(t("toast.stopped"));
 		} catch (err: unknown) {
