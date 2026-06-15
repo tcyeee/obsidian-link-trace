@@ -1,4 +1,4 @@
-import { Menu, Notice, Plugin, TFile, setIcon, setTooltip } from "obsidian";
+import { Menu, Notice, Plugin, TFile, debounce, setIcon, setTooltip } from "obsidian";
 import { ShareOnlineSettings, DEFAULT_SETTINGS, ShareOnlineSettingTab } from "./src/settings";
 import { exportToLocal, prepareExport, generateUniqueName, collectLinkedNotesWithStatus, rewriteInternalLinks } from "./src/exporter";
 import { ShareModal } from "./src/share-modal";
@@ -6,6 +6,7 @@ import { uploadToOss, uploadSubNoteToOss, deleteFromOss, listPublishedNames, ens
 import { t, setLanguage } from "./src/i18n";
 import { getAnalyticsInjectConfig } from "./src/analytics";
 import { hashBody, stripFrontmatter } from "./src/note-hash";
+import { ShareBanner } from "./src/share-banner";
 
 /* ── Export Toast ──────────────────────────────────────────────────────── */
 
@@ -53,12 +54,14 @@ class ExportToast {
 
 export default class ShareOnlinePlugin extends Plugin {
 	settings: ShareOnlineSettings;
+	shareBanner: ShareBanner;
 	private statusBarEl: HTMLElement;
 	private currentToast: ExportToast | null = null;
 
 	async onload() {
 		await this.loadSettings();
 		this.addSettingTab(new ShareOnlineSettingTab(this.app, this));
+		this.shareBanner = new ShareBanner(this);
 
 		this.addCommand({
 			id: "export-current-note-to-desktop",
@@ -82,15 +85,32 @@ export default class ShareOnlinePlugin extends Plugin {
 		this.statusBarEl.addEventListener("click", (e) => this.showShareMenu(e));
 
 		this.registerEvent(
-			this.app.workspace.on("active-leaf-change", () => this.updateStatusBar())
+			this.app.workspace.on("active-leaf-change", () => {
+				this.updateStatusBar();
+				void this.shareBanner.refresh();
+			})
 		);
 
 		this.registerEvent(
 			this.app.metadataCache.on("changed", (changedFile) => {
 				const active = this.app.workspace.getActiveFile();
-				if (active && changedFile.path === active.path) this.updateStatusBar();
+				if (active && changedFile.path === active.path) {
+					this.updateStatusBar();
+					void this.shareBanner.refresh();
+				}
 			})
 		);
+
+		this.registerEvent(
+			this.app.workspace.on("layout-change", () => void this.shareBanner.refresh())
+		);
+
+		const debouncedBannerRefresh = debounce(() => void this.shareBanner.refresh(), 500, true);
+		this.registerEvent(
+			this.app.workspace.on("editor-change", () => debouncedBannerRefresh())
+		);
+
+		void this.shareBanner.refresh();
 	}
 
 	async loadSettings() {
@@ -298,6 +318,7 @@ export default class ShareOnlinePlugin extends Plugin {
 				await navigator.clipboard.writeText(url);
 			}
 			this.currentToast?.setSuccess(successText);
+			void this.shareBanner.refresh();
 		} catch (err: unknown) {
 			this.currentToast?.setError(t("toast.publishFailed", { error: (err as Error).message }));
 			console.error(err);
@@ -332,6 +353,7 @@ export default class ShareOnlinePlugin extends Plugin {
 			await this.removeShareMeta(file);
 			this.updateStatusBar();
 			this.currentToast?.setSuccess(t("toast.stopped"));
+			void this.shareBanner.refresh();
 		} catch (err: unknown) {
 			this.currentToast?.setError(t("toast.stopFailed", { error: (err as Error).message }));
 			console.error(err);
@@ -352,6 +374,11 @@ export default class ShareOnlinePlugin extends Plugin {
 			? collectLinkedNotesWithStatus(this.app, file)
 			: [];
 		await this.doPublish(file, subNotes, existingName, t("toast.updateSuccess"), false);
+	}
+
+	async updateNoteFromBanner(file: TFile): Promise<void> {
+		await this.updateNote(file);
+		void this.shareBanner.refresh();
 	}
 
 	private async exportCurrentNote(toOss = false) {
@@ -391,6 +418,7 @@ export default class ShareOnlinePlugin extends Plugin {
 	}
 
 	onunload() {
+		this.shareBanner?.remove();
 		this.currentToast?.dismiss();
 	}
 }
