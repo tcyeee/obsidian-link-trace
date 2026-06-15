@@ -7,7 +7,6 @@ import { Language, t, setLanguage, formatPageCount } from "./i18n";
 export interface ShareOnlineSettings {
 	exportPath: string;
 	includeLinkedNotes: boolean;
-	shareBannerEnabled: boolean;
 	ossRegion: string;
 	ossBucket: string;
 	ossAccessKeyId: string;
@@ -25,7 +24,6 @@ export interface ShareOnlineSettings {
 export const DEFAULT_SETTINGS: ShareOnlineSettings = {
 	exportPath: path.join(os.homedir(), "Desktop"),
 	includeLinkedNotes: false,
-	shareBannerEnabled: false,
 	ossRegion: "",
 	ossBucket: "",
 	ossAccessKeyId: "",
@@ -111,19 +109,6 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.includeLinkedNotes = value;
 						await this.plugin.saveSettings();
-					})
-			);
-
-		new Setting(exportDetails)
-			.setName(t("settings.shareBanner.name"))
-			.setDesc(t("settings.shareBanner.desc"))
-			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.settings.shareBannerEnabled)
-					.onChange(async (value) => {
-						this.plugin.settings.shareBannerEnabled = value;
-						await this.plugin.saveSettings();
-						void this.plugin.shareBanner.refresh();
 					})
 			);
 

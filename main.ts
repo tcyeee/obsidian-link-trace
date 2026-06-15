@@ -1,4 +1,4 @@
-import { Menu, Notice, Plugin, TFile, debounce, setIcon, setTooltip } from "obsidian";
+import { MarkdownView, Notice, Plugin, TFile, debounce, setIcon, setTooltip } from "obsidian";
 import { ShareOnlineSettings, DEFAULT_SETTINGS, ShareOnlineSettingTab } from "./src/settings";
 import { exportToLocal, prepareExport, generateUniqueName, collectLinkedNotesWithStatus, rewriteInternalLinks } from "./src/exporter";
 import { ShareModal } from "./src/share-modal";
@@ -6,7 +6,7 @@ import { uploadToOss, uploadSubNoteToOss, deleteFromOss, listPublishedNames, ens
 import { t, setLanguage } from "./src/i18n";
 import { getAnalyticsInjectConfig } from "./src/analytics";
 import { hashBody, stripFrontmatter } from "./src/note-hash";
-import { ShareBanner } from "./src/share-banner";
+import { SharePopover } from "./src/share-popover";
 
 /* ── Export Toast ──────────────────────────────────────────────────────── */
 
@@ -54,14 +54,14 @@ class ExportToast {
 
 export default class ShareOnlinePlugin extends Plugin {
 	settings: ShareOnlineSettings;
-	shareBanner: ShareBanner;
+	sharePopover: SharePopover;
 	private statusBarEl: HTMLElement;
 	private currentToast: ExportToast | null = null;
 
 	async onload() {
 		await this.loadSettings();
 		this.addSettingTab(new ShareOnlineSettingTab(this.app, this));
-		this.shareBanner = new ShareBanner(this);
+		this.sharePopover = new SharePopover(this);
 
 		this.addCommand({
 			id: "export-current-note-to-desktop",
@@ -80,14 +80,14 @@ export default class ShareOnlinePlugin extends Plugin {
 		this.statusBarEl.addClass("opal-status-bar-btn");
 		setTooltip(this.statusBarEl, t("statusbar.shareNote"));
 		setIcon(this.statusBarEl, "share-2");
-		this.updateStatusBar();
+		void this.updateStatusBar();
 
-		this.statusBarEl.addEventListener("click", (e) => this.showShareMenu(e));
+		this.statusBarEl.addEventListener("click", () => void this.sharePopover.toggle(this.statusBarEl));
 
 		this.registerEvent(
 			this.app.workspace.on("active-leaf-change", () => {
-				this.updateStatusBar();
-				void this.shareBanner.refresh();
+				this.sharePopover.close();
+				void this.updateStatusBar();
 			})
 		);
 
@@ -95,22 +95,20 @@ export default class ShareOnlinePlugin extends Plugin {
 			this.app.metadataCache.on("changed", (changedFile) => {
 				const active = this.app.workspace.getActiveFile();
 				if (active && changedFile.path === active.path) {
-					this.updateStatusBar();
-					void this.shareBanner.refresh();
+					void this.updateStatusBar();
 				}
 			})
 		);
 
 		this.registerEvent(
-			this.app.workspace.on("layout-change", () => void this.shareBanner.refresh())
+			this.app.workspace.on("layout-change", () => this.sharePopover.close())
 		);
 
-		const debouncedBannerRefresh = debounce(() => void this.shareBanner.refresh(), 500, true);
+		// Reflect stale state on the status-bar icon while the note is edited.
+		const debouncedStatusRefresh = debounce(() => void this.updateStatusBar(), 500, true);
 		this.registerEvent(
-			this.app.workspace.on("editor-change", () => debouncedBannerRefresh())
+			this.app.workspace.on("editor-change", () => debouncedStatusRefresh())
 		);
-
-		void this.shareBanner.refresh();
 	}
 
 	async loadSettings() {
@@ -156,7 +154,7 @@ export default class ShareOnlinePlugin extends Plugin {
 
 	// ── Status bar ───────────────────────────────────────────────────────
 
-	private updateStatusBar() {
+	private async updateStatusBar(): Promise<void> {
 		const file = this.app.workspace.getActiveFile();
 		// Only Markdown notes can be shared — hide the icon for anything else
 		if (!this.isMarkdown(file)) {
@@ -165,88 +163,64 @@ export default class ShareOnlinePlugin extends Plugin {
 		}
 		this.statusBarEl.show();
 		const published = !!this.getShareLink(file);
-		this.statusBarEl.toggleClass("opal-status-published", published);
-		setTooltip(this.statusBarEl, published ? t("statusbar.published") : t("statusbar.shareNote"));
+		const stale = published ? await this.isStale(file) : false;
+		// Active file may have changed during the async read — re-check before painting.
+		if (this.app.workspace.getActiveFile()?.path !== file.path) return;
+		this.statusBarEl.toggleClass("opal-status-published", published && !stale);
+		this.statusBarEl.toggleClass("opal-status-stale", published && stale);
+		setTooltip(
+			this.statusBarEl,
+			!published ? t("statusbar.shareNote") : stale ? t("statusbar.stale") : t("statusbar.published")
+		);
 	}
 
-	private showShareMenu(event: MouseEvent) {
-		const file = this.app.workspace.getActiveFile();
-		if (!this.isMarkdown(file)) {
-			new Notice(t("notice.onlyMarkdown.share"));
-			return;
-		}
-
-		const published = !!this.getShareLink(file);
-		const menu = new Menu();
-
-		const ossReady = !!(
+	/** True when the OSS credentials needed to publish are all present. */
+	isOssReady(): boolean {
+		return !!(
 			this.settings.ossRegion &&
 			this.settings.ossBucket &&
 			this.settings.ossAccessKeyId &&
 			this.settings.ossAccessKeySecret
 		);
+	}
 
-		if (!published) {
-			menu.addItem((item) =>
-				item
-					.setTitle(t("menu.publish"))
-					.setIcon("upload-cloud")
-					.setDisabled(!ossReady)
-					.onClick(() => {
-						if (!ossReady) return;
-						new ShareModal(this.app, this, file, "publish", (subNotes) => {
-							void this.doPublish(file, subNotes);
-						}).open();
-					})
-			);
-			menu.addItem((item) =>
-				item
-					.setTitle(t("menu.exportLocal"))
-					.setIcon("download")
-					.onClick(async () => {
-						await this.exportFile(file);
-						this.currentToast?.setSuccess(t("toast.exportSuccess"));
-					})
-			);
-		} else {
-			menu.addItem((item) =>
-				item
-					.setTitle(t("menu.openLink"))
-					.setIcon("external-link")
-					.onClick(() => {
-						const url = this.getShareLink(file);
-						activeWindow.open(url, "_blank");
-					})
-			);
-			menu.addItem((item) =>
-				item
-					.setTitle(t("menu.update"))
-					.setIcon("refresh-cw")
-					.onClick(() => this.updateNote(file))
-			);
-			menu.addItem((item) =>
-				item
-					.setTitle(t("menu.unpublish"))
-					.setIcon("eye-off")
-					.onClick(() => {
-						new ShareModal(this.app, this, file, "unpublish", (subNotes) => {
-							void this.doUnpublish(file, subNotes);
-						}).open();
-					})
-			);
-			menu.addSeparator();
-			menu.addItem((item) =>
-				item
-					.setTitle(t("menu.exportLocal"))
-					.setIcon("download")
-					.onClick(async () => {
-						await this.exportFile(file);
-						this.currentToast?.setSuccess(t("toast.exportSuccess"));
-					})
-			);
-		}
+	/** True when the note's current body differs from the published snapshot. */
+	async isStale(file: TFile): Promise<boolean> {
+		const shareHash =
+			(this.app.metadataCache.getFileCache(file)?.frontmatter?.["share_hash"] as string | undefined) ?? "";
+		if (!shareHash) return true;
+		// Prefer the live editor so staleness updates while typing; fall back to disk.
+		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+		const raw =
+			view?.file?.path === file.path && view.editor
+				? view.editor.getValue()
+				: await this.app.vault.cachedRead(file);
+		return hashBody(stripFrontmatter(raw)) !== shareHash;
+	}
 
-		menu.showAtPosition({ x: event.clientX + 12, y: event.clientY + 28 });
+	// ── Popover-driven actions ─────────────────────────────────────────────
+
+	openShareLink(file: TFile): void {
+		const url = this.getShareLink(file);
+		if (url) activeWindow.open(url, "_blank");
+	}
+
+	publishFromUi(file: TFile): void {
+		if (!this.isOssReady()) return;
+		new ShareModal(this.app, this, file, "publish", (subNotes) => {
+			void this.doPublish(file, subNotes);
+		}).open();
+	}
+
+	unpublishFromUi(file: TFile): void {
+		new ShareModal(this.app, this, file, "unpublish", (subNotes) => {
+			void this.doUnpublish(file, subNotes);
+		}).open();
+	}
+
+	async exportFromUi(file: TFile): Promise<void> {
+		await this.exportFile(file);
+		this.currentToast?.setSuccess(t("toast.exportSuccess"));
 	}
 
 	// ── Actions ──────────────────────────────────────────────────────────
@@ -313,12 +287,11 @@ export default class ShareOnlinePlugin extends Plugin {
 				result.images
 			);
 			await this.setShareMeta(file, url);
-			this.updateStatusBar();
+			void this.updateStatusBar();
 			if (copyToClipboard) {
 				await navigator.clipboard.writeText(url);
 			}
 			this.currentToast?.setSuccess(successText);
-			void this.shareBanner.refresh();
 		} catch (err: unknown) {
 			this.currentToast?.setError(t("toast.publishFailed", { error: (err as Error).message }));
 			console.error(err);
@@ -351,9 +324,8 @@ export default class ShareOnlinePlugin extends Plugin {
 				await deleteFromOss(this.settings, existingName);
 			}
 			await this.removeShareMeta(file);
-			this.updateStatusBar();
+			void this.updateStatusBar();
 			this.currentToast?.setSuccess(t("toast.stopped"));
-			void this.shareBanner.refresh();
 		} catch (err: unknown) {
 			this.currentToast?.setError(t("toast.stopFailed", { error: (err as Error).message }));
 			console.error(err);
@@ -376,7 +348,7 @@ export default class ShareOnlinePlugin extends Plugin {
 		await this.doPublish(file, subNotes, existingName, t("toast.updateSuccess"), false);
 	}
 
-	async updateNoteFromBanner(file: TFile): Promise<void> {
+	async updateFromUi(file: TFile): Promise<void> {
 		await this.updateNote(file);
 	}
 
@@ -417,7 +389,7 @@ export default class ShareOnlinePlugin extends Plugin {
 	}
 
 	onunload() {
-		this.shareBanner?.remove();
+		this.sharePopover?.close();
 		this.currentToast?.dismiss();
 	}
 }

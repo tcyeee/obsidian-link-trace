@@ -15,8 +15,6 @@ const zh: Translations = {
 
 	"settings.includeLinked.name": "包含二级笔记",
 	"settings.includeLinked.desc": "导出单个笔记时，同时导出该笔记中链接的所有二级笔记",
-	"settings.shareBanner.name": "在分享的笔记中显示提示框",
-	"settings.shareBanner.desc": "已分享的笔记在 Obsidian 中顶部显示提示框（含链接、发布时间、滞后提醒）。该提示框只存在于编辑器，不会写入文件，也不会被导出。",
 	"settings.pageLinkLength.name": "页面名称长度",
 	"settings.pageLinkLength.desc": "生成分享链接时的路径长度，越长碰撞概率越低",
 
@@ -54,6 +52,7 @@ const zh: Translations = {
 
 	"statusbar.shareNote": "分享笔记",
 	"statusbar.published": "已发布 — 点击管理",
+	"statusbar.stale": "内容有更新 — 点击管理",
 
 	"toast.uploading": "上传中...",
 	"toast.uploadSuccess": "上传成功",
@@ -89,14 +88,16 @@ const zh: Translations = {
 	"modal.btn.confirmPublish": "确认发布",
 	"modal.btn.confirmUnpublish": "确认停止分享",
 
-	"banner.title": "已发布到网络",
-	"banner.published": "发布于 {time}",
-	"banner.badge.fresh": "已是最新",
-	"banner.badge.stale": "待更新",
-	"banner.hint.stale": "内容已修改，建议重新发布",
-	"banner.btn.update": "重新发布",
-	"banner.copied": "链接已复制",
-	"banner.copy": "复制链接",
+	"popover.title": "已发布到网络",
+	"popover.published": "发布于 {time}",
+	"popover.badge.fresh": "已是最新",
+	"popover.badge.stale": "待更新",
+	"popover.hint.stale": "内容已修改，建议重新发布",
+	"popover.btn.update": "重新发布",
+	"popover.copied": "链接已复制",
+	"popover.copy": "复制链接",
+	"popover.unpublished.title": "尚未发布",
+	"popover.unpublished.subline": "发布后可获得分享链接",
 };
 
 const en: Translations = {
@@ -112,8 +113,6 @@ const en: Translations = {
 
 	"settings.includeLinked.name": "Include Linked Notes",
 	"settings.includeLinked.desc": "When exporting a note, also export all linked sub-notes",
-	"settings.shareBanner.name": "Show banner on shared notes",
-	"settings.shareBanner.desc": "Shared notes show a banner at the top inside Obsidian (link, publish time, stale warning). The banner lives only in the editor — it is never written to the file or exported.",
 	"settings.pageLinkLength.name": "Page Name Length",
 	"settings.pageLinkLength.desc": "Length of the share link path; longer means fewer collisions",
 
@@ -151,6 +150,7 @@ const en: Translations = {
 
 	"statusbar.shareNote": "Share note",
 	"statusbar.published": "Published — click to manage",
+	"statusbar.stale": "Content changed — click to manage",
 
 	"toast.uploading": "Uploading...",
 	"toast.uploadSuccess": "Upload successful",
@@ -186,14 +186,16 @@ const en: Translations = {
 	"modal.btn.confirmPublish": "Confirm Publish",
 	"modal.btn.confirmUnpublish": "Confirm Stop Sharing",
 
-	"banner.title": "Published online",
-	"banner.published": "Published {time}",
-	"banner.badge.fresh": "Up to date",
-	"banner.badge.stale": "Needs update",
-	"banner.hint.stale": "Content changed — re-publish recommended",
-	"banner.btn.update": "Re-publish",
-	"banner.copied": "Link copied",
-	"banner.copy": "Copy link",
+	"popover.title": "Published online",
+	"popover.published": "Published {time}",
+	"popover.badge.fresh": "Up to date",
+	"popover.badge.stale": "Needs update",
+	"popover.hint.stale": "Content changed — re-publish recommended",
+	"popover.btn.update": "Re-publish",
+	"popover.copied": "Link copied",
+	"popover.copy": "Copy link",
+	"popover.unpublished.title": "Not published yet",
+	"popover.unpublished.subline": "Publish to get a shareable link",
 };
 
 const translations: Record<Language, Translations> = { zh, en };

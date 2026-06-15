@@ -25657,8 +25657,6 @@ var zh = {
   "settings.oss.callout.item2": "OSS \u5FC5\u987B\u914D\u7F6E\u57DF\u540D\uFF0C\u5426\u5219\u94FE\u63A5\u6253\u5F00\u53EA\u4F1A\u89E6\u53D1\u4E0B\u8F7D",
   "settings.includeLinked.name": "\u5305\u542B\u4E8C\u7EA7\u7B14\u8BB0",
   "settings.includeLinked.desc": "\u5BFC\u51FA\u5355\u4E2A\u7B14\u8BB0\u65F6\uFF0C\u540C\u65F6\u5BFC\u51FA\u8BE5\u7B14\u8BB0\u4E2D\u94FE\u63A5\u7684\u6240\u6709\u4E8C\u7EA7\u7B14\u8BB0",
-  "settings.shareBanner.name": "\u5728\u5206\u4EAB\u7684\u7B14\u8BB0\u4E2D\u663E\u793A\u63D0\u793A\u6846",
-  "settings.shareBanner.desc": "\u5DF2\u5206\u4EAB\u7684\u7B14\u8BB0\u5728 Obsidian \u4E2D\u9876\u90E8\u663E\u793A\u63D0\u793A\u6846\uFF08\u542B\u94FE\u63A5\u3001\u53D1\u5E03\u65F6\u95F4\u3001\u6EDE\u540E\u63D0\u9192\uFF09\u3002\u8BE5\u63D0\u793A\u6846\u53EA\u5B58\u5728\u4E8E\u7F16\u8F91\u5668\uFF0C\u4E0D\u4F1A\u5199\u5165\u6587\u4EF6\uFF0C\u4E5F\u4E0D\u4F1A\u88AB\u5BFC\u51FA\u3002",
   "settings.pageLinkLength.name": "\u9875\u9762\u540D\u79F0\u957F\u5EA6",
   "settings.pageLinkLength.desc": "\u751F\u6210\u5206\u4EAB\u94FE\u63A5\u65F6\u7684\u8DEF\u5F84\u957F\u5EA6\uFF0C\u8D8A\u957F\u78B0\u649E\u6982\u7387\u8D8A\u4F4E",
   "settings.exportPath.name": "\u5BFC\u51FA\u8DEF\u5F84",
@@ -25691,6 +25689,7 @@ var zh = {
   "cmd.exportOss": "\u5BFC\u51FA\u5230 OSS",
   "statusbar.shareNote": "\u5206\u4EAB\u7B14\u8BB0",
   "statusbar.published": "\u5DF2\u53D1\u5E03 \u2014 \u70B9\u51FB\u7BA1\u7406",
+  "statusbar.stale": "\u5185\u5BB9\u6709\u66F4\u65B0 \u2014 \u70B9\u51FB\u7BA1\u7406",
   "toast.uploading": "\u4E0A\u4F20\u4E2D...",
   "toast.uploadSuccess": "\u4E0A\u4F20\u6210\u529F",
   "toast.exporting": "\u5BFC\u51FA\u4E2D...",
@@ -25721,14 +25720,16 @@ var zh = {
   "modal.btn.cancel": "\u53D6\u6D88",
   "modal.btn.confirmPublish": "\u786E\u8BA4\u53D1\u5E03",
   "modal.btn.confirmUnpublish": "\u786E\u8BA4\u505C\u6B62\u5206\u4EAB",
-  "banner.title": "\u5DF2\u53D1\u5E03\u5230\u7F51\u7EDC",
-  "banner.published": "\u53D1\u5E03\u4E8E {time}",
-  "banner.badge.fresh": "\u5DF2\u662F\u6700\u65B0",
-  "banner.badge.stale": "\u5F85\u66F4\u65B0",
-  "banner.hint.stale": "\u5185\u5BB9\u5DF2\u4FEE\u6539\uFF0C\u5EFA\u8BAE\u91CD\u65B0\u53D1\u5E03",
-  "banner.btn.update": "\u91CD\u65B0\u53D1\u5E03",
-  "banner.copied": "\u94FE\u63A5\u5DF2\u590D\u5236",
-  "banner.copy": "\u590D\u5236\u94FE\u63A5"
+  "popover.title": "\u5DF2\u53D1\u5E03\u5230\u7F51\u7EDC",
+  "popover.published": "\u53D1\u5E03\u4E8E {time}",
+  "popover.badge.fresh": "\u5DF2\u662F\u6700\u65B0",
+  "popover.badge.stale": "\u5F85\u66F4\u65B0",
+  "popover.hint.stale": "\u5185\u5BB9\u5DF2\u4FEE\u6539\uFF0C\u5EFA\u8BAE\u91CD\u65B0\u53D1\u5E03",
+  "popover.btn.update": "\u91CD\u65B0\u53D1\u5E03",
+  "popover.copied": "\u94FE\u63A5\u5DF2\u590D\u5236",
+  "popover.copy": "\u590D\u5236\u94FE\u63A5",
+  "popover.unpublished.title": "\u5C1A\u672A\u53D1\u5E03",
+  "popover.unpublished.subline": "\u53D1\u5E03\u540E\u53EF\u83B7\u5F97\u5206\u4EAB\u94FE\u63A5"
 };
 var en = {
   "settings.language": "\u8BED\u8A00 / Language",
@@ -25741,8 +25742,6 @@ var en = {
   "settings.oss.callout.item2": "OSS must have a custom domain configured; otherwise links will trigger a download instead of opening",
   "settings.includeLinked.name": "Include Linked Notes",
   "settings.includeLinked.desc": "When exporting a note, also export all linked sub-notes",
-  "settings.shareBanner.name": "Show banner on shared notes",
-  "settings.shareBanner.desc": "Shared notes show a banner at the top inside Obsidian (link, publish time, stale warning). The banner lives only in the editor \u2014 it is never written to the file or exported.",
   "settings.pageLinkLength.name": "Page Name Length",
   "settings.pageLinkLength.desc": "Length of the share link path; longer means fewer collisions",
   "settings.exportPath.name": "Export Path",
@@ -25775,6 +25774,7 @@ var en = {
   "cmd.exportOss": "Export to OSS",
   "statusbar.shareNote": "Share note",
   "statusbar.published": "Published \u2014 click to manage",
+  "statusbar.stale": "Content changed \u2014 click to manage",
   "toast.uploading": "Uploading...",
   "toast.uploadSuccess": "Upload successful",
   "toast.exporting": "Exporting...",
@@ -25805,14 +25805,16 @@ var en = {
   "modal.btn.cancel": "Cancel",
   "modal.btn.confirmPublish": "Confirm Publish",
   "modal.btn.confirmUnpublish": "Confirm Stop Sharing",
-  "banner.title": "Published online",
-  "banner.published": "Published {time}",
-  "banner.badge.fresh": "Up to date",
-  "banner.badge.stale": "Needs update",
-  "banner.hint.stale": "Content changed \u2014 re-publish recommended",
-  "banner.btn.update": "Re-publish",
-  "banner.copied": "Link copied",
-  "banner.copy": "Copy link"
+  "popover.title": "Published online",
+  "popover.published": "Published {time}",
+  "popover.badge.fresh": "Up to date",
+  "popover.badge.stale": "Needs update",
+  "popover.hint.stale": "Content changed \u2014 re-publish recommended",
+  "popover.btn.update": "Re-publish",
+  "popover.copied": "Link copied",
+  "popover.copy": "Copy link",
+  "popover.unpublished.title": "Not published yet",
+  "popover.unpublished.subline": "Publish to get a shareable link"
 };
 var translations = { zh, en };
 var currentLanguage = "zh";
@@ -25858,7 +25860,6 @@ function formatPageCount(count) {
 var DEFAULT_SETTINGS = {
   exportPath: path.join(os.homedir(), "Desktop"),
   includeLinkedNotes: false,
-  shareBannerEnabled: false,
   ossRegion: "",
   ossBucket: "",
   ossAccessKeyId: "",
@@ -25915,13 +25916,6 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
       (toggle) => toggle.setValue(this.plugin.settings.includeLinkedNotes).onChange(async (value) => {
         this.plugin.settings.includeLinkedNotes = value;
         await this.plugin.saveSettings();
-      })
-    );
-    new import_obsidian.Setting(exportDetails).setName(t("settings.shareBanner.name")).setDesc(t("settings.shareBanner.desc")).addToggle(
-      (toggle) => toggle.setValue(this.plugin.settings.shareBannerEnabled).onChange(async (value) => {
-        this.plugin.settings.shareBannerEnabled = value;
-        await this.plugin.saveSettings();
-        void this.plugin.shareBanner.refresh();
       })
     );
     new import_obsidian.Setting(exportDetails).setName(t("settings.pageLinkLength.name")).setDesc(t("settings.pageLinkLength.desc")).addDropdown((dropdown) => {
@@ -28058,90 +28052,208 @@ async function deleteFromOss(settings, noteName) {
   }
 }
 
-// src/share-banner.ts
+// src/share-popover.ts
 var import_obsidian8 = require("obsidian");
-var BANNER_CLASS = "opal-share-banner";
-function resolveBannerMount(contentEl) {
-  var _a, _b;
-  return (_b = (_a = contentEl.querySelector(".markdown-preview-sizer")) != null ? _a : contentEl.querySelector(".cm-sizer")) != null ? _b : contentEl;
-}
-var ShareBanner = class {
+var POPOVER_CLASS = "opal-share-popover";
+var SharePopover = class {
   constructor(plugin) {
     this.plugin = plugin;
-    this.token = 0;
+    this.el = null;
   }
-  /** Remove every banner this plugin has mounted, anywhere in the workspace. */
-  remove() {
-    this.plugin.app.workspace.containerEl.querySelectorAll(`.${BANNER_CLASS}`).forEach((el) => el.remove());
+  isOpen() {
+    return !!this.el;
   }
-  /** Rebuild the banner for the active MarkdownView, or remove it if not applicable. */
-  async refresh() {
-    var _a, _b, _c, _d;
-    const token = ++this.token;
-    this.remove();
-    const { app, settings } = this.plugin;
-    if (!settings.shareBannerEnabled) return;
-    const view = app.workspace.getActiveViewOfType(import_obsidian8.MarkdownView);
-    const file = view == null ? void 0 : view.file;
-    if (!view || !file) return;
+  /** Toggle the card relative to the given anchor (the status-bar icon). */
+  async toggle(anchor) {
+    if (this.el) {
+      this.close();
+      return;
+    }
+    await this.open(anchor);
+  }
+  close() {
+    if (this.onDocPointerDown) {
+      activeDocument.removeEventListener("pointerdown", this.onDocPointerDown, true);
+    }
+    if (this.onKeyDown) {
+      activeDocument.removeEventListener("keydown", this.onKeyDown, true);
+    }
+    this.onDocPointerDown = void 0;
+    this.onKeyDown = void 0;
+    const el = this.el;
+    this.el = null;
+    if (!el) return;
+    el.classList.remove("is-visible");
+    window.setTimeout(() => el.remove(), 150);
+  }
+  async open(anchor) {
+    const file = this.plugin.app.workspace.getActiveFile();
+    if (!file || file.extension !== "md") return;
+    const card = createDiv({ cls: POPOVER_CLASS });
     const shareLink = this.plugin.getShareLink(file);
-    if (!shareLink) return;
-    const fm = (_b = (_a = app.metadataCache.getFileCache(file)) == null ? void 0 : _a.frontmatter) != null ? _b : {};
-    const shareTime = (_c = fm["share_time"]) != null ? _c : "";
-    const shareHash = (_d = fm["share_hash"]) != null ? _d : "";
-    const raw = view.editor ? view.editor.getValue() : await app.vault.cachedRead(file);
-    if (token !== this.token) return;
-    const currentHash = hashBody(stripFrontmatter(raw));
-    const stale = !shareHash || currentHash !== shareHash;
-    this.render(view, file, shareLink, shareTime, stale);
+    if (shareLink) {
+      const stale = await this.plugin.isStale(file);
+      this.renderPublished(card, file, shareLink, stale);
+    } else {
+      this.renderUnpublished(card, file);
+    }
+    activeDocument.body.appendChild(card);
+    this.el = card;
+    this.position(card, anchor);
+    window.requestAnimationFrame(() => card.classList.add("is-visible"));
+    this.onDocPointerDown = (e) => {
+      const target = e.target;
+      if (card.contains(target) || anchor.contains(target)) return;
+      this.close();
+    };
+    this.onKeyDown = (e) => {
+      if (e.key === "Escape") this.close();
+    };
+    window.setTimeout(() => {
+      if (!this.el) return;
+      activeDocument.addEventListener("pointerdown", this.onDocPointerDown, true);
+      activeDocument.addEventListener("keydown", this.onKeyDown, true);
+    }, 0);
   }
-  render(view, file, shareLink, shareTime, stale) {
-    const banner = createDiv({ cls: BANNER_CLASS });
-    banner.addClass(stale ? `${BANNER_CLASS}--stale` : `${BANNER_CLASS}--fresh`);
-    const header = banner.createDiv({ cls: "opal-share-banner-header" });
-    const icon = header.createDiv({ cls: "opal-share-banner-icon" });
+  /**
+   * Anchor the card next to the status-bar icon, flipping above/below based on
+   * available space and clamping into the viewport. The status bar's position
+   * varies by theme, so we never assume it sits at the bottom.
+   */
+  position(card, anchor) {
+    const rect = anchor.getBoundingClientRect();
+    const gap = 8;
+    const margin = 8;
+    const vw = activeWindow.innerWidth;
+    const vh = activeWindow.innerHeight;
+    const cw = card.offsetWidth;
+    const ch = card.offsetHeight;
+    let left = rect.left;
+    if (left + cw + margin > vw) left = vw - cw - margin;
+    if (left < margin) left = margin;
+    const spaceAbove = rect.top;
+    const spaceBelow = vh - rect.bottom;
+    let top = spaceAbove >= ch + gap || spaceAbove >= spaceBelow ? rect.top - gap - ch : rect.bottom + gap;
+    if (top + ch + margin > vh) top = vh - ch - margin;
+    if (top < margin) top = margin;
+    card.setCssProps({
+      "--opal-popover-left": `${Math.round(left)}px`,
+      "--opal-popover-top": `${Math.round(top)}px`
+    });
+  }
+  renderPublished(card, file, shareLink, stale) {
+    var _a, _b, _c;
+    card.addClass(stale ? `${POPOVER_CLASS}--stale` : `${POPOVER_CLASS}--fresh`);
+    const header = card.createDiv({ cls: "opal-share-popover-header" });
+    const icon = header.createDiv({ cls: "opal-share-popover-icon" });
     (0, import_obsidian8.setIcon)(icon, "globe");
-    const headText = header.createDiv({ cls: "opal-share-banner-headtext" });
-    headText.createDiv({ cls: "opal-share-banner-title", text: t("banner.title") });
+    const headText = header.createDiv({ cls: "opal-share-popover-headtext" });
+    headText.createDiv({ cls: "opal-share-popover-title", text: t("popover.title") });
+    const shareTime = (_c = (_b = (_a = this.plugin.app.metadataCache.getFileCache(file)) == null ? void 0 : _a.frontmatter) == null ? void 0 : _b["share_time"]) != null ? _c : "";
     const publishedAt = shareTime ? new Date(shareTime) : null;
     if (publishedAt && !isNaN(publishedAt.getTime())) {
       headText.createDiv({
-        cls: "opal-share-banner-subline",
-        text: t("banner.published", { time: publishedAt.toLocaleString() })
+        cls: "opal-share-popover-subline",
+        text: t("popover.published", { time: publishedAt.toLocaleString() })
       });
     }
     header.createSpan({
-      cls: "opal-share-banner-badge",
-      text: stale ? t("banner.badge.stale") : t("banner.badge.fresh")
+      cls: "opal-share-popover-badge",
+      text: stale ? t("popover.badge.stale") : t("popover.badge.fresh")
     });
-    const urlRow = banner.createDiv({ cls: "opal-share-banner-urlrow" });
+    const urlRow = card.createDiv({ cls: "opal-share-popover-urlrow" });
     const link = urlRow.createEl("a", {
-      cls: "opal-share-banner-url",
+      cls: "opal-share-popover-url",
       text: shareLink,
       href: shareLink
     });
     link.setAttr("target", "_blank");
     link.setAttr("rel", "noopener");
-    const copyBtn = urlRow.createDiv({ cls: "opal-share-banner-copy" });
+    const copyBtn = urlRow.createDiv({ cls: "opal-share-popover-copy" });
     (0, import_obsidian8.setIcon)(copyBtn, "copy");
-    (0, import_obsidian8.setTooltip)(copyBtn, t("banner.copy"));
-    copyBtn.addEventListener("click", async (e) => {
+    (0, import_obsidian8.setTooltip)(copyBtn, t("popover.copy"));
+    copyBtn.addEventListener("click", (e) => {
       e.preventDefault();
-      await navigator.clipboard.writeText(shareLink);
-      new import_obsidian8.Notice(t("banner.copied"));
+      void navigator.clipboard.writeText(shareLink).then(() => new import_obsidian8.Notice(t("popover.copied")));
     });
     if (stale) {
-      const footer = banner.createDiv({ cls: "opal-share-banner-footer" });
-      footer.createSpan({ cls: "opal-share-banner-hint", text: t("banner.hint.stale") });
-      const updateBtn = footer.createEl("button", {
-        cls: "opal-share-banner-update",
-        text: t("banner.btn.update")
+      const hint = card.createDiv({ cls: "opal-share-popover-hint" });
+      hint.createSpan({ text: t("popover.hint.stale") });
+      const updateBtn = hint.createEl("button", {
+        cls: "opal-share-popover-republish mod-cta",
+        text: t("popover.btn.update")
       });
       updateBtn.addEventListener("click", () => {
-        void this.plugin.updateNoteFromBanner(file);
+        this.close();
+        void this.plugin.updateFromUi(file);
       });
     }
-    resolveBannerMount(view.contentEl).prepend(banner);
+    const actions = card.createDiv({ cls: "opal-share-popover-actions" });
+    this.iconAction(actions, "external-link", t("menu.openLink"), () => {
+      this.close();
+      this.plugin.openShareLink(file);
+    });
+    if (!stale) {
+      this.iconAction(actions, "refresh-cw", t("menu.update"), () => {
+        this.close();
+        void this.plugin.updateFromUi(file);
+      });
+    }
+    this.iconAction(actions, "download", t("menu.exportLocal"), () => {
+      this.close();
+      void this.plugin.exportFromUi(file);
+    });
+    this.iconAction(
+      actions,
+      "eye-off",
+      t("menu.unpublish"),
+      () => {
+        this.close();
+        this.plugin.unpublishFromUi(file);
+      },
+      true
+    );
+  }
+  renderUnpublished(card, file) {
+    card.addClass(`${POPOVER_CLASS}--unpublished`);
+    const header = card.createDiv({ cls: "opal-share-popover-header" });
+    const icon = header.createDiv({ cls: "opal-share-popover-icon" });
+    (0, import_obsidian8.setIcon)(icon, "globe");
+    const headText = header.createDiv({ cls: "opal-share-popover-headtext" });
+    headText.createDiv({ cls: "opal-share-popover-title", text: t("popover.unpublished.title") });
+    headText.createDiv({
+      cls: "opal-share-popover-subline",
+      text: t("popover.unpublished.subline")
+    });
+    const actions = card.createDiv({
+      cls: "opal-share-popover-actions opal-share-popover-actions--text"
+    });
+    const ossReady = this.plugin.isOssReady();
+    const publishBtn = actions.createEl("button", {
+      cls: "opal-share-popover-textbtn mod-cta",
+      text: t("menu.publish")
+    });
+    publishBtn.disabled = !ossReady;
+    publishBtn.addEventListener("click", () => {
+      if (!ossReady) return;
+      this.close();
+      this.plugin.publishFromUi(file);
+    });
+    const exportBtn = actions.createEl("button", {
+      cls: "opal-share-popover-textbtn",
+      text: t("menu.exportLocal")
+    });
+    exportBtn.addEventListener("click", () => {
+      this.close();
+      void this.plugin.exportFromUi(file);
+    });
+  }
+  iconAction(parent, icon, tooltip, onClick, danger = false) {
+    const btn = parent.createDiv({ cls: "opal-share-popover-action" });
+    if (danger) btn.addClass("opal-share-popover-action--danger");
+    (0, import_obsidian8.setIcon)(btn, icon);
+    (0, import_obsidian8.setTooltip)(btn, tooltip);
+    btn.addEventListener("click", onClick);
   }
 };
 
@@ -28190,7 +28302,7 @@ var ShareOnlinePlugin = class extends import_obsidian9.Plugin {
   async onload() {
     await this.loadSettings();
     this.addSettingTab(new ShareOnlineSettingTab(this.app, this));
-    this.shareBanner = new ShareBanner(this);
+    this.sharePopover = new SharePopover(this);
     this.addCommand({
       id: "export-current-note-to-desktop",
       name: t("cmd.exportLocal"),
@@ -28205,31 +28317,29 @@ var ShareOnlinePlugin = class extends import_obsidian9.Plugin {
     this.statusBarEl.addClass("opal-status-bar-btn");
     (0, import_obsidian9.setTooltip)(this.statusBarEl, t("statusbar.shareNote"));
     (0, import_obsidian9.setIcon)(this.statusBarEl, "share-2");
-    this.updateStatusBar();
-    this.statusBarEl.addEventListener("click", (e) => this.showShareMenu(e));
+    void this.updateStatusBar();
+    this.statusBarEl.addEventListener("click", () => void this.sharePopover.toggle(this.statusBarEl));
     this.registerEvent(
       this.app.workspace.on("active-leaf-change", () => {
-        this.updateStatusBar();
-        void this.shareBanner.refresh();
+        this.sharePopover.close();
+        void this.updateStatusBar();
       })
     );
     this.registerEvent(
       this.app.metadataCache.on("changed", (changedFile) => {
         const active = this.app.workspace.getActiveFile();
         if (active && changedFile.path === active.path) {
-          this.updateStatusBar();
-          void this.shareBanner.refresh();
+          void this.updateStatusBar();
         }
       })
     );
     this.registerEvent(
-      this.app.workspace.on("layout-change", () => void this.shareBanner.refresh())
+      this.app.workspace.on("layout-change", () => this.sharePopover.close())
     );
-    const debouncedBannerRefresh = (0, import_obsidian9.debounce)(() => void this.shareBanner.refresh(), 500, true);
+    const debouncedStatusRefresh = (0, import_obsidian9.debounce)(() => void this.updateStatusBar(), 500, true);
     this.registerEvent(
-      this.app.workspace.on("editor-change", () => debouncedBannerRefresh())
+      this.app.workspace.on("editor-change", () => debouncedStatusRefresh())
     );
-    void this.shareBanner.refresh();
   }
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
@@ -28266,7 +28376,8 @@ var ShareOnlinePlugin = class extends import_obsidian9.Plugin {
     return !!file && file.extension === "md";
   }
   // ── Status bar ───────────────────────────────────────────────────────
-  updateStatusBar() {
+  async updateStatusBar() {
+    var _a;
     const file = this.app.workspace.getActiveFile();
     if (!this.isMarkdown(file)) {
       this.statusBarEl.hide();
@@ -28274,61 +28385,48 @@ var ShareOnlinePlugin = class extends import_obsidian9.Plugin {
     }
     this.statusBarEl.show();
     const published = !!this.getShareLink(file);
-    this.statusBarEl.toggleClass("opal-status-published", published);
-    (0, import_obsidian9.setTooltip)(this.statusBarEl, published ? t("statusbar.published") : t("statusbar.shareNote"));
+    const stale = published ? await this.isStale(file) : false;
+    if (((_a = this.app.workspace.getActiveFile()) == null ? void 0 : _a.path) !== file.path) return;
+    this.statusBarEl.toggleClass("opal-status-published", published && !stale);
+    this.statusBarEl.toggleClass("opal-status-stale", published && stale);
+    (0, import_obsidian9.setTooltip)(
+      this.statusBarEl,
+      !published ? t("statusbar.shareNote") : stale ? t("statusbar.stale") : t("statusbar.published")
+    );
   }
-  showShareMenu(event) {
-    const file = this.app.workspace.getActiveFile();
-    if (!this.isMarkdown(file)) {
-      new import_obsidian9.Notice(t("notice.onlyMarkdown.share"));
-      return;
-    }
-    const published = !!this.getShareLink(file);
-    const menu = new import_obsidian9.Menu();
-    const ossReady = !!(this.settings.ossRegion && this.settings.ossBucket && this.settings.ossAccessKeyId && this.settings.ossAccessKeySecret);
-    if (!published) {
-      menu.addItem(
-        (item) => item.setTitle(t("menu.publish")).setIcon("upload-cloud").setDisabled(!ossReady).onClick(() => {
-          if (!ossReady) return;
-          new ShareModal(this.app, this, file, "publish", (subNotes) => {
-            void this.doPublish(file, subNotes);
-          }).open();
-        })
-      );
-      menu.addItem(
-        (item) => item.setTitle(t("menu.exportLocal")).setIcon("download").onClick(async () => {
-          var _a;
-          await this.exportFile(file);
-          (_a = this.currentToast) == null ? void 0 : _a.setSuccess(t("toast.exportSuccess"));
-        })
-      );
-    } else {
-      menu.addItem(
-        (item) => item.setTitle(t("menu.openLink")).setIcon("external-link").onClick(() => {
-          const url = this.getShareLink(file);
-          activeWindow.open(url, "_blank");
-        })
-      );
-      menu.addItem(
-        (item) => item.setTitle(t("menu.update")).setIcon("refresh-cw").onClick(() => this.updateNote(file))
-      );
-      menu.addItem(
-        (item) => item.setTitle(t("menu.unpublish")).setIcon("eye-off").onClick(() => {
-          new ShareModal(this.app, this, file, "unpublish", (subNotes) => {
-            void this.doUnpublish(file, subNotes);
-          }).open();
-        })
-      );
-      menu.addSeparator();
-      menu.addItem(
-        (item) => item.setTitle(t("menu.exportLocal")).setIcon("download").onClick(async () => {
-          var _a;
-          await this.exportFile(file);
-          (_a = this.currentToast) == null ? void 0 : _a.setSuccess(t("toast.exportSuccess"));
-        })
-      );
-    }
-    menu.showAtPosition({ x: event.clientX + 12, y: event.clientY + 28 });
+  /** True when the OSS credentials needed to publish are all present. */
+  isOssReady() {
+    return !!(this.settings.ossRegion && this.settings.ossBucket && this.settings.ossAccessKeyId && this.settings.ossAccessKeySecret);
+  }
+  /** True when the note's current body differs from the published snapshot. */
+  async isStale(file) {
+    var _a, _b, _c, _d;
+    const shareHash = (_c = (_b = (_a = this.app.metadataCache.getFileCache(file)) == null ? void 0 : _a.frontmatter) == null ? void 0 : _b["share_hash"]) != null ? _c : "";
+    if (!shareHash) return true;
+    const view = this.app.workspace.getActiveViewOfType(import_obsidian9.MarkdownView);
+    const raw = ((_d = view == null ? void 0 : view.file) == null ? void 0 : _d.path) === file.path && view.editor ? view.editor.getValue() : await this.app.vault.cachedRead(file);
+    return hashBody(stripFrontmatter(raw)) !== shareHash;
+  }
+  // ── Popover-driven actions ─────────────────────────────────────────────
+  openShareLink(file) {
+    const url = this.getShareLink(file);
+    if (url) activeWindow.open(url, "_blank");
+  }
+  publishFromUi(file) {
+    if (!this.isOssReady()) return;
+    new ShareModal(this.app, this, file, "publish", (subNotes) => {
+      void this.doPublish(file, subNotes);
+    }).open();
+  }
+  unpublishFromUi(file) {
+    new ShareModal(this.app, this, file, "unpublish", (subNotes) => {
+      void this.doUnpublish(file, subNotes);
+    }).open();
+  }
+  async exportFromUi(file) {
+    var _a;
+    await this.exportFile(file);
+    (_a = this.currentToast) == null ? void 0 : _a.setSuccess(t("toast.exportSuccess"));
   }
   // ── Actions ──────────────────────────────────────────────────────────
   async doPublish(file, subNotes, existingName, successText = t("toast.publishSuccess"), copyToClipboard = true) {
@@ -28381,12 +28479,11 @@ var ShareOnlinePlugin = class extends import_obsidian9.Plugin {
         result.images
       );
       await this.setShareMeta(file, url);
-      this.updateStatusBar();
+      void this.updateStatusBar();
       if (copyToClipboard) {
         await navigator.clipboard.writeText(url);
       }
       (_b = this.currentToast) == null ? void 0 : _b.setSuccess(successText);
-      void this.shareBanner.refresh();
     } catch (err) {
       (_c = this.currentToast) == null ? void 0 : _c.setError(t("toast.publishFailed", { error: err.message }));
       console.error(err);
@@ -28413,9 +28510,8 @@ var ShareOnlinePlugin = class extends import_obsidian9.Plugin {
         await deleteFromOss(this.settings, existingName);
       }
       await this.removeShareMeta(file);
-      this.updateStatusBar();
+      void this.updateStatusBar();
       (_b = this.currentToast) == null ? void 0 : _b.setSuccess(t("toast.stopped"));
-      void this.shareBanner.refresh();
     } catch (err) {
       (_c = this.currentToast) == null ? void 0 : _c.setError(t("toast.stopFailed", { error: err.message }));
       console.error(err);
@@ -28433,7 +28529,7 @@ var ShareOnlinePlugin = class extends import_obsidian9.Plugin {
     const subNotes = this.settings.includeLinkedNotes ? collectLinkedNotesWithStatus(this.app, file) : [];
     await this.doPublish(file, subNotes, existingName, t("toast.updateSuccess"), false);
   }
-  async updateNoteFromBanner(file) {
+  async updateFromUi(file) {
     await this.updateNote(file);
   }
   async exportCurrentNote(toOss = false) {
@@ -28472,7 +28568,7 @@ var ShareOnlinePlugin = class extends import_obsidian9.Plugin {
   }
   onunload() {
     var _a, _b;
-    (_a = this.shareBanner) == null ? void 0 : _a.remove();
+    (_a = this.sharePopover) == null ? void 0 : _a.close();
     (_b = this.currentToast) == null ? void 0 : _b.dismiss();
   }
 };

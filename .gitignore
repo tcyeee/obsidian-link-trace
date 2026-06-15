@@ -30,4 +30,5 @@ package-lock.json
 
 
 tmp/
-data.json.superpowers/
+data.json
+.superpowers/
