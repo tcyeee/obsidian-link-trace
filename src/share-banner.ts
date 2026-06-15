@@ -6,6 +6,20 @@ import { hashBody, stripFrontmatter } from "./note-hash";
 const BANNER_CLASS = "opal-share-banner";
 
 /**
+ * Pick the element the banner should mount into so it inherits the note's
+ * readable content width. Reading view uses `.markdown-preview-sizer`;
+ * editing / live preview uses `.cm-sizer`. Falls back to contentEl so the
+ * banner never disappears if neither sizer is present.
+ */
+export function resolveBannerMount(contentEl: HTMLElement): HTMLElement {
+	return (
+		contentEl.querySelector<HTMLElement>(".markdown-preview-sizer") ??
+		contentEl.querySelector<HTMLElement>(".cm-sizer") ??
+		contentEl
+	);
+}
+
+/**
  * Injects a runtime banner at the top of a shared note's MarkdownView (reading and
  * editing). The banner lives only in the view DOM — it is never written to the file
  * and therefore never exported. Call refresh() on every relevant view/content change.
