@@ -11,6 +11,8 @@ const BANNER_CLASS = "opal-share-banner";
  * and therefore never exported. Call refresh() on every relevant view/content change.
  */
 export class ShareBanner {
+	private token = 0;
+
 	constructor(private plugin: ShareOnlinePlugin) {}
 
 	/** Remove every banner this plugin has mounted, anywhere in the workspace. */
@@ -22,6 +24,7 @@ export class ShareBanner {
 
 	/** Rebuild the banner for the active MarkdownView, or remove it if not applicable. */
 	async refresh(): Promise<void> {
+		const token = ++this.token;
 		this.remove();
 		const { app, settings } = this.plugin;
 		if (!settings.shareBannerEnabled) return;
@@ -40,6 +43,7 @@ export class ShareBanner {
 		// Prefer live editor content so the stale state updates while typing;
 		// fall back to disk in reading mode where there is no editor.
 		const raw = view.editor ? view.editor.getValue() : await app.vault.cachedRead(file);
+		if (token !== this.token) return;
 		const currentHash = hashBody(stripFrontmatter(raw));
 		const stale = !shareHash || currentHash !== shareHash;
 
@@ -68,7 +72,7 @@ export class ShareBanner {
 		link.setAttr("rel", "noopener");
 		const copyBtn = urlRow.createDiv({ cls: "opal-share-banner-copy" });
 		setIcon(copyBtn, "copy");
-		setTooltip(copyBtn, t("banner.copied"));
+		setTooltip(copyBtn, t("banner.copy"));
 		copyBtn.addEventListener("click", async (e) => {
 			e.preventDefault();
 			await navigator.clipboard.writeText(shareLink);
@@ -76,12 +80,13 @@ export class ShareBanner {
 		});
 
 		// Time row
-		if (shareTime) {
+		const publishedAt = shareTime ? new Date(shareTime) : null;
+		if (publishedAt && !isNaN(publishedAt.getTime())) {
 			const timeRow = banner.createDiv({ cls: "opal-share-banner-row" });
 			timeRow.createSpan({ cls: "opal-share-banner-label", text: t("banner.time.label") });
 			timeRow.createSpan({
 				cls: "opal-share-banner-time",
-				text: new Date(shareTime).toLocaleString(),
+				text: publishedAt.toLocaleString(),
 			});
 		}
 

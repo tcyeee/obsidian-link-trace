@@ -378,7 +378,6 @@ export default class ShareOnlinePlugin extends Plugin {
 
 	async updateNoteFromBanner(file: TFile): Promise<void> {
 		await this.updateNote(file);
-		void this.shareBanner.refresh();
 	}
 
 	private async exportCurrentNote(toOss = false) {

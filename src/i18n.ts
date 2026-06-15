@@ -95,6 +95,7 @@ const zh: Translations = {
 	"banner.status.stale": "线上版本已滞后",
 	"banner.btn.update": "更新",
 	"banner.copied": "链接已复制",
+	"banner.copy": "复制链接",
 };
 
 const en: Translations = {
@@ -190,6 +191,7 @@ const en: Translations = {
 	"banner.status.stale": "Online version is outdated",
 	"banner.btn.update": "Update",
 	"banner.copied": "Link copied",
+	"banner.copy": "Copy link",
 };
 
 const translations: Record<Language, Translations> = { zh, en };
