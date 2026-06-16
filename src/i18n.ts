@@ -60,6 +60,7 @@ const zh: Translations = {
 	"toast.exportSuccess": "导出成功",
 	"toast.stopping": "停止分享中...",
 	"toast.stopped": "已停止分享",
+	"toast.stoppedWithWarn": "已停止分享，但部分二级笔记未删除：{names}",
 	"toast.publishSuccess": "发布成功，链接已复制到剪贴板",
 	"toast.updateSuccess": "更新成功",
 	"toast.publishFailed": "发布失败：{error}",
@@ -74,7 +75,6 @@ const zh: Translations = {
 
 	"notice.onlyMarkdown.share": "只能分享 Markdown 笔记",
 	"notice.onlyMarkdown.publish": "只能发布 Markdown 笔记",
-	"notice.deleteSubFailed": "删除 {name} 失败，已保留其分享链接",
 
 	"modal.publish.title": "发布笔记",
 	"modal.unpublish.title": "停止分享",
@@ -158,6 +158,7 @@ const en: Translations = {
 	"toast.exportSuccess": "Export successful",
 	"toast.stopping": "Stopping share...",
 	"toast.stopped": "Sharing stopped",
+	"toast.stoppedWithWarn": "Sharing stopped, but some sub-notes were not removed: {names}",
 	"toast.publishSuccess": "Published, link copied to clipboard",
 	"toast.updateSuccess": "Updated successfully",
 	"toast.publishFailed": "Publish failed: {error}",
@@ -172,7 +173,6 @@ const en: Translations = {
 
 	"notice.onlyMarkdown.share": "Only Markdown notes can be shared",
 	"notice.onlyMarkdown.publish": "Only Markdown notes can be published",
-	"notice.deleteSubFailed": "Failed to delete {name}, share link retained",
 
 	"modal.publish.title": "Publish Note",
 	"modal.unpublish.title": "Stop Sharing",

@@ -8,55 +8,10 @@ import { getAnalyticsInjectConfig } from "./src/analytics";
 import { hashBody, stripFrontmatter } from "./src/note-hash";
 import { SharePopover } from "./src/share-popover";
 
-/* ── Export Toast ──────────────────────────────────────────────────────── */
-
-class ExportToast {
-	private el: HTMLElement;
-	private state: "loading" | "done" = "loading";
-	private timer = 0;
-
-	constructor(loadingText = t("toast.uploading")) {
-		this.el = createDiv({ cls: "opal-toast" });
-		this.el.createDiv({ cls: "opal-spinner" });
-		this.el.createSpan({ text: loadingText });
-		activeDocument.body.appendChild(this.el);
-		window.requestAnimationFrame(() => this.el.classList.add("is-visible"));
-	}
-
-	setSuccess(text = t("toast.uploadSuccess")) {
-		if (this.state === "done") return;
-		this.state = "done";
-		window.clearTimeout(this.timer);
-		this.el.empty();
-		const iconEl = this.el.createDiv();
-		setIcon(iconEl, "check");
-		this.el.createSpan({ text });
-		this.timer = window.setTimeout(() => this.dismiss(), 2800);
-	}
-
-	setError(text: string) {
-		if (this.state === "done") return;
-		this.state = "done";
-		window.clearTimeout(this.timer);
-		this.el.empty();
-		const iconEl = this.el.createDiv();
-		setIcon(iconEl, "x");
-		this.el.createSpan({ text });
-		this.timer = window.setTimeout(() => this.dismiss(), 4000);
-	}
-
-	dismiss() {
-		window.clearTimeout(this.timer);
-		this.el.classList.remove("is-visible");
-		window.setTimeout(() => this.el.remove(), 250);
-	}
-}
-
 export default class ShareOnlinePlugin extends Plugin {
 	settings: ShareOnlineSettings;
 	sharePopover: SharePopover;
 	private statusBarEl: HTMLElement;
-	private currentToast: ExportToast | null = null;
 
 	async onload() {
 		await this.loadSettings();
@@ -220,7 +175,6 @@ export default class ShareOnlinePlugin extends Plugin {
 
 	async exportFromUi(file: TFile): Promise<void> {
 		await this.exportFile(file);
-		this.currentToast?.setSuccess(t("toast.exportSuccess"));
 	}
 
 	// ── Actions ──────────────────────────────────────────────────────────
@@ -232,8 +186,9 @@ export default class ShareOnlinePlugin extends Plugin {
 		successText = t("toast.publishSuccess"),
 		copyToClipboard = true
 	): Promise<void> {
-		this.currentToast?.dismiss();
-		this.currentToast = new ExportToast(t("toast.uploading"));
+		// Progress + success are shown inside the share popover (anchored to the
+		// status-bar icon) rather than as a separate toast.
+		this.sharePopover.showBusy(this.statusBarEl, t("toast.uploading"));
 		try {
 			// Seed with every name already published to OSS so new names never
 			// overwrite an unrelated note; reused names go in too so freshly
@@ -291,9 +246,9 @@ export default class ShareOnlinePlugin extends Plugin {
 			if (copyToClipboard) {
 				await navigator.clipboard.writeText(url);
 			}
-			this.currentToast?.setSuccess(successText);
+			await this.sharePopover.showResult(this.statusBarEl, file, successText, url);
 		} catch (err: unknown) {
-			this.currentToast?.setError(t("toast.publishFailed", { error: (err as Error).message }));
+			this.sharePopover.showError(this.statusBarEl, t("toast.publishFailed", { error: (err as Error).message }));
 			console.error(err);
 		}
 	}
@@ -302,10 +257,11 @@ export default class ShareOnlinePlugin extends Plugin {
 		file: TFile,
 		subNotesToDelete: { file: TFile; shareLink: string }[]
 	): Promise<void> {
-		this.currentToast?.dismiss();
-		this.currentToast = new ExportToast(t("toast.stopping"));
+		this.sharePopover.showBusy(this.statusBarEl, t("toast.stopping"));
 		try {
-			// Delete selected sub-notes first (errors are non-fatal)
+			// Delete selected sub-notes first (errors are non-fatal — collected and
+			// surfaced in the result banner rather than as a separate notice)
+			const failedSubs: string[] = [];
 			for (const sn of subNotesToDelete) {
 				const snName = this.extractNoteName(sn.shareLink);
 				try {
@@ -313,7 +269,7 @@ export default class ShareOnlinePlugin extends Plugin {
 					await this.removeShareMeta(sn.file);
 				} catch (err: unknown) {
 					console.error(`删除二级笔记失败 (${sn.file.basename}):`, err);
-					new Notice(t("notice.deleteSubFailed", { name: sn.file.basename }));
+					failedSubs.push(sn.file.basename);
 				}
 			}
 
@@ -325,9 +281,13 @@ export default class ShareOnlinePlugin extends Plugin {
 			}
 			await this.removeShareMeta(file);
 			void this.updateStatusBar();
-			this.currentToast?.setSuccess(t("toast.stopped"));
+			const successText =
+				failedSubs.length > 0
+					? t("toast.stoppedWithWarn", { names: failedSubs.join("、") })
+					: t("toast.stopped");
+			await this.sharePopover.showResult(this.statusBarEl, file, successText, null);
 		} catch (err: unknown) {
-			this.currentToast?.setError(t("toast.stopFailed", { error: (err as Error).message }));
+			this.sharePopover.showError(this.statusBarEl, t("toast.stopFailed", { error: (err as Error).message }));
 			console.error(err);
 		}
 	}
@@ -365,13 +325,11 @@ export default class ShareOnlinePlugin extends Plugin {
 			await this.doPublish(file, subNotes, undefined, t("toast.uploadSuccess"), false);
 		} else {
 			await this.exportFile(file);
-			this.currentToast?.setSuccess("导出成功");
 		}
 	}
 
 	private async exportFile(file: TFile): Promise<void> {
-		this.currentToast?.dismiss();
-		this.currentToast = new ExportToast(t("toast.exporting"));
+		this.sharePopover.showBusy(this.statusBarEl, t("toast.exporting"));
 		try {
 			await exportToLocal(
 				this.app,
@@ -382,14 +340,15 @@ export default class ShareOnlinePlugin extends Plugin {
 				this.settings.pageLinkLength,
 				getAnalyticsInjectConfig(this.settings)
 			);
+			// A local export changes no publish state — re-derive the card's current state.
+			await this.sharePopover.showResult(this.statusBarEl, file, t("toast.exportSuccess"));
 		} catch (err: unknown) {
-			this.currentToast?.setError(t("toast.exportFailed", { error: (err as Error).message }));
+			this.sharePopover.showError(this.statusBarEl, t("toast.exportFailed", { error: (err as Error).message }));
 			console.error(err);
 		}
 	}
 
 	onunload() {
 		this.sharePopover?.close();
-		this.currentToast?.dismiss();
 	}
 }

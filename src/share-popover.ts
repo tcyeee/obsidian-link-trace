@@ -21,6 +21,7 @@ function formatDateTime(d: Date): string {
  */
 export class SharePopover {
 	private el: HTMLElement | null = null;
+	private anchor: HTMLElement | null = null;
 	private onDocPointerDown?: (e: MouseEvent) => void;
 	private onKeyDown?: (e: KeyboardEvent) => void;
 
@@ -50,6 +51,7 @@ export class SharePopover {
 		this.onKeyDown = undefined;
 		const el = this.el;
 		this.el = null;
+		this.anchor = null;
 		if (!el) return;
 		el.classList.remove("is-visible");
 		window.setTimeout(() => el.remove(), 150);
@@ -59,20 +61,95 @@ export class SharePopover {
 		const file = this.plugin.app.workspace.getActiveFile();
 		if (!file || file.extension !== "md") return;
 
-		const card = createDiv({ cls: POPOVER_CLASS });
+		const card = this.ensureCard(anchor);
 		const shareLink = this.plugin.getShareLink(file);
 		if (shareLink) {
 			const stale = await this.plugin.isStale(file);
-			this.renderPublished(card, file, shareLink, stale);
+			this.renderPublished(card, file, shareLink, this.readPublishedAt(file), stale);
 		} else {
 			this.renderUnpublished(card, file);
 		}
+		this.position(card, anchor);
+		this.registerDismiss(card, anchor);
+	}
 
+	// ── Publish lifecycle (success/progress merged into this card, no separate toast) ──
+
+	/** Open (or re-render) the card in a busy state while a publish/update runs. */
+	showBusy(anchor: HTMLElement, text: string): void {
+		const card = this.ensureCard(anchor);
+		card.addClass(`${POPOVER_CLASS}--progress`);
+		const row = card.createDiv({ cls: "opal-share-popover-progress" });
+		row.createDiv({ cls: "opal-share-popover-spinner" });
+		row.createSpan({ text });
+		this.position(card, anchor);
+	}
+
+	/**
+	 * Re-render the busy card to reflect an operation's result, topped with a
+	 * success banner. `state` pins the publish state when the operation just
+	 * changed it (the metadata cache may lag a tick): a link string => freshly
+	 * published at that link; `null` => just unpublished. Omit it to re-derive
+	 * the current state from the cache (e.g. a local export changes nothing).
+	 */
+	async showResult(
+		anchor: HTMLElement,
+		file: TFile,
+		successText: string,
+		state?: string | null
+	): Promise<void> {
+		const card = this.ensureCard(anchor);
+		const pinned = state !== undefined;
+		const shareLink = pinned ? state : this.plugin.getShareLink(file);
+		if (shareLink) {
+			// A freshly published note is by definition up to date, with share_time = now.
+			const stale = pinned ? false : await this.plugin.isStale(file);
+			if (this.el !== card) return;
+			const publishedAt = pinned ? new Date() : this.readPublishedAt(file);
+			this.renderPublished(card, file, shareLink, publishedAt, stale, successText);
+		} else {
+			this.renderUnpublished(card, file, successText);
+		}
+		this.position(card, anchor);
+		this.registerDismiss(card, anchor);
+	}
+
+	/** Re-render the busy card to show a publish failure. */
+	showError(anchor: HTMLElement, text: string): void {
+		const card = this.ensureCard(anchor);
+		card.addClass(`${POPOVER_CLASS}--error`);
+		const row = card.createDiv({ cls: "opal-share-popover-progress" });
+		const icon = row.createDiv({ cls: "opal-share-popover-erroricon" });
+		setIcon(icon, "alert-triangle");
+		row.createSpan({ text });
+		this.position(card, anchor);
+		this.registerDismiss(card, anchor);
+	}
+
+	/** Return the existing card (cleared for re-render) or mount a fresh one. */
+	private ensureCard(anchor: HTMLElement): HTMLElement {
+		this.anchor = anchor;
+		if (this.el) {
+			this.el.empty();
+			this.el.removeClass(
+				`${POPOVER_CLASS}--fresh`,
+				`${POPOVER_CLASS}--stale`,
+				`${POPOVER_CLASS}--unpublished`,
+				`${POPOVER_CLASS}--progress`,
+				`${POPOVER_CLASS}--error`
+			);
+			return this.el;
+		}
+		const card = createDiv({ cls: POPOVER_CLASS });
 		activeDocument.body.appendChild(card);
 		this.el = card;
-		this.position(card, anchor);
 		window.requestAnimationFrame(() => card.classList.add("is-visible"));
+		return card;
+	}
 
+	/** Wire up dismiss-on-outside-click / Escape. No-op if already registered. */
+	private registerDismiss(card: HTMLElement, anchor: HTMLElement): void {
+		if (this.onDocPointerDown) return;
 		this.onDocPointerDown = (e: MouseEvent) => {
 			const target = e.target as Node;
 			if (card.contains(target) || anchor.contains(target)) return;
@@ -83,10 +160,19 @@ export class SharePopover {
 		};
 		// Defer registration so the click that opened the card doesn't dismiss it.
 		window.setTimeout(() => {
-			if (!this.el) return;
-			activeDocument.addEventListener("pointerdown", this.onDocPointerDown!, true);
-			activeDocument.addEventListener("keydown", this.onKeyDown!, true);
+			if (!this.el || !this.onDocPointerDown || !this.onKeyDown) return;
+			activeDocument.addEventListener("pointerdown", this.onDocPointerDown, true);
+			activeDocument.addEventListener("keydown", this.onKeyDown, true);
 		}, 0);
+	}
+
+	private readPublishedAt(file: TFile): Date | null {
+		const shareTime = this.plugin.app.metadataCache.getFileCache(file)?.frontmatter?.["share_time"] as
+			| string
+			| undefined;
+		if (!shareTime) return null;
+		const d = new Date(shareTime);
+		return isNaN(d.getTime()) ? null : d;
 	}
 
 	/**
@@ -124,8 +210,23 @@ export class SharePopover {
 		});
 	}
 
-	private renderPublished(card: HTMLElement, file: TFile, shareLink: string, stale: boolean): void {
+	private renderPublished(
+		card: HTMLElement,
+		file: TFile,
+		shareLink: string,
+		publishedAt: Date | null,
+		stale: boolean,
+		successText?: string
+	): void {
 		card.addClass(stale ? `${POPOVER_CLASS}--stale` : `${POPOVER_CLASS}--fresh`);
+
+		// Success banner: shown right after a publish/update completes in this card.
+		if (successText) {
+			const banner = card.createDiv({ cls: "opal-share-popover-success" });
+			const check = banner.createDiv({ cls: "opal-share-popover-successicon" });
+			setIcon(check, "check");
+			banner.createSpan({ text: successText });
+		}
 
 		// Header: icon avatar + title/time + status badge
 		const header = card.createDiv({ cls: "opal-share-popover-header" });
@@ -133,11 +234,6 @@ export class SharePopover {
 		setIcon(icon, "globe");
 		const headText = header.createDiv({ cls: "opal-share-popover-headtext" });
 		headText.createDiv({ cls: "opal-share-popover-title", text: t("popover.title") });
-		const shareTime =
-			(this.plugin.app.metadataCache.getFileCache(file)?.frontmatter?.["share_time"] as
-				| string
-				| undefined) ?? "";
-		const publishedAt = shareTime ? new Date(shareTime) : null;
 		header.createSpan({
 			cls: "opal-share-popover-badge",
 			text: stale ? t("popover.badge.stale") : t("popover.badge.fresh"),
@@ -223,8 +319,15 @@ export class SharePopover {
 		);
 	}
 
-	private renderUnpublished(card: HTMLElement, file: TFile): void {
+	private renderUnpublished(card: HTMLElement, file: TFile, successText?: string): void {
 		card.addClass(`${POPOVER_CLASS}--unpublished`);
+
+		if (successText) {
+			const banner = card.createDiv({ cls: "opal-share-popover-success" });
+			const check = banner.createDiv({ cls: "opal-share-popover-successicon" });
+			setIcon(check, "check");
+			banner.createSpan({ text: successText });
+		}
 
 		const header = card.createDiv({ cls: "opal-share-popover-header" });
 		const icon = header.createDiv({ cls: "opal-share-popover-icon" });
