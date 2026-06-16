@@ -194,12 +194,13 @@ export async function renderNote(
   const basePlaceholders = Array.from(el.querySelectorAll<HTMLElement>("[data-base-embed]"));
   for (const placeholder of basePlaceholders) {
     const name = placeholder.getAttribute("data-base-embed") ?? "";
+    const viewName = placeholder.getAttribute("data-base-view") ?? undefined;
     const baseFile = app.vault.getFiles().find(
       f => f.path === name || f.name === name || f.name === name.split("/").pop()
     );
     if (baseFile) {
       const parsed = new DOMParser().parseFromString(
-        await renderBaseAsTable(app, baseFile, images), "text/html"
+        await renderBaseAsTable(app, baseFile, images, viewName), "text/html"
       );
       placeholder.replaceWith(...Array.from(parsed.body.childNodes));
     } else {
@@ -212,7 +213,8 @@ export async function renderNote(
   // (in case MarkdownRenderer created them instead of rendering the placeholder)
   const internalEmbeds = Array.from(el.querySelectorAll<HTMLElement>(".internal-embed"));
   for (const embed of internalEmbeds) {
-    const src = embed.getAttribute("src") ?? "";
+    const rawSrc = embed.getAttribute("src") ?? "";
+    const [src, viewName] = rawSrc.split("#");
     if (!src.endsWith(".base")) continue;
     const baseName = src.split("/").pop() ?? src;
     const baseFile = app.vault.getFiles().find(
@@ -220,7 +222,7 @@ export async function renderNote(
     );
     if (baseFile) {
       const parsed = new DOMParser().parseFromString(
-        await renderBaseAsTable(app, baseFile, images), "text/html"
+        await renderBaseAsTable(app, baseFile, images, viewName || undefined), "text/html"
       );
       embed.replaceWith(...Array.from(parsed.body.childNodes));
     } else {
@@ -1208,6 +1210,34 @@ em { font-style: italic; }
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* ── Base list view ── */
+.base-list {
+  display: flex;
+  flex-direction: column;
+  margin: 1em 0;
+  border: 1px solid #DADCDE;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.base-list-item {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 7px 12px;
+  border-bottom: 1px solid #EDEEF0;
+}
+.base-list-item:last-child { border-bottom: none; }
+.base-list-cell {
+  font-size: 0.9em;
+  line-height: 1.5;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 /* ── Dataview list ── */

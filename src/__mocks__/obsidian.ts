@@ -5,3 +5,4 @@ export const Notice = class {};
 export const TFile = class {};
 export const setIcon = () => {};
 export const setTooltip = () => {};
+export const parseYaml = (_s: string) => ({});

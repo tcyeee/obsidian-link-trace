@@ -25696,6 +25696,7 @@ var zh = {
   "toast.exportSuccess": "\u5BFC\u51FA\u6210\u529F",
   "toast.stopping": "\u505C\u6B62\u5206\u4EAB\u4E2D...",
   "toast.stopped": "\u5DF2\u505C\u6B62\u5206\u4EAB",
+  "toast.stoppedWithWarn": "\u5DF2\u505C\u6B62\u5206\u4EAB\uFF0C\u4F46\u90E8\u5206\u4E8C\u7EA7\u7B14\u8BB0\u672A\u5220\u9664\uFF1A{names}",
   "toast.publishSuccess": "\u53D1\u5E03\u6210\u529F\uFF0C\u94FE\u63A5\u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F",
   "toast.updateSuccess": "\u66F4\u65B0\u6210\u529F",
   "toast.publishFailed": "\u53D1\u5E03\u5931\u8D25\uFF1A{error}",
@@ -25708,7 +25709,6 @@ var zh = {
   "menu.unpublish": "\u505C\u6B62\u5206\u4EAB",
   "notice.onlyMarkdown.share": "\u53EA\u80FD\u5206\u4EAB Markdown \u7B14\u8BB0",
   "notice.onlyMarkdown.publish": "\u53EA\u80FD\u53D1\u5E03 Markdown \u7B14\u8BB0",
-  "notice.deleteSubFailed": "\u5220\u9664 {name} \u5931\u8D25\uFF0C\u5DF2\u4FDD\u7559\u5176\u5206\u4EAB\u94FE\u63A5",
   "modal.publish.title": "\u53D1\u5E03\u7B14\u8BB0",
   "modal.unpublish.title": "\u505C\u6B62\u5206\u4EAB",
   "modal.mainNote": "\u4E3B\u7B14\u8BB0",
@@ -25781,6 +25781,7 @@ var en = {
   "toast.exportSuccess": "Export successful",
   "toast.stopping": "Stopping share...",
   "toast.stopped": "Sharing stopped",
+  "toast.stoppedWithWarn": "Sharing stopped, but some sub-notes were not removed: {names}",
   "toast.publishSuccess": "Published, link copied to clipboard",
   "toast.updateSuccess": "Updated successfully",
   "toast.publishFailed": "Publish failed: {error}",
@@ -25793,7 +25794,6 @@ var en = {
   "menu.unpublish": "Stop sharing",
   "notice.onlyMarkdown.share": "Only Markdown notes can be shared",
   "notice.onlyMarkdown.publish": "Only Markdown notes can be published",
-  "notice.deleteSubFailed": "Failed to delete {name}, share link retained",
   "modal.publish.title": "Publish Note",
   "modal.unpublish.title": "Stop Sharing",
   "modal.mainNote": "Main Note",
@@ -26161,13 +26161,111 @@ function findTopLevelOp(expr, op) {
   }
   return -1;
 }
-function evalBoolExpr(expr, fm) {
-  const m = expr.trim().match(/^(\w+)\.isEmpty\(\)$/);
-  if (m) {
-    const v = fm[m[1]];
-    return v === void 0 || v === null || v === "";
+function isEmptyValue(v) {
+  return v === void 0 || v === null || v === "" || Array.isArray(v) && v.length === 0;
+}
+function evalBoolExpr(expr, ctx) {
+  expr = expr.trim();
+  if (expr.startsWith("!")) return !evalBoolExpr(expr.slice(1), ctx);
+  const emptyM = expr.match(/^([\w.]+)\.isEmpty\(\)$/);
+  if (emptyM) {
+    const key = emptyM[1].startsWith("note.") ? emptyM[1].slice(5) : emptyM[1];
+    return isEmptyValue(ctx.fm[key]);
+  }
+  for (const op of [">=", "<=", "==", "!=", ">", "<"]) {
+    const idx = findTopLevelOp(expr, op);
+    if (idx === -1) continue;
+    const left = expr.slice(0, idx).trim();
+    const right = expr.slice(idx + op.length).trim();
+    const ln = evalNumber(left, ctx), rn = evalNumber(right, ctx);
+    if (ln !== null && rn !== null) {
+      switch (op) {
+        case ">":
+          return ln > rn;
+        case "<":
+          return ln < rn;
+        case ">=":
+          return ln >= rn;
+        case "<=":
+          return ln >= rn || ln === rn;
+        case "==":
+          return ln === rn;
+        case "!=":
+          return ln !== rn;
+      }
+    }
+    const ls = evalExpr(left, ctx), rs = evalExpr(right, ctx);
+    return op === "!=" ? ls !== rs : op === "==" ? ls === rs : false;
   }
   return false;
+}
+function evalNumber(expr, ctx) {
+  expr = expr.trim();
+  if (/^-?\d+(\.\d+)?$/.test(expr)) return parseFloat(expr);
+  const numM = expr.match(/^number\(([\s\S]+)\)$/);
+  if (numM) return evalNumber(numM[1], ctx);
+  if (expr.startsWith("(") && findMatchingParen(expr, 0) === expr.length - 1) {
+    return evalNumber(expr.slice(1, -1), ctx);
+  }
+  const roundM = expr.match(/^([\s\S]+)\.(floor|ceil|round)\(\)$/);
+  if (roundM) {
+    const inner = evalNumber(roundM[1], ctx);
+    if (inner === null) return null;
+    return roundM[2] === "floor" ? Math.floor(inner) : roundM[2] === "ceil" ? Math.ceil(inner) : Math.round(inner);
+  }
+  for (const op of ["+", "-", "*", "/"]) {
+    const idx = findTopLevelOp(expr, op);
+    if (idx <= 0) continue;
+    const l = evalNumber(expr.slice(0, idx), ctx);
+    const r = evalNumber(expr.slice(idx + 1), ctx);
+    if (l === null || r === null) continue;
+    return op === "+" ? l + r : op === "-" ? l - r : op === "*" ? l * r : l / r;
+  }
+  if (expr === "file.size") return ctx.stat.size;
+  if (expr === "file.ctime") return ctx.stat.ctime;
+  if (expr === "file.mtime") return ctx.stat.mtime;
+  if (expr === "file.backlinks.length") return countBacklinks(ctx.app, ctx.file);
+  if (expr === "file.links.length" || expr === "file.links.unique().length") return outgoingLinks(ctx.app, ctx.file).length;
+  const lenM = expr.match(/^([\s\S]+)\.length$/);
+  if (lenM) {
+    const key = lenM[1].startsWith("note.") ? lenM[1].slice(5) : lenM[1];
+    if (lenM[1] === "file.basename") return ctx.file.basename.length;
+    if (lenM[1] === "file.name") return ctx.file.name.length;
+    const v = ctx.fm[key];
+    if (Array.isArray(v)) return v.length;
+    if (typeof v === "string") return v.length;
+    return null;
+  }
+  return null;
+}
+function findMatchingParen(s, open) {
+  let depth = 0, inStr = false, strChar = "";
+  for (let i = open; i < s.length; i++) {
+    const c = s[i];
+    if (inStr) {
+      if (c === strChar) inStr = false;
+    } else if (c === '"' || c === "'") {
+      inStr = true;
+      strChar = c;
+    } else if (c === "(") depth++;
+    else if (c === ")") {
+      depth--;
+      if (depth === 0) return i;
+    }
+  }
+  return -1;
+}
+function outgoingLinks(app, file) {
+  var _a, _b;
+  const links = (_b = (_a = app.metadataCache.resolvedLinks) == null ? void 0 : _a[file.path]) != null ? _b : {};
+  return Object.keys(links);
+}
+function countBacklinks(app, file) {
+  var _a;
+  const all = (_a = app.metadataCache.resolvedLinks) != null ? _a : {};
+  let n = 0;
+  for (const src in all) if (all[src][file.path]) n++;
+  return n;
 }
 function formatDateValue(val, fmt = "YYYY-MM-DD") {
   let d;
@@ -26198,8 +26296,10 @@ function fmToString(v) {
 }
 function evalExpr(expr, ctx) {
   expr = expr.trim();
-  const strLit = expr.match(/^(['"])(.*)\1$/s);
-  if (strLit) return escapeHtml(strLit[2]);
+  const strLit = expr.match(/^(['"])([\s\S]*)\1$/);
+  if (strLit && expr.indexOf(strLit[1], 1) === expr.length - 1) {
+    return escapeHtml(strLit[2]);
+  }
   const linkM = expr.match(/^link\(([\s\S]+)\)$/);
   if (linkM) {
     const args = splitTopLevelArgs(linkM[1]);
@@ -26211,9 +26311,21 @@ function evalExpr(expr, ctx) {
   if (ifM) {
     const args = splitTopLevelArgs(ifM[1]);
     if (args.length >= 3) {
-      return evalExpr(evalBoolExpr(args[0], ctx.fm) ? args[1] : args[2], ctx);
+      return evalExpr(evalBoolExpr(args[0], ctx) ? args[1] : args[2], ctx);
     }
   }
+  const numM = expr.match(/^number\(([\s\S]+)\)$/);
+  if (numM) {
+    const n = evalNumber(expr, ctx);
+    if (n !== null) return String(n);
+  }
+  if (expr === "file.links" || expr === "file.links.unique()") {
+    return outgoingLinks(ctx.app, ctx.file).map((p) => {
+      var _a;
+      return escapeHtml((_a = p.replace(/\.md$/, "").split("/").pop()) != null ? _a : p);
+    }).join(", ");
+  }
+  if (expr === "file.backlinks.length") return String(countBacklinks(ctx.app, ctx.file));
   const fmtM = expr.match(/^([\s\S]+)\.format\("([^"]+)"\)$/);
   if (fmtM) {
     const inner = evalExpr(fmtM[1], ctx);
@@ -26234,6 +26346,8 @@ function evalExpr(expr, ctx) {
   if (plusIdx !== -1) {
     return evalExpr(expr.slice(0, plusIdx), ctx) + evalExpr(expr.slice(plusIdx + 1), ctx);
   }
+  const asNum = evalNumber(expr, ctx);
+  if (asNum !== null) return String(asNum);
   if (expr === "file.basename") return escapeHtml(ctx.file.basename);
   if (expr === "file.name") return escapeHtml(ctx.file.name);
   if (expr === "file.path") return escapeHtml(ctx.file.path);
@@ -26248,33 +26362,95 @@ function evalExpr(expr, ctx) {
   const v = ctx.fm[expr];
   return v !== void 0 && v !== null ? escapeHtml(fmToString(v)) : "";
 }
-function matchesFilter(expr, file, meta) {
-  var _a, _b, _c, _d, _e, _f;
+function quotedArgs(s) {
+  var _a;
+  return ((_a = s.match(/["']([^"']+)["']/g)) != null ? _a : []).map((a) => a.replace(/["']/g, ""));
+}
+function evalFilterAtom(expr, file, meta) {
+  var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
   expr = expr.trim();
+  if (expr.startsWith("!")) {
+    const inner = evalFilterAtom(expr.slice(1).trim(), file, meta);
+    return inner === null ? null : !inner;
+  }
   const bodyTags = (_b = (_a = meta == null ? void 0 : meta.tags) == null ? void 0 : _a.map((t2) => t2.tag.replace(/^#/, ""))) != null ? _b : [];
   const fmTags = (_c = meta == null ? void 0 : meta.frontmatter) == null ? void 0 : _c["tags"];
   const fmTagList = Array.isArray(fmTags) ? fmTags : fmTags ? [String(fmTags)] : [];
   const allTags = /* @__PURE__ */ new Set([...bodyTags, ...fmTagList]);
   const containsAllM = expr.match(/^file\.tags\.containsAll\((.+)\)$/);
-  if (containsAllM) {
-    const req = ((_d = containsAllM[1].match(/["']([^"']+)["']/g)) != null ? _d : []).map((s) => s.replace(/["']/g, ""));
-    return req.every((t2) => allTags.has(t2));
-  }
+  if (containsAllM) return quotedArgs(containsAllM[1]).every((t2) => allTags.has(t2));
+  const containsAnyM = expr.match(/^file\.tags\.containsAny\((.+)\)$/);
+  if (containsAnyM) return quotedArgs(containsAnyM[1]).some((t2) => allTags.has(t2));
   const containsM = expr.match(/^file\.tags\.contains\((.+)\)$/);
   if (containsM) return allTags.has(containsM[1].replace(/["']/g, ""));
-  const folderM = expr.match(/^file\.folder\s*==\s*["']([^"']+)["']$/);
-  if (folderM) return ((_f = (_e = file.parent) == null ? void 0 : _e.path) != null ? _f : "") === folderM[1];
-  const extM = expr.match(/^file\.ext\s*==\s*["']([^"']+)["']$/);
-  if (extM) return file.extension === extM[1];
-  return true;
+  const hasTagM = expr.match(/^file\.hasTag\((.+)\)$/);
+  if (hasTagM) return quotedArgs(hasTagM[1]).some((t2) => allTags.has(t2));
+  const tagsEqM = expr.match(/^file\.tags\s*(==|!=)\s*\[(.*)\]$/);
+  if (tagsEqM) {
+    const want = new Set(quotedArgs(tagsEqM[2]));
+    const equal = want.size === allTags.size && [...want].every((t2) => allTags.has(t2));
+    return tagsEqM[1] === "==" ? equal : !equal;
+  }
+  const folderM = expr.match(/^file\.folder\s*(==|!=)\s*["']([^"']+)["']$/);
+  if (folderM) {
+    const eq = ((_e = (_d = file.parent) == null ? void 0 : _d.path) != null ? _e : "") === folderM[2];
+    return folderM[1] === "==" ? eq : !eq;
+  }
+  const inFolderM = expr.match(/^file\.inFolder\(["']([^"']+)["']\)$/);
+  if (inFolderM) return ((_g = (_f = file.parent) == null ? void 0 : _f.path) != null ? _g : "") === inFolderM[1];
+  const extM = expr.match(/^file\.ext\s*(==|!=)\s*["']([^"']+)["']$/);
+  if (extM) {
+    const eq = file.extension === extM[2];
+    return extM[1] === "==" ? eq : !eq;
+  }
+  const emptyM = expr.match(/^([\w.]+)\.isEmpty\(\)$/);
+  if (emptyM) {
+    const key = emptyM[1].startsWith("note.") ? emptyM[1].slice(5) : emptyM[1];
+    return isEmptyValue((_h = meta == null ? void 0 : meta.frontmatter) == null ? void 0 : _h[key]);
+  }
+  const propEqM = expr.match(/^([\w.]+)\s*(==|!=)\s*["']([^"']*)["']$/);
+  if (propEqM) {
+    const key = propEqM[1].startsWith("note.") ? propEqM[1].slice(5) : propEqM[1];
+    const eq = String((_j = (_i = meta == null ? void 0 : meta.frontmatter) == null ? void 0 : _i[key]) != null ? _j : "") === propEqM[3];
+    return propEqM[2] === "==" ? eq : !eq;
+  }
+  return null;
+}
+function matchesFilter(expr, file, meta) {
+  return evalFilterAtom(expr, file, meta) === true;
 }
 function colLabel(col, properties) {
   var _a, _b, _c, _d, _e, _f, _g, _h;
   const bare = col.startsWith("formula.") ? col.slice(8) : col.startsWith("file.") ? col.slice(5) : col;
   return (_h = (_g = (_e = (_c = (_a = properties == null ? void 0 : properties["note." + bare]) == null ? void 0 : _a.displayName) != null ? _c : (_b = properties == null ? void 0 : properties[bare]) == null ? void 0 : _b.displayName) != null ? _e : (_d = properties == null ? void 0 : properties["note." + col]) == null ? void 0 : _d.displayName) != null ? _g : (_f = properties == null ? void 0 : properties[col]) == null ? void 0 : _f.displayName) != null ? _h : bare;
 }
-async function renderBaseAsTable(app, baseFile, images) {
-  var _a, _b, _c, _d, _e, _f;
+function makeCtx(app, f, vaultName) {
+  var _a, _b;
+  const fm = (_b = (_a = app.metadataCache.getFileCache(f)) == null ? void 0 : _a.frontmatter) != null ? _b : {};
+  const stat = { mtime: f.stat.mtime, ctime: f.stat.ctime, size: f.stat.size };
+  return { app, file: f, fm, stat, vaultName };
+}
+function cellValue(col, ctx, formulas) {
+  if (col.startsWith("formula.")) {
+    const key2 = col.slice(8);
+    return formulas[key2] ? evalExpr(formulas[key2], ctx) : "";
+  }
+  if (col === "file.mtime") return formatDateValue(ctx.stat.mtime);
+  if (col === "file.ctime") return formatDateValue(ctx.stat.ctime);
+  if (col === "file.name") return escapeHtml(ctx.file.name);
+  if (col === "file.basename") return escapeHtml(ctx.file.basename);
+  if (col === "file.size") return String(ctx.stat.size);
+  if (col === "file.backlinks") return String(countBacklinks(ctx.app, ctx.file));
+  const key = col.startsWith("note.") ? col.slice(5) : col;
+  const v = ctx.fm[key];
+  return v !== void 0 ? escapeHtml(fmToString(v)) : "";
+}
+function viewOrder(view, formulas) {
+  var _a;
+  return ((_a = view.order) == null ? void 0 : _a.length) ? view.order : Object.keys(formulas).map((k) => `formula.${k}`);
+}
+async function renderBaseAsTable(app, baseFile, images, viewName) {
+  var _a, _b, _c, _d, _e, _f, _g;
   const raw = await app.vault.read(baseFile);
   let config;
   try {
@@ -26282,27 +26458,26 @@ async function renderBaseAsTable(app, baseFile, images) {
   } catch (e) {
     return `<div class="base-error">\u65E0\u6CD5\u89E3\u6790 ${baseFile.name}</div>`;
   }
-  const view = (_b = (_a = config.views) == null ? void 0 : _a[0]) != null ? _b : {};
-  const formulas = (_c = config.formulas) != null ? _c : {};
+  const views = (_a = config.views) != null ? _a : [];
+  const view = (_c = (_b = viewName && views.find((v) => v.name === viewName)) != null ? _b : views[0]) != null ? _c : {};
+  const formulas = (_d = config.formulas) != null ? _d : {};
   const properties = config.properties;
   const vaultName = app.vault.getName();
+  const filterGroups = [config.filters, view.filters].filter(Boolean);
   let matched = app.vault.getMarkdownFiles().filter((f) => {
     const meta = app.metadataCache.getFileCache(f);
-    const filters = config.filters;
-    if (!filters) return true;
-    if (filters.and) return filters.and.every((e) => matchesFilter(e, f, meta));
-    if (filters.or) return filters.or.some((e) => matchesFilter(e, f, meta));
-    return true;
+    return filterGroups.every((g) => {
+      if (g.and) return g.and.every((e) => matchesFilter(e, f, meta));
+      if (g.or) return g.or.some((e) => matchesFilter(e, f, meta));
+      return true;
+    });
   });
-  if ((_d = view.sort) == null ? void 0 : _d.length) {
+  if ((_e = view.sort) == null ? void 0 : _e.length) {
     const { property: sortProp, direction } = view.sort[0];
     const desc = (direction == null ? void 0 : direction.toUpperCase()) === "DESC";
     matched.sort((a, b) => {
       const getV = (f) => {
-        var _a2, _b2;
-        const fm = (_b2 = (_a2 = app.metadataCache.getFileCache(f)) == null ? void 0 : _a2.frontmatter) != null ? _b2 : {};
-        const s = { mtime: f.stat.mtime, ctime: f.stat.ctime };
-        const ctx = { file: f, fm, stat: s, vaultName };
+        const ctx = makeCtx(app, f, vaultName);
         if (sortProp.startsWith("formula.")) {
           const key = sortProp.slice(8);
           return formulas[key] ? evalExpr(formulas[key], ctx) : "";
@@ -26310,7 +26485,7 @@ async function renderBaseAsTable(app, baseFile, images) {
         if (sortProp === "file.mtime") return String(f.stat.mtime);
         if (sortProp === "file.ctime") return String(f.stat.ctime);
         if (sortProp === "file.name") return f.name;
-        const v = fm[sortProp];
+        const v = ctx.fm[sortProp];
         return v !== void 0 ? fmToString(v) : "";
       };
       const va = getV(a), vb = getV(b);
@@ -26320,35 +26495,25 @@ async function renderBaseAsTable(app, baseFile, images) {
   }
   if (view.limit) matched = matched.slice(0, view.limit);
   if (matched.length === 0) return `<div class="base-empty">\uFF08\u65E0\u5339\u914D\u8BB0\u5F55\uFF09</div>`;
-  const viewType = ((_e = view.type) != null ? _e : "table").toLowerCase();
-  if (viewType === "cards" || viewType === "list") {
+  const viewType = ((_f = view.type) != null ? _f : "table").toLowerCase();
+  if (viewType === "cards") {
     return renderCards(app, baseFile, config, view, matched, formulas, properties, vaultName, images);
   }
-  const order = ((_f = view.order) == null ? void 0 : _f.length) ? view.order : Object.keys(formulas).map((k) => `formula.${k}`);
+  if (viewType === "list") {
+    return renderList(app, view, matched, formulas, properties, vaultName);
+  }
+  const order = viewOrder(view, formulas);
+  const colSize = (_g = view.columnSize) != null ? _g : {};
+  const colgroup = order.some((c) => colSize[c]) ? `<colgroup>${order.map((c) => colSize[c] ? `<col style="width:${colSize[c]}px">` : "<col>").join("")}</colgroup>` : "";
   const thead = `<tr>${order.map((c) => `<th>${colLabel(c, properties)}</th>`).join("")}</tr>`;
   const tbody = matched.map((f) => {
-    var _a2, _b2;
-    const fm = (_b2 = (_a2 = app.metadataCache.getFileCache(f)) == null ? void 0 : _a2.frontmatter) != null ? _b2 : {};
-    const s = { mtime: f.stat.mtime, ctime: f.stat.ctime };
-    const ctx = { file: f, fm, stat: s, vaultName };
-    const cells = order.map((col) => {
-      if (col.startsWith("formula.")) {
-        const key = col.slice(8);
-        return formulas[key] ? evalExpr(formulas[key], ctx) : "";
-      }
-      if (col === "file.mtime") return formatDateValue(f.stat.mtime);
-      if (col === "file.ctime") return formatDateValue(f.stat.ctime);
-      if (col === "file.name") return escapeHtml(f.name);
-      if (col === "file.basename") return escapeHtml(f.basename);
-      if (col === "file.backlinks") return "";
-      const v = fm[col];
-      return v !== void 0 ? escapeHtml(fmToString(v)) : "";
-    });
+    const ctx = makeCtx(app, f, vaultName);
+    const cells = order.map((col) => cellValue(col, ctx, formulas));
     return `<tr>${cells.map((c) => `<td>${c}</td>`).join("")}</tr>`;
   }).join("\n");
   return `<div class="table-wrapper">
 <table>
-<thead>${thead}</thead>
+${colgroup}<thead>${thead}</thead>
 <tbody>
 ${tbody}
 </tbody>
@@ -26356,22 +26521,20 @@ ${tbody}
 </div>`;
 }
 function renderCards(app, baseFile, config, view, matched, formulas, properties, vaultName, images) {
-  var _a, _b, _c, _d, _e;
+  var _a, _b, _c, _d;
   const cardSize = (_a = view.cardSize) != null ? _a : 200;
   const imageAspectRatio = (_b = view.imageAspectRatio) != null ? _b : 0.5;
   const imgHeight = Math.round(cardSize * imageAspectRatio);
   const imgFmKey = ((_c = view.image) == null ? void 0 : _c.startsWith("note.")) ? view.image.slice(5) : (_d = view.image) != null ? _d : "";
-  const order = ((_e = view.order) == null ? void 0 : _e.length) ? view.order : Object.keys(formulas).map((k) => `formula.${k}`);
+  const order = viewOrder(view, formulas);
   const cards = matched.map((f) => {
-    var _a2, _b2, _c2, _d2;
-    const fm = (_b2 = (_a2 = app.metadataCache.getFileCache(f)) == null ? void 0 : _a2.frontmatter) != null ? _b2 : {};
-    const s = { mtime: f.stat.mtime, ctime: f.stat.ctime };
-    const ctx = { file: f, fm, stat: s, vaultName };
+    var _a2, _b2;
+    const ctx = makeCtx(app, f, vaultName);
     let bannerHtml = "";
     if (imgFmKey) {
-      const raw = String((_c2 = fm[imgFmKey]) != null ? _c2 : "").replace(/^\//, "");
+      const raw = String((_a2 = ctx.fm[imgFmKey]) != null ? _a2 : "").replace(/^\//, "");
       if (raw) {
-        const imgFile = (_d2 = app.vault.getAbstractFileByPath(raw)) != null ? _d2 : app.metadataCache.getFirstLinkpathDest(raw, baseFile.path);
+        const imgFile = (_b2 = app.vault.getAbstractFileByPath(raw)) != null ? _b2 : app.metadataCache.getFirstLinkpathDest(raw, baseFile.path);
         if (imgFile instanceof import_obsidian3.TFile) {
           const src = images ? `images/${registerImage(imgFile, images)}` : `app://local/${encodeURIComponent(imgFile.path)}`;
           bannerHtml = `<img class="base-card-banner" src="${src}" alt="${escapeHtml(imgFile.name)}" style="height:${imgHeight}px">`;
@@ -26379,25 +26542,7 @@ function renderCards(app, baseFile, config, view, matched, formulas, properties,
       }
     }
     const bodyHtml = order.map((col) => {
-      let val = "";
-      if (col.startsWith("formula.")) {
-        const key = col.slice(8);
-        val = formulas[key] ? evalExpr(formulas[key], ctx) : "";
-      } else if (col.startsWith("note.")) {
-        const v = fm[col.slice(5)];
-        val = v !== void 0 ? escapeHtml(fmToString(v)) : "";
-      } else if (col === "file.name") {
-        val = escapeHtml(f.name);
-      } else if (col === "file.basename") {
-        val = escapeHtml(f.basename);
-      } else if (col === "file.mtime") {
-        val = formatDateValue(f.stat.mtime);
-      } else if (col === "file.ctime") {
-        val = formatDateValue(f.stat.ctime);
-      } else {
-        const v = fm[col];
-        val = v !== void 0 ? escapeHtml(fmToString(v)) : "";
-      }
+      const val = cellValue(col, ctx, formulas);
       if (!val) return "";
       const label = colLabel(col, properties);
       return `<div class="base-card-row" title="${escapeHtml(label)}">${val}</div>`;
@@ -26406,12 +26551,28 @@ function renderCards(app, baseFile, config, view, matched, formulas, properties,
   }).join("\n");
   return `<div class="base-cards">${cards}</div>`;
 }
+function renderList(app, view, matched, formulas, properties, vaultName) {
+  var _a;
+  const order = viewOrder(view, formulas);
+  const colSize = (_a = view.columnSize) != null ? _a : {};
+  const items = matched.map((f) => {
+    const ctx = makeCtx(app, f, vaultName);
+    const cells = order.map((col) => {
+      const val = cellValue(col, ctx, formulas);
+      const width = colSize[col] ? ` style="flex:0 0 ${colSize[col]}px"` : "";
+      const label = colLabel(col, properties);
+      return `<div class="base-list-cell"${width} title="${escapeHtml(label)}">${val}</div>`;
+    }).join("");
+    return `<div class="base-list-item">${cells}</div>`;
+  }).join("\n");
+  return `<div class="base-list">${items}</div>`;
+}
 function resolveBaseEmbeds(content) {
   return content.replace(
-    /!\[\[([^\]]+\.base)\]\]/g,
-    (_, name) => `
+    /!\[\[([^\]#|]+\.base)(?:#([^\]|]+))?(?:\|[^\]]*)?\]\]/g,
+    (_, name, view) => `
 
-<div data-base-embed="${name}"></div>
+<div data-base-embed="${name}"${view ? ` data-base-view="${view}"` : ""}></div>
 
 `
   );
@@ -26556,7 +26717,7 @@ function restorePluginCodeLangs(el) {
   });
 }
 async function renderNote(app, file, rawContent) {
-  var _a, _b, _c;
+  var _a, _b, _c, _d;
   let content = stripFrontmatter(rawContent);
   content = resolveBaseEmbeds(content);
   content = protectPluginCodeBlocks(content);
@@ -26592,12 +26753,13 @@ async function renderNote(app, file, rawContent) {
   const basePlaceholders = Array.from(el.querySelectorAll("[data-base-embed]"));
   for (const placeholder of basePlaceholders) {
     const name = (_a = placeholder.getAttribute("data-base-embed")) != null ? _a : "";
+    const viewName = (_b = placeholder.getAttribute("data-base-view")) != null ? _b : void 0;
     const baseFile = app.vault.getFiles().find(
       (f) => f.path === name || f.name === name || f.name === name.split("/").pop()
     );
     if (baseFile) {
       const parsed = new DOMParser().parseFromString(
-        await renderBaseAsTable(app, baseFile, images),
+        await renderBaseAsTable(app, baseFile, images, viewName),
         "text/html"
       );
       placeholder.replaceWith(...Array.from(parsed.body.childNodes));
@@ -26608,15 +26770,16 @@ async function renderNote(app, file, rawContent) {
   }
   const internalEmbeds = Array.from(el.querySelectorAll(".internal-embed"));
   for (const embed of internalEmbeds) {
-    const src = (_b = embed.getAttribute("src")) != null ? _b : "";
+    const rawSrc = (_c = embed.getAttribute("src")) != null ? _c : "";
+    const [src, viewName] = rawSrc.split("#");
     if (!src.endsWith(".base")) continue;
-    const baseName = (_c = src.split("/").pop()) != null ? _c : src;
+    const baseName = (_d = src.split("/").pop()) != null ? _d : src;
     const baseFile = app.vault.getFiles().find(
       (f) => f.path === src || f.name === baseName
     );
     if (baseFile) {
       const parsed = new DOMParser().parseFromString(
-        await renderBaseAsTable(app, baseFile, images),
+        await renderBaseAsTable(app, baseFile, images, viewName || void 0),
         "text/html"
       );
       embed.replaceWith(...Array.from(parsed.body.childNodes));
@@ -27587,6 +27750,34 @@ em { font-style: italic; }
   white-space: nowrap;
 }
 
+/* \u2500\u2500 Base list view \u2500\u2500 */
+.base-list {
+  display: flex;
+  flex-direction: column;
+  margin: 1em 0;
+  border: 1px solid #DADCDE;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.base-list-item {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 7px 12px;
+  border-bottom: 1px solid #EDEEF0;
+}
+.base-list-item:last-child { border-bottom: none; }
+.base-list-cell {
+  font-size: 0.9em;
+  line-height: 1.5;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 /* \u2500\u2500 Dataview list \u2500\u2500 */
 ul.dv-list { padding-left: 1.5em; margin: 0.5em 0; }
 ul.dv-list li { margin: 0.25em 0; line-height: 1.6; }
@@ -28063,6 +28254,7 @@ var SharePopover = class {
   constructor(plugin) {
     this.plugin = plugin;
     this.el = null;
+    this.anchor = null;
   }
   isOpen() {
     return !!this.el;
@@ -28086,6 +28278,7 @@ var SharePopover = class {
     this.onKeyDown = void 0;
     const el = this.el;
     this.el = null;
+    this.anchor = null;
     if (!el) return;
     el.classList.remove("is-visible");
     window.setTimeout(() => el.remove(), 150);
@@ -28093,18 +28286,83 @@ var SharePopover = class {
   async open(anchor) {
     const file = this.plugin.app.workspace.getActiveFile();
     if (!file || file.extension !== "md") return;
-    const card = createDiv({ cls: POPOVER_CLASS });
+    const card = this.ensureCard(anchor);
     const shareLink = this.plugin.getShareLink(file);
     if (shareLink) {
       const stale = await this.plugin.isStale(file);
-      this.renderPublished(card, file, shareLink, stale);
+      this.renderPublished(card, file, shareLink, this.readPublishedAt(file), stale);
     } else {
       this.renderUnpublished(card, file);
     }
+    this.position(card, anchor);
+    this.registerDismiss(card, anchor);
+  }
+  // ── Publish lifecycle (success/progress merged into this card, no separate toast) ──
+  /** Open (or re-render) the card in a busy state while a publish/update runs. */
+  showBusy(anchor, text) {
+    const card = this.ensureCard(anchor);
+    card.addClass(`${POPOVER_CLASS}--progress`);
+    const row = card.createDiv({ cls: "opal-share-popover-progress" });
+    row.createDiv({ cls: "opal-share-popover-spinner" });
+    row.createSpan({ text });
+    this.position(card, anchor);
+  }
+  /**
+   * Re-render the busy card to reflect an operation's result, topped with a
+   * success banner. `state` pins the publish state when the operation just
+   * changed it (the metadata cache may lag a tick): a link string => freshly
+   * published at that link; `null` => just unpublished. Omit it to re-derive
+   * the current state from the cache (e.g. a local export changes nothing).
+   */
+  async showResult(anchor, file, successText, state) {
+    const card = this.ensureCard(anchor);
+    const pinned = state !== void 0;
+    const shareLink = pinned ? state : this.plugin.getShareLink(file);
+    if (shareLink) {
+      const stale = pinned ? false : await this.plugin.isStale(file);
+      if (this.el !== card) return;
+      const publishedAt = pinned ? /* @__PURE__ */ new Date() : this.readPublishedAt(file);
+      this.renderPublished(card, file, shareLink, publishedAt, stale, successText);
+    } else {
+      this.renderUnpublished(card, file, successText);
+    }
+    this.position(card, anchor);
+    this.registerDismiss(card, anchor);
+  }
+  /** Re-render the busy card to show a publish failure. */
+  showError(anchor, text) {
+    const card = this.ensureCard(anchor);
+    card.addClass(`${POPOVER_CLASS}--error`);
+    const row = card.createDiv({ cls: "opal-share-popover-progress" });
+    const icon = row.createDiv({ cls: "opal-share-popover-erroricon" });
+    (0, import_obsidian8.setIcon)(icon, "alert-triangle");
+    row.createSpan({ text });
+    this.position(card, anchor);
+    this.registerDismiss(card, anchor);
+  }
+  /** Return the existing card (cleared for re-render) or mount a fresh one. */
+  ensureCard(anchor) {
+    this.anchor = anchor;
+    if (this.el) {
+      this.el.empty();
+      this.el.removeClass(
+        `${POPOVER_CLASS}--fresh`,
+        `${POPOVER_CLASS}--stale`,
+        `${POPOVER_CLASS}--unpublished`,
+        `${POPOVER_CLASS}--progress`,
+        `${POPOVER_CLASS}--error`
+      );
+      return this.el;
+    }
+    const card = createDiv({ cls: POPOVER_CLASS });
     activeDocument.body.appendChild(card);
     this.el = card;
-    this.position(card, anchor);
     window.requestAnimationFrame(() => card.classList.add("is-visible"));
+    return card;
+  }
+  /** Wire up dismiss-on-outside-click / Escape. No-op if already registered. */
+  registerDismiss(card, anchor) {
+    if (this.onDocPointerDown) return;
     this.onDocPointerDown = (e) => {
       const target = e.target;
       if (card.contains(target) || anchor.contains(target)) return;
@@ -28114,10 +28372,17 @@ var SharePopover = class {
       if (e.key === "Escape") this.close();
     };
     window.setTimeout(() => {
-      if (!this.el) return;
+      if (!this.el || !this.onDocPointerDown || !this.onKeyDown) return;
       activeDocument.addEventListener("pointerdown", this.onDocPointerDown, true);
       activeDocument.addEventListener("keydown", this.onKeyDown, true);
     }, 0);
+  }
+  readPublishedAt(file) {
+    var _a, _b;
+    const shareTime = (_b = (_a = this.plugin.app.metadataCache.getFileCache(file)) == null ? void 0 : _a.frontmatter) == null ? void 0 : _b["share_time"];
+    if (!shareTime) return null;
+    const d = new Date(shareTime);
+    return isNaN(d.getTime()) ? null : d;
   }
   /**
    * Anchor the card next to the status-bar icon, flipping above/below based on
@@ -28145,16 +28410,19 @@ var SharePopover = class {
       "--opal-popover-top": `${Math.round(top)}px`
     });
   }
-  renderPublished(card, file, shareLink, stale) {
-    var _a, _b, _c;
+  renderPublished(card, file, shareLink, publishedAt, stale, successText) {
     card.addClass(stale ? `${POPOVER_CLASS}--stale` : `${POPOVER_CLASS}--fresh`);
+    if (successText) {
+      const banner = card.createDiv({ cls: "opal-share-popover-success" });
+      const check = banner.createDiv({ cls: "opal-share-popover-successicon" });
+      (0, import_obsidian8.setIcon)(check, "check");
+      banner.createSpan({ text: successText });
+    }
     const header = card.createDiv({ cls: "opal-share-popover-header" });
     const icon = header.createDiv({ cls: "opal-share-popover-icon" });
     (0, import_obsidian8.setIcon)(icon, "globe");
     const headText = header.createDiv({ cls: "opal-share-popover-headtext" });
     headText.createDiv({ cls: "opal-share-popover-title", text: t("popover.title") });
-    const shareTime = (_c = (_b = (_a = this.plugin.app.metadataCache.getFileCache(file)) == null ? void 0 : _a.frontmatter) == null ? void 0 : _b["share_time"]) != null ? _c : "";
-    const publishedAt = shareTime ? new Date(shareTime) : null;
     header.createSpan({
       cls: "opal-share-popover-badge",
       text: stale ? t("popover.badge.stale") : t("popover.badge.fresh")
@@ -28230,8 +28498,14 @@ var SharePopover = class {
       true
     );
   }
-  renderUnpublished(card, file) {
+  renderUnpublished(card, file, successText) {
     card.addClass(`${POPOVER_CLASS}--unpublished`);
+    if (successText) {
+      const banner = card.createDiv({ cls: "opal-share-popover-success" });
+      const check = banner.createDiv({ cls: "opal-share-popover-successicon" });
+      (0, import_obsidian8.setIcon)(check, "check");
+      banner.createSpan({ text: successText });
+    }
     const header = card.createDiv({ cls: "opal-share-popover-header" });
     const icon = header.createDiv({ cls: "opal-share-popover-icon" });
     (0, import_obsidian8.setIcon)(icon, "globe");
@@ -28274,47 +28548,7 @@ var SharePopover = class {
 };
 
 // main.ts
-var ExportToast = class {
-  constructor(loadingText = t("toast.uploading")) {
-    this.state = "loading";
-    this.timer = 0;
-    this.el = createDiv({ cls: "opal-toast" });
-    this.el.createDiv({ cls: "opal-spinner" });
-    this.el.createSpan({ text: loadingText });
-    activeDocument.body.appendChild(this.el);
-    window.requestAnimationFrame(() => this.el.classList.add("is-visible"));
-  }
-  setSuccess(text = t("toast.uploadSuccess")) {
-    if (this.state === "done") return;
-    this.state = "done";
-    window.clearTimeout(this.timer);
-    this.el.empty();
-    const iconEl = this.el.createDiv();
-    (0, import_obsidian9.setIcon)(iconEl, "check");
-    this.el.createSpan({ text });
-    this.timer = window.setTimeout(() => this.dismiss(), 2800);
-  }
-  setError(text) {
-    if (this.state === "done") return;
-    this.state = "done";
-    window.clearTimeout(this.timer);
-    this.el.empty();
-    const iconEl = this.el.createDiv();
-    (0, import_obsidian9.setIcon)(iconEl, "x");
-    this.el.createSpan({ text });
-    this.timer = window.setTimeout(() => this.dismiss(), 4e3);
-  }
-  dismiss() {
-    window.clearTimeout(this.timer);
-    this.el.classList.remove("is-visible");
-    window.setTimeout(() => this.el.remove(), 250);
-  }
-};
 var ShareOnlinePlugin = class extends import_obsidian9.Plugin {
-  constructor() {
-    super(...arguments);
-    this.currentToast = null;
-  }
   async onload() {
     await this.loadSettings();
     this.addSettingTab(new ShareOnlineSettingTab(this.app, this));
@@ -28440,15 +28674,11 @@ var ShareOnlinePlugin = class extends import_obsidian9.Plugin {
     }).open();
   }
   async exportFromUi(file) {
-    var _a;
     await this.exportFile(file);
-    (_a = this.currentToast) == null ? void 0 : _a.setSuccess(t("toast.exportSuccess"));
   }
   // ── Actions ──────────────────────────────────────────────────────────
   async doPublish(file, subNotes, existingName, successText = t("toast.publishSuccess"), copyToClipboard = true) {
-    var _a, _b, _c;
-    (_a = this.currentToast) == null ? void 0 : _a.dismiss();
-    this.currentToast = new ExportToast(t("toast.uploading"));
+    this.sharePopover.showBusy(this.statusBarEl, t("toast.uploading"));
     try {
       const usedNames = await listPublishedNames(this.settings);
       const mainName = existingName != null ? existingName : generateUniqueName(usedNames, this.settings.pageLinkLength);
@@ -28499,17 +28729,16 @@ var ShareOnlinePlugin = class extends import_obsidian9.Plugin {
       if (copyToClipboard) {
         await navigator.clipboard.writeText(url);
       }
-      (_b = this.currentToast) == null ? void 0 : _b.setSuccess(successText);
+      await this.sharePopover.showResult(this.statusBarEl, file, successText, url);
     } catch (err) {
-      (_c = this.currentToast) == null ? void 0 : _c.setError(t("toast.publishFailed", { error: err.message }));
+      this.sharePopover.showError(this.statusBarEl, t("toast.publishFailed", { error: err.message }));
       console.error(err);
     }
   }
   async doUnpublish(file, subNotesToDelete) {
-    var _a, _b, _c;
-    (_a = this.currentToast) == null ? void 0 : _a.dismiss();
-    this.currentToast = new ExportToast(t("toast.stopping"));
+    this.sharePopover.showBusy(this.statusBarEl, t("toast.stopping"));
     try {
+      const failedSubs = [];
       for (const sn of subNotesToDelete) {
         const snName = this.extractNoteName(sn.shareLink);
         try {
@@ -28517,7 +28746,7 @@ var ShareOnlinePlugin = class extends import_obsidian9.Plugin {
           await this.removeShareMeta(sn.file);
         } catch (err) {
           console.error(`\u5220\u9664\u4E8C\u7EA7\u7B14\u8BB0\u5931\u8D25 (${sn.file.basename}):`, err);
-          new import_obsidian9.Notice(t("notice.deleteSubFailed", { name: sn.file.basename }));
+          failedSubs.push(sn.file.basename);
         }
       }
       const existingUrl = this.getShareLink(file);
@@ -28527,9 +28756,10 @@ var ShareOnlinePlugin = class extends import_obsidian9.Plugin {
       }
       await this.removeShareMeta(file);
       void this.updateStatusBar();
-      (_b = this.currentToast) == null ? void 0 : _b.setSuccess(t("toast.stopped"));
+      const successText = failedSubs.length > 0 ? t("toast.stoppedWithWarn", { names: failedSubs.join("\u3001") }) : t("toast.stopped");
+      await this.sharePopover.showResult(this.statusBarEl, file, successText, null);
     } catch (err) {
-      (_c = this.currentToast) == null ? void 0 : _c.setError(t("toast.stopFailed", { error: err.message }));
+      this.sharePopover.showError(this.statusBarEl, t("toast.stopFailed", { error: err.message }));
       console.error(err);
     }
   }
@@ -28549,7 +28779,6 @@ var ShareOnlinePlugin = class extends import_obsidian9.Plugin {
     await this.updateNote(file);
   }
   async exportCurrentNote(toOss = false) {
-    var _a;
     const file = this.app.workspace.getActiveFile();
     if (!this.isMarkdown(file)) {
       new import_obsidian9.Notice(t("notice.onlyMarkdown.publish"));
@@ -28560,13 +28789,10 @@ var ShareOnlinePlugin = class extends import_obsidian9.Plugin {
       await this.doPublish(file, subNotes, void 0, t("toast.uploadSuccess"), false);
     } else {
       await this.exportFile(file);
-      (_a = this.currentToast) == null ? void 0 : _a.setSuccess("\u5BFC\u51FA\u6210\u529F");
     }
   }
   async exportFile(file) {
-    var _a, _b;
-    (_a = this.currentToast) == null ? void 0 : _a.dismiss();
-    this.currentToast = new ExportToast(t("toast.exporting"));
+    this.sharePopover.showBusy(this.statusBarEl, t("toast.exporting"));
     try {
       await exportToLocal(
         this.app,
@@ -28577,15 +28803,15 @@ var ShareOnlinePlugin = class extends import_obsidian9.Plugin {
         this.settings.pageLinkLength,
         getAnalyticsInjectConfig(this.settings)
       );
+      await this.sharePopover.showResult(this.statusBarEl, file, t("toast.exportSuccess"));
     } catch (err) {
-      (_b = this.currentToast) == null ? void 0 : _b.setError(t("toast.exportFailed", { error: err.message }));
+      this.sharePopover.showError(this.statusBarEl, t("toast.exportFailed", { error: err.message }));
       console.error(err);
     }
   }
   onunload() {
-    var _a, _b;
+    var _a;
     (_a = this.sharePopover) == null ? void 0 : _a.close();
-    (_b = this.currentToast) == null ? void 0 : _b.dismiss();
   }
 };
 /*! Bundled license information:

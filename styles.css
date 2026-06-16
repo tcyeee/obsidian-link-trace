@@ -1,36 +1,4 @@
-/* ── Toast notification ── */
-.opal-toast {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 99999;
-  background: var(--background-modifier-message);
-  border-radius: 5px;
-  padding: 10px 16px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  opacity: 0;
-  transform: translateY(-6px);
-  transition: opacity 0.22s ease, transform 0.22s ease;
-  font-size: 13.5px;
-  color: var(--text-on-accent);
-  white-space: nowrap;
-  pointer-events: none;
-}
-.opal-toast.is-visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-.opal-spinner {
-  width: 13px;
-  height: 13px;
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  border-top-color: rgba(255, 255, 255, 0.9);
-  border-radius: 50%;
-  animation: opal-spin 0.65s linear infinite;
-  flex-shrink: 0;
-}
+/* ── Spinner (shared by the share-popover busy state) ── */
 @keyframes opal-spin {
   to { transform: rotate(360deg); }
 }
@@ -362,4 +330,52 @@ details[open] > .opal-collapsible-heading::before {
 .opal-share-popover-textbtn {
   flex: 1;
   cursor: pointer;
+}
+
+/* Busy / error states (publish progress shown inside the card) */
+.opal-share-popover-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-normal);
+}
+.opal-share-popover-spinner {
+  width: 15px;
+  height: 15px;
+  border: 2px solid var(--background-modifier-border);
+  border-top-color: var(--text-muted);
+  border-radius: 50%;
+  animation: opal-spin 0.65s linear infinite;
+  flex-shrink: 0;
+}
+.opal-share-popover-erroricon {
+  display: flex;
+  flex-shrink: 0;
+  color: var(--color-red);
+}
+.opal-share-popover-erroricon svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Success banner above the published details after a publish/update */
+.opal-share-popover-success {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 11px;
+  padding: 7px 10px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-green);
+  background: rgba(var(--color-green-rgb), 0.15);
+}
+.opal-share-popover-successicon {
+  display: flex;
+  flex-shrink: 0;
+}
+.opal-share-popover-successicon svg {
+  width: 15px;
+  height: 15px;
 }
