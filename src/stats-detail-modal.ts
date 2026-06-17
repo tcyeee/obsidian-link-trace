@@ -2,7 +2,7 @@ import { Modal, setIcon } from "obsidian";
 import type { App } from "obsidian";
 import { t } from "./i18n";
 import type { ShareOnlineSettings } from "./settings";
-import type { DimensionItem, StatsRow } from "./analytics";
+import type { DimensionItem, PageDetail, StatsRow } from "./analytics";
 import { fetchPageDetail } from "./analytics-client";
 
 /** Format a timestamp as local date + 24h time, e.g. "2026-06-15 14:30"; null → em dash. */
@@ -15,6 +15,26 @@ function formatDateTime(ms: number | null): string {
 		`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ` +
 		`${pad(d.getHours())}:${pad(d.getMinutes())}`
 	);
+}
+
+/**
+ * Map a GoatCounter screen-size id to a localized label. The sizes dimension
+ * returns its value in `id` (phone/tablet/desktop/desktophd/unknown) with `name`
+ * always empty, so the label must be derived here; unknown/missing → "(unknown)".
+ */
+function sizeLabel(id: string | undefined): string {
+	switch (id) {
+		case "phone":
+			return t("stats.detail.size.phone");
+		case "tablet":
+			return t("stats.detail.size.tablet");
+		case "desktop":
+			return t("stats.detail.size.desktop");
+		case "desktophd":
+			return t("stats.detail.size.desktophd");
+		default:
+			return t("stats.detail.unknownName");
+	}
 }
 
 /**
@@ -43,34 +63,58 @@ export class StatsDetailModal extends Modal {
 		this.renderHeader(contentEl);
 
 		const body = contentEl.createDiv({ cls: "opal-detail-body" });
-		body.createDiv({ cls: "opal-detail-loading", text: t("stats.loading") });
 
-		const detail = await fetchPageDetail(this.settings, this.row.shareLink);
-		body.empty();
-
-		if (detail === null) {
-			body.createDiv({ cls: "opal-stats-notice", text: t("stats.notConfigured") });
-			return;
-		}
-
-		// ── Overview number + daily trend sparkline ──
+		// ── Overview: available immediately from the list's known count ──
 		const overview = body.createDiv({ cls: "opal-detail-overview" });
 		const numEl = overview.createDiv({ cls: "opal-detail-bignum" });
 		numEl.setText(this.countsAvailable ? this.row.views.toLocaleString() : t("stats.views.unknown"));
 		overview.createDiv({ cls: "opal-detail-bignum-label", text: t("stats.detail.totalViews") });
 
-		const trend = body.createDiv({ cls: "opal-detail-section" });
-		trend.createDiv({ cls: "opal-detail-section-title", text: t("stats.detail.trend") });
-		this.renderSparkline(trend, detail.daily);
-
-		// ── Ranked dimension lists ──
+		// ── Per-part skeletons: each section spins on its own and fills as soon
+		//    as its slice of data arrives (the parts are fetched separately). ──
+		const daily = this.createSection(body, t("stats.detail.trend"));
 		const grid = body.createDiv({ cls: "opal-detail-grid" });
-		this.renderDimension(grid, t("stats.detail.referrers"), detail.referrers);
-		this.renderDimension(grid, t("stats.detail.browsers"), detail.browsers);
-		this.renderDimension(grid, t("stats.detail.systems"), detail.systems);
-		this.renderDimension(grid, t("stats.detail.locations"), detail.locations);
-		this.renderDimension(grid, t("stats.detail.languages"), detail.languages);
-		this.renderDimension(grid, t("stats.detail.sizes"), detail.sizes);
+		const slots: Record<string, HTMLElement> = {
+			daily,
+			referrers: this.createSection(grid, t("stats.detail.referrers")),
+			browsers: this.createSection(grid, t("stats.detail.browsers")),
+			systems: this.createSection(grid, t("stats.detail.systems")),
+			locations: this.createSection(grid, t("stats.detail.locations")),
+			languages: this.createSection(grid, t("stats.detail.languages")),
+			sizes: this.createSection(grid, t("stats.detail.sizes")),
+		};
+
+		const detail = await fetchPageDetail(this.settings, this.row.shareLink, (key, value) => {
+			const slot = slots[key];
+			if (!slot) return;
+			slot.empty();
+			if (key === "daily") {
+				this.renderSparkline(slot, value as PageDetail["daily"]);
+			} else if (key === "referrers") {
+				// GoatCounter 用空 name 表示无来源（直接访问），改用可读标签替代“（未知）”。
+				const referrers = (value as DimensionItem[]).map((r) => ({
+					...r,
+					name: r.name || t("stats.detail.directReferrer"),
+				}));
+				this.renderDimension(slot, referrers);
+			} else if (key === "sizes") {
+				// 屏幕尺寸维度 name 恒为空，可读标签需由 id 推导。
+				const sizes = (value as DimensionItem[]).map((s) => ({
+					...s,
+					name: sizeLabel(s.id),
+				}));
+				this.renderDimension(slot, sizes);
+			} else {
+				this.renderDimension(slot, value as DimensionItem[]);
+			}
+		});
+
+		// Unconfigured / invalid link: no parts ever arrived — replace the whole
+		// skeleton with a single notice.
+		if (detail === null) {
+			body.empty();
+			body.createDiv({ cls: "opal-stats-notice", text: t("stats.notConfigured") });
+		}
 	}
 
 	onClose(): void {
@@ -95,6 +139,19 @@ export class StatsDetailModal extends Modal {
 		});
 	}
 
+	/**
+	 * Create a titled section with its own loading spinner and return the inner
+	 * body element to fill once the section's data arrives. Each section loads
+	 * independently, so whichever part resolves first replaces its own spinner.
+	 */
+	private createSection(parent: HTMLElement, title: string): HTMLElement {
+		const section = parent.createDiv({ cls: "opal-detail-section" });
+		section.createDiv({ cls: "opal-detail-section-title", text: title });
+		const sectionBody = section.createDiv({ cls: "opal-detail-section-body" });
+		sectionBody.createDiv({ cls: "opal-detail-section-spinner opal-detail-spinner" });
+		return sectionBody;
+	}
+
 	/** A horizontal bar chart of the daily series (height ∝ count, normalized to the max). */
 	private renderSparkline(parent: HTMLElement, daily: { day: string; count: number }[]): void {
 		if (daily.length === 0) {
@@ -112,16 +169,14 @@ export class StatsDetailModal extends Modal {
 		}
 	}
 
-	/** A titled, ranked list of one dimension; mini bar per row, normalized to the dimension max. */
-	private renderDimension(parent: HTMLElement, title: string, items: DimensionItem[]): void {
-		const section = parent.createDiv({ cls: "opal-detail-section" });
-		section.createDiv({ cls: "opal-detail-section-title", text: title });
+	/** A ranked list of one dimension; mini bar per row, normalized to the dimension max. */
+	private renderDimension(parent: HTMLElement, items: DimensionItem[]): void {
 		if (items.length === 0) {
-			section.createDiv({ cls: "opal-detail-empty", text: t("stats.detail.noData") });
+			parent.createDiv({ cls: "opal-detail-empty", text: t("stats.detail.noData") });
 			return;
 		}
 		const max = Math.max(1, ...items.map((i) => i.count));
-		const list = section.createDiv({ cls: "opal-detail-list" });
+		const list = parent.createDiv({ cls: "opal-detail-list" });
 		for (const item of items) {
 			const rowEl = list.createDiv({ cls: "opal-detail-row" });
 			const fill = rowEl.createDiv({ cls: "opal-detail-row-fill" });

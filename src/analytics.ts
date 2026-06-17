@@ -112,6 +112,12 @@ export interface DimensionItem {
 	name: string;
 	/** 该取值在区间内的访客计数。 */
 	count: number;
+	/**
+	 * GoatCounter 维度取值的内部 id（存在时保留）。多数维度 name 已可读，无需用到；
+	 * 但屏幕尺寸（sizes）维度 name 恒为空，可读标签需由 id（phone/tablet/desktop/
+	 * desktophd/unknown）推导，故此处保留供调用方映射。
+	 */
+	id?: string;
 }
 
 /** 每日访问序列中的一个点。 */
@@ -135,7 +141,9 @@ export function parseDimensionStats(json: unknown): DimensionItem[] | null {
 	for (const s of stats) {
 		const obj = s as Record<string, unknown> | null;
 		if (obj && typeof obj.name === "string" && typeof obj.count === "number") {
-			out.push({ name: obj.name, count: obj.count });
+			const item: DimensionItem = { name: obj.name, count: obj.count };
+			if (typeof obj.id === "string") item.id = obj.id;
+			out.push(item);
 		}
 	}
 	return out;
@@ -212,30 +220,27 @@ export function buildStatsRows(
 }
 
 /** 注入判定所需的设置子集。 */
-type InjectSettings = Pick<ShareOnlineSettings, "analyticsEnabled" | "goatcounterEndpoint">;
+type InjectSettings = Pick<ShareOnlineSettings, "goatcounterEndpoint">;
 
-/** 启用且 endpoint 非空时返回注入配置，否则 undefined。 */
+/**
+ * endpoint 非空时返回注入配置，否则 undefined。
+ * 访问统计默认常开（无开关设置项），故仅以 endpoint 是否配置为准。
+ */
 export function getAnalyticsInjectConfig(s: InjectSettings): GoatCounterInjectConfig | undefined {
-	if (!s.analyticsEnabled) return undefined;
 	const endpoint = s.goatcounterEndpoint.trim();
 	if (!endpoint) return undefined;
 	return { endpoint };
 }
 
 /** 读取浏览量所需的设置子集。 */
-type ReadSettings = Pick<
-	ShareOnlineSettings,
-	"analyticsEnabled" | "goatcounterEndpoint" | "goatcounterApiToken"
->;
+type ReadSettings = Pick<ShareOnlineSettings, "goatcounterEndpoint">;
 
 /**
- * 是否具备读取浏览量的完整配置（启用 + endpoint + apiToken 均非空）。
- * endpoint 既用于推导 API 基址，apiToken 用于鉴权；缺任一都无法读取。
+ * 是否具备读取浏览量的配置（endpoint 非空即可）。
+ * endpoint 用于推导 API 基址。读取无需 token：默认的 stats.viii.me 端点由
+ * nginx 在服务端注入只读 token（见 README/CLAUDE.md 的 Analytics backend），
+ * 客户端不持有任何 token。访问统计默认常开，无启用开关。
  */
 export function canReadAnalytics(s: ReadSettings): boolean {
-	return (
-		s.analyticsEnabled &&
-		!!s.goatcounterEndpoint.trim() &&
-		!!s.goatcounterApiToken.trim()
-	);
+	return !!s.goatcounterEndpoint.trim();
 }

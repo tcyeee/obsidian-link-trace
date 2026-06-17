@@ -16,6 +16,15 @@ import {
 /** 统计起点：取一个足够早的固定时刻，等效“全部累计”。 */
 const STATS_START = "2020-01-01T00:00:00Z";
 
+/** 简单延时，用于 429 限流退避。 */
+const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * 统计读取请求头。客户端不持有任何 token——默认的 stats.viii.me 端点由服务端
+ * nginx 注入只读 token（见 analytics.ts canReadAnalytics 的说明）。
+ */
+const STATS_HEADERS: Record<string, string> = { accept: "application/json" };
+
 /**
  * 读取某个已发布页面的累计浏览量。
  * 任意失败（未配置 / 非法链接 / 网络 / 鉴权 / 结构异常）都返回 null，调用方降级展示。
@@ -28,7 +37,6 @@ export async function fetchPageViews(
 	shareLink: string
 ): Promise<PageViewStats | null> {
 	if (!canReadAnalytics(settings)) return null;
-	const apiToken = settings.goatcounterApiToken.trim();
 
 	const apiBase = deriveApiBase(settings.goatcounterEndpoint.trim());
 	if (!apiBase) return null;
@@ -46,10 +54,7 @@ export async function fetchPageViews(
 		const res = await requestUrl({
 			url,
 			method: "GET",
-			headers: {
-				Authorization: `Bearer ${apiToken}`,
-				accept: "application/json",
-			},
+			headers: STATS_HEADERS,
 			throw: false,
 		});
 		if (res.status < 200 || res.status >= 300) return null;
@@ -75,7 +80,6 @@ export async function fetchAllPathHits(
 	settings: ShareOnlineSettings
 ): Promise<Map<string, number> | null> {
 	if (!canReadAnalytics(settings)) return null;
-	const apiToken = settings.goatcounterApiToken.trim();
 	const apiBase = deriveApiBase(settings.goatcounterEndpoint.trim());
 	if (!apiBase) return null;
 
@@ -94,7 +98,7 @@ export async function fetchAllPathHits(
 			const res = await requestUrl({
 				url,
 				method: "GET",
-				headers: { Authorization: `Bearer ${apiToken}`, accept: "application/json" },
+				headers: STATS_HEADERS,
 				throw: false,
 			});
 			if (res.status < 200 || res.status >= 300) return gotAnyPage ? byPath : null;
@@ -135,17 +139,33 @@ const DETAIL_DIMENSIONS = [
 	"languages",
 ] as const;
 
+/** GoatCounter 维度端点名 → PageDetail 字段名（详情弹窗逐块填充时用）。 */
+const DIMENSION_TO_KEY = {
+	toprefs: "referrers",
+	browsers: "browsers",
+	systems: "systems",
+	sizes: "sizes",
+	locations: "locations",
+	languages: "languages",
+} as const;
+
+/** 详情弹窗可逐块渲染的部件键：每日趋势 + 六个维度。 */
+export type PageDetailPartKey = "daily" | (typeof DIMENSION_TO_KEY)[keyof typeof DIMENSION_TO_KEY];
+
 /**
  * 拉取单个分享页的完整可读维度（详情弹窗用）。
- * 未配置 / 非法链接返回 null；否则并发拉取近 30 天每日趋势 + 全时段六个维度，
+ * 未配置 / 非法链接返回 null；否则顺序拉取近 30 天每日趋势 + 全时段六个维度，
  * 任一子请求失败仅令该维度为空数组，不拖垮整体。概览访问数由调用方用列表已知计数提供。
+ *
+ * 各部件是分开请求的：传入 `onPart` 即可在每块到达时立即回调（先拿到的先显示），
+ * 无需等待整体完成；返回的 Promise 仍在全部完成后 resolve 出完整 PageDetail。
  */
 export async function fetchPageDetail(
 	settings: ShareOnlineSettings,
-	shareLink: string
+	shareLink: string,
+	onPart?: (key: PageDetailPartKey, value: PageDetail["daily"] | DimensionItem[]) => void
 ): Promise<PageDetail | null> {
 	if (!canReadAnalytics(settings)) return null;
-	const apiToken = settings.goatcounterApiToken.trim();
 	const apiBase = deriveApiBase(settings.goatcounterEndpoint.trim());
 	if (!apiBase) return null;
 	const urlPath = extractPathname(shareLink);
@@ -156,20 +176,37 @@ export async function fetchPageDetail(
 	const scope =
 		`&path_by_name=true&include_paths=${encodeURIComponent(urlPath)}`;
 
-	/** GET + parse，失败统一返回 fallback（绝不抛出）。 */
+	/** 从 GoatCounter 429 文案（"try again in 296.6ms"）解析建议等待毫秒数，失败回退 500ms。 */
+	const parseRetryMs = (text: string): number => {
+		const m = /try again in ([\d.]+)ms/.exec(text);
+		const ms = m ? Number(m[1]) : NaN;
+		return Number.isFinite(ms) ? Math.ceil(ms) + 50 : 500;
+	};
+
+	/**
+	 * GET + parse，失败统一返回 fallback（绝不抛出）。
+	 * GoatCounter 对突发请求限流（429），按响应建议的等待时间退避重试至多 3 次。
+	 */
 	const get = async <T>(query: string, parse: (json: unknown) => T | null, fallback: T): Promise<T> => {
-		try {
-			const res = await requestUrl({
-				url: `${apiBase}${query}`,
-				method: "GET",
-				headers: { Authorization: `Bearer ${apiToken}`, accept: "application/json" },
-				throw: false,
-			});
-			if (res.status < 200 || res.status >= 300) return fallback;
-			return parse(res.json) ?? fallback;
-		} catch {
-			return fallback;
+		for (let attempt = 0; attempt < 4; attempt++) {
+			try {
+				const res = await requestUrl({
+					url: `${apiBase}${query}`,
+					method: "GET",
+					headers: STATS_HEADERS,
+					throw: false,
+				});
+				if (res.status === 429) {
+					await sleep(parseRetryMs(res.text));
+					continue;
+				}
+				if (res.status < 200 || res.status >= 300) return fallback;
+				return parse(res.json) ?? fallback;
+			} catch {
+				return fallback;
+			}
 		}
+		return fallback;
 	};
 
 	const dailyQuery =
@@ -179,12 +216,24 @@ export async function fetchPageDetail(
 		`/stats/${page}?start=${encodeURIComponent(STATS_START)}&end=${encodeURIComponent(end)}` +
 		`&limit=${DETAIL_DIMENSION_LIMIT}${scope}`;
 
-	const [daily, referrers, browsers, systems, sizes, locations, languages] = await Promise.all([
-		get(dailyQuery, parseDailySeries, [] as PageDetail["daily"]),
-		...DETAIL_DIMENSIONS.map((page) =>
-			get(dimQuery(page), parseDimensionStats, [] as DimensionItem[])
-		),
-	]);
+	// 顺序请求（而非 Promise.all 并发），避免 GoatCounter 对突发请求限流（429）；
+	// get 内仍带 429 退避重试兜底。每块到手即回调，让弹窗逐块渲染。
+	const daily = await get(dailyQuery, parseDailySeries, [] as PageDetail["daily"]);
+	onPart?.("daily", daily);
+	const dims: Record<string, DimensionItem[]> = {};
+	for (const page of DETAIL_DIMENSIONS) {
+		const items = await get(dimQuery(page), parseDimensionStats, [] as DimensionItem[]);
+		dims[page] = items;
+		onPart?.(DIMENSION_TO_KEY[page], items);
+	}
 
-	return { daily, referrers, browsers, systems, sizes, locations, languages };
+	return {
+		daily,
+		referrers: dims.toprefs,
+		browsers: dims.browsers,
+		systems: dims.systems,
+		sizes: dims.sizes,
+		locations: dims.locations,
+		languages: dims.languages,
+	};
 }

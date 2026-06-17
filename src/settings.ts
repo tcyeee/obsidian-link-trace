@@ -15,9 +15,7 @@ export interface ShareOnlineSettings {
 	ossPrefix: string;
 	ossDomain: string;
 	pageLinkLength: number;
-	analyticsEnabled: boolean;
 	goatcounterEndpoint: string;
-	goatcounterApiToken: string;
 	language: Language;
 }
 
@@ -31,9 +29,7 @@ export const DEFAULT_SETTINGS: ShareOnlineSettings = {
 	ossPrefix: "notes",
 	ossDomain: "",
 	pageLinkLength: 3,
-	analyticsEnabled: false,
 	goatcounterEndpoint: "https://stats.viii.me/count",
-	goatcounterApiToken: "",
 	language: "zh",
 };
 
@@ -230,43 +226,5 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 						previewEl?.setText(this.buildPreviewUrl());
 					})
 			);
-
-		// ── 访问统计 / Analytics ─ collapsible ──
-		const analyticsDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
-		analyticsDetails.createEl("summary", {
-			cls: "opal-collapsible-heading",
-			text: t("settings.analytics.heading"),
-		});
-
-		new Setting(analyticsDetails)
-			.setName(t("settings.analyticsEnabled.name"))
-			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.settings.analyticsEnabled)
-					.onChange(async (value) => {
-						this.plugin.settings.analyticsEnabled = value;
-						// 固定使用统一的 Count 端点
-						this.plugin.settings.goatcounterEndpoint = DEFAULT_SETTINGS.goatcounterEndpoint;
-						await this.plugin.saveSettings();
-						this.buildUI();
-					})
-			);
-
-		// API Token 仅在启用访问统计时显示
-		if (this.plugin.settings.analyticsEnabled) {
-			new Setting(analyticsDetails)
-				.setName(t("settings.goatcounterApiToken.name"))
-				.setDesc(t("settings.goatcounterApiToken.desc"))
-				.addText((text) => {
-					text
-						.setPlaceholder("xxxxxxxxxxxxxxxx")
-						.setValue(this.plugin.settings.goatcounterApiToken)
-						.onChange(async (value) => {
-							this.plugin.settings.goatcounterApiToken = value.trim();
-							await this.plugin.saveSettings();
-						});
-					text.inputEl.type = "password";
-				});
-		}
 	}
 }

@@ -382,8 +382,15 @@ details[open] > .opal-collapsible-heading::before {
 
 /* ── Share-stats view ──────────────────────────────────────────────── */
 .opal-stats-view {
-  padding: 16px 18px;
+  padding: 150px 18px 16px;
   overflow: auto;
+}
+/* Center content with a readable max-width, like an Obsidian note */
+.opal-stats-header,
+.opal-stats-body {
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
 }
 .opal-stats-header {
   display: flex;
@@ -395,18 +402,19 @@ details[open] > .opal-collapsible-heading::before {
 .opal-stats-titlerow {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 12px;
+  margin-bottom: 28px;
 }
 .opal-stats-titleicon {
   display: flex;
   color: var(--text-accent);
 }
 .opal-stats-titleicon svg {
-  width: 18px;
-  height: 18px;
+  width: 36px;
+  height: 36px;
 }
 .opal-stats-title {
-  font-size: var(--h4-size);
+  font-size: 300%;
   font-weight: var(--font-bold);
   color: var(--text-normal);
 }
@@ -624,10 +632,23 @@ details[open] > .opal-collapsible-heading::before {
   color: var(--text-muted);
 }
 .opal-detail-loading {
-  padding: 28px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 36px 4px;
   text-align: center;
   color: var(--text-muted);
   font-size: var(--font-ui-small);
+}
+.opal-detail-spinner {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--background-modifier-border);
+  border-top-color: var(--text-muted);
+  border-radius: 50%;
+  animation: opal-spin 0.65s linear infinite;
 }
 .opal-detail-overview {
   margin-bottom: 16px;
@@ -652,6 +673,16 @@ details[open] > .opal-collapsible-heading::before {
   font-size: var(--font-ui-smaller);
   font-weight: var(--font-medium);
   color: var(--text-muted);
+}
+/* Per-section spinner: each part loads independently, so each section shows its
+   own loading state and fills the moment its data arrives. */
+.opal-detail-section-body {
+  min-height: 24px;
+}
+.opal-detail-section-spinner {
+  width: 16px;
+  height: 16px;
+  margin: 6px 0;
 }
 .opal-detail-empty {
   padding: 8px 0;

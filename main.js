@@ -18222,7 +18222,7 @@ var require_httpclient2 = __commonJS({
           debug("retry request %s, remain %s", url, args.retry);
           if (args.retryDelay) {
             debug("retry after %sms", args.retryDelay);
-            return sleep(args.retryDelay).then(function() {
+            return sleep2(args.retryDelay).then(function() {
               return self2.request(url, args);
             });
           }
@@ -18235,7 +18235,7 @@ var require_httpclient2 = __commonJS({
           debug("retry request %s, remain %s, err %s", url, args.retry, err);
           if (args.retryDelay) {
             debug("retry after %sms", args.retryDelay);
-            return sleep(args.retryDelay).then(function() {
+            return sleep2(args.retryDelay).then(function() {
               return self2.request(url, args);
             });
           }
@@ -18259,7 +18259,7 @@ var require_httpclient2 = __commonJS({
         });
       };
     };
-    function sleep(ms2) {
+    function sleep2(ms2) {
       if (!_Promise) {
         _Promise = require_any_promise();
       }
@@ -25668,10 +25668,6 @@ var zh = {
   "settings.ossDomain.name": "\u81EA\u5B9A\u4E49\u57DF\u540D",
   "settings.ossDomain.desc": "\u66FF\u6362\u9ED8\u8BA4\u7684 OSS \u57DF\u540D\uFF0C\u7559\u7A7A\u5219\u4F7F\u7528\u9ED8\u8BA4\u3002\u4F8B\u5982 https://cdn.example.com",
   "settings.urlPreview.label": "\u9884\u89C8\uFF1A",
-  "settings.analytics.heading": "\u8BBF\u95EE\u7EDF\u8BA1",
-  "settings.analyticsEnabled.name": "\u542F\u7528\u8BBF\u95EE\u7EDF\u8BA1",
-  "settings.goatcounterApiToken.name": "API Token",
-  "settings.goatcounterApiToken.desc": "\u7528\u4E8E\u8BFB\u53D6\u6D4F\u89C8\u91CF\u7684 GoatCounter API Token",
   "modal.views.loading": "\u6D4F\u89C8 \u2026",
   "modal.views.value": "\u{1F441} {count}",
   "modal.views.fail": "\u{1F441} \u2014",
@@ -25703,8 +25699,13 @@ var zh = {
   "stats.detail.locations": "\u56FD\u5BB6\uFF0F\u5730\u533A",
   "stats.detail.languages": "\u8BED\u8A00",
   "stats.detail.sizes": "\u5C4F\u5E55\u5C3A\u5BF8",
+  "stats.detail.size.phone": "\u624B\u673A",
+  "stats.detail.size.tablet": "\u5E73\u677F\uFF0F\u5927\u5C4F\u624B\u673A",
+  "stats.detail.size.desktop": "\u7535\u8111\u663E\u793A\u5668",
+  "stats.detail.size.desktophd": "\u9AD8\u6E05\u4EE5\u4E0A\u663E\u793A\u5668",
   "stats.detail.noData": "\u6682\u65E0\u6570\u636E",
   "stats.detail.unknownName": "\uFF08\u672A\u77E5\uFF09",
+  "stats.detail.directReferrer": "\u76F4\u63A5\u8BBF\u95EE",
   "cmd.exportLocal": "\u5BFC\u51FA\u5230\u672C\u5730",
   "cmd.exportOss": "\u5BFC\u51FA\u5230 OSS",
   "statusbar.shareNote": "\u5206\u4EAB\u7B14\u8BB0",
@@ -25773,10 +25774,6 @@ var en = {
   "settings.ossDomain.name": "Custom Domain",
   "settings.ossDomain.desc": "Replace the default OSS domain. Leave empty for default. e.g. https://cdn.example.com",
   "settings.urlPreview.label": "Preview: ",
-  "settings.analytics.heading": "Analytics",
-  "settings.analyticsEnabled.name": "Enable analytics",
-  "settings.goatcounterApiToken.name": "API Token",
-  "settings.goatcounterApiToken.desc": "GoatCounter API Token used to read page views",
   "modal.views.loading": "Views \u2026",
   "modal.views.value": "\u{1F441} {count}",
   "modal.views.fail": "\u{1F441} \u2014",
@@ -25808,8 +25805,13 @@ var en = {
   "stats.detail.locations": "Countries / regions",
   "stats.detail.languages": "Languages",
   "stats.detail.sizes": "Screen sizes",
+  "stats.detail.size.phone": "Phones",
+  "stats.detail.size.tablet": "Tablets and large phones",
+  "stats.detail.size.desktop": "Computer monitors",
+  "stats.detail.size.desktophd": "Computer monitors larger than HD",
   "stats.detail.noData": "No data",
   "stats.detail.unknownName": "(unknown)",
+  "stats.detail.directReferrer": "Direct",
   "cmd.exportLocal": "Export to local",
   "cmd.exportOss": "Export to OSS",
   "statusbar.shareNote": "Share note",
@@ -25907,9 +25909,7 @@ var DEFAULT_SETTINGS = {
   ossPrefix: "notes",
   ossDomain: "",
   pageLinkLength: 3,
-  analyticsEnabled: false,
   goatcounterEndpoint: "https://stats.viii.me/count",
-  goatcounterApiToken: "",
   language: "zh"
 };
 var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
@@ -26028,28 +26028,6 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
         previewEl == null ? void 0 : previewEl.setText(this.buildPreviewUrl());
       })
     );
-    const analyticsDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
-    analyticsDetails.createEl("summary", {
-      cls: "opal-collapsible-heading",
-      text: t("settings.analytics.heading")
-    });
-    new import_obsidian.Setting(analyticsDetails).setName(t("settings.analyticsEnabled.name")).addToggle(
-      (toggle) => toggle.setValue(this.plugin.settings.analyticsEnabled).onChange(async (value) => {
-        this.plugin.settings.analyticsEnabled = value;
-        this.plugin.settings.goatcounterEndpoint = DEFAULT_SETTINGS.goatcounterEndpoint;
-        await this.plugin.saveSettings();
-        this.buildUI();
-      })
-    );
-    if (this.plugin.settings.analyticsEnabled) {
-      new import_obsidian.Setting(analyticsDetails).setName(t("settings.goatcounterApiToken.name")).setDesc(t("settings.goatcounterApiToken.desc")).addText((text) => {
-        text.setPlaceholder("xxxxxxxxxxxxxxxx").setValue(this.plugin.settings.goatcounterApiToken).onChange(async (value) => {
-          this.plugin.settings.goatcounterApiToken = value.trim();
-          await this.plugin.saveSettings();
-        });
-        text.inputEl.type = "password";
-      });
-    }
   }
 };
 
@@ -26668,7 +26646,9 @@ function parseDimensionStats(json) {
   for (const s of stats) {
     const obj = s;
     if (obj && typeof obj.name === "string" && typeof obj.count === "number") {
-      out.push({ name: obj.name, count: obj.count });
+      const item = { name: obj.name, count: obj.count };
+      if (typeof obj.id === "string") item.id = obj.id;
+      out.push(item);
     }
   }
   return out;
@@ -26700,13 +26680,12 @@ function buildStatsRows(pages, hitsByPath) {
   });
 }
 function getAnalyticsInjectConfig(s) {
-  if (!s.analyticsEnabled) return void 0;
   const endpoint = s.goatcounterEndpoint.trim();
   if (!endpoint) return void 0;
   return { endpoint };
 }
 function canReadAnalytics(s) {
-  return s.analyticsEnabled && !!s.goatcounterEndpoint.trim() && !!s.goatcounterApiToken.trim();
+  return !!s.goatcounterEndpoint.trim();
 }
 
 // src/note-hash.ts
@@ -28018,9 +27997,10 @@ var import_obsidian6 = require("obsidian");
 // src/analytics-client.ts
 var import_obsidian5 = require("obsidian");
 var STATS_START = "2020-01-01T00:00:00Z";
+var sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+var STATS_HEADERS = { accept: "application/json" };
 async function fetchPageViews(settings, shareLink) {
   if (!canReadAnalytics(settings)) return null;
-  const apiToken = settings.goatcounterApiToken.trim();
   const apiBase = deriveApiBase(settings.goatcounterEndpoint.trim());
   if (!apiBase) return null;
   const urlPath = extractPathname(shareLink);
@@ -28032,10 +28012,7 @@ async function fetchPageViews(settings, shareLink) {
     const res = await (0, import_obsidian5.requestUrl)({
       url,
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${apiToken}`,
-        accept: "application/json"
-      },
+      headers: STATS_HEADERS,
       throw: false
     });
     if (res.status < 200 || res.status >= 300) return null;
@@ -28047,7 +28024,6 @@ async function fetchPageViews(settings, shareLink) {
 var MAX_HITS_PAGES = 100;
 async function fetchAllPathHits(settings) {
   if (!canReadAnalytics(settings)) return null;
-  const apiToken = settings.goatcounterApiToken.trim();
   const apiBase = deriveApiBase(settings.goatcounterEndpoint.trim());
   if (!apiBase) return null;
   const end = (/* @__PURE__ */ new Date()).toISOString();
@@ -28061,7 +28037,7 @@ async function fetchAllPathHits(settings) {
       const res = await (0, import_obsidian5.requestUrl)({
         url,
         method: "GET",
-        headers: { Authorization: `Bearer ${apiToken}`, accept: "application/json" },
+        headers: STATS_HEADERS,
         throw: false
       });
       if (res.status < 200 || res.status >= 300) return gotAnyPage ? byPath : null;
@@ -28096,9 +28072,16 @@ var DETAIL_DIMENSIONS = [
   "locations",
   "languages"
 ];
-async function fetchPageDetail(settings, shareLink) {
+var DIMENSION_TO_KEY = {
+  toprefs: "referrers",
+  browsers: "browsers",
+  systems: "systems",
+  sizes: "sizes",
+  locations: "locations",
+  languages: "languages"
+};
+async function fetchPageDetail(settings, shareLink, onPart) {
   if (!canReadAnalytics(settings)) return null;
-  const apiToken = settings.goatcounterApiToken.trim();
   const apiBase = deriveApiBase(settings.goatcounterEndpoint.trim());
   if (!apiBase) return null;
   const urlPath = extractPathname(shareLink);
@@ -28106,30 +28089,52 @@ async function fetchPageDetail(settings, shareLink) {
   const end = (/* @__PURE__ */ new Date()).toISOString();
   const trendStart = new Date(Date.now() - DETAIL_TREND_DAYS * 864e5).toISOString();
   const scope = `&path_by_name=true&include_paths=${encodeURIComponent(urlPath)}`;
+  const parseRetryMs = (text) => {
+    const m = /try again in ([\d.]+)ms/.exec(text);
+    const ms = m ? Number(m[1]) : NaN;
+    return Number.isFinite(ms) ? Math.ceil(ms) + 50 : 500;
+  };
   const get = async (query, parse, fallback) => {
     var _a;
-    try {
-      const res = await (0, import_obsidian5.requestUrl)({
-        url: `${apiBase}${query}`,
-        method: "GET",
-        headers: { Authorization: `Bearer ${apiToken}`, accept: "application/json" },
-        throw: false
-      });
-      if (res.status < 200 || res.status >= 300) return fallback;
-      return (_a = parse(res.json)) != null ? _a : fallback;
-    } catch (e) {
-      return fallback;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      try {
+        const res = await (0, import_obsidian5.requestUrl)({
+          url: `${apiBase}${query}`,
+          method: "GET",
+          headers: STATS_HEADERS,
+          throw: false
+        });
+        if (res.status === 429) {
+          await sleep(parseRetryMs(res.text));
+          continue;
+        }
+        if (res.status < 200 || res.status >= 300) return fallback;
+        return (_a = parse(res.json)) != null ? _a : fallback;
+      } catch (e) {
+        return fallback;
+      }
     }
+    return fallback;
   };
   const dailyQuery = `/stats/hits?start=${encodeURIComponent(trendStart)}&end=${encodeURIComponent(end)}&daily=true&limit=1${scope}`;
   const dimQuery = (page) => `/stats/${page}?start=${encodeURIComponent(STATS_START)}&end=${encodeURIComponent(end)}&limit=${DETAIL_DIMENSION_LIMIT}${scope}`;
-  const [daily, referrers, browsers, systems, sizes, locations, languages] = await Promise.all([
-    get(dailyQuery, parseDailySeries, []),
-    ...DETAIL_DIMENSIONS.map(
-      (page) => get(dimQuery(page), parseDimensionStats, [])
-    )
-  ]);
-  return { daily, referrers, browsers, systems, sizes, locations, languages };
+  const daily = await get(dailyQuery, parseDailySeries, []);
+  onPart == null ? void 0 : onPart("daily", daily);
+  const dims = {};
+  for (const page of DETAIL_DIMENSIONS) {
+    const items = await get(dimQuery(page), parseDimensionStats, []);
+    dims[page] = items;
+    onPart == null ? void 0 : onPart(DIMENSION_TO_KEY[page], items);
+  }
+  return {
+    daily,
+    referrers: dims.toprefs,
+    browsers: dims.browsers,
+    systems: dims.systems,
+    sizes: dims.sizes,
+    locations: dims.locations,
+    languages: dims.languages
+  };
 }
 
 // src/share-modal.ts
@@ -28746,6 +28751,20 @@ function formatDateTime2(ms) {
   const pad = (n) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
+function sizeLabel(id) {
+  switch (id) {
+    case "phone":
+      return t("stats.detail.size.phone");
+    case "tablet":
+      return t("stats.detail.size.tablet");
+    case "desktop":
+      return t("stats.detail.size.desktop");
+    case "desktophd":
+      return t("stats.detail.size.desktophd");
+    default:
+      return t("stats.detail.unknownName");
+  }
+}
 var StatsDetailModal = class extends import_obsidian9.Modal {
   constructor(app, settings, row, countsAvailable) {
     super(app);
@@ -28760,27 +28779,47 @@ var StatsDetailModal = class extends import_obsidian9.Modal {
     contentEl.addClass("opal-detail");
     this.renderHeader(contentEl);
     const body = contentEl.createDiv({ cls: "opal-detail-body" });
-    body.createDiv({ cls: "opal-detail-loading", text: t("stats.loading") });
-    const detail = await fetchPageDetail(this.settings, this.row.shareLink);
-    body.empty();
-    if (detail === null) {
-      body.createDiv({ cls: "opal-stats-notice", text: t("stats.notConfigured") });
-      return;
-    }
     const overview = body.createDiv({ cls: "opal-detail-overview" });
     const numEl = overview.createDiv({ cls: "opal-detail-bignum" });
     numEl.setText(this.countsAvailable ? this.row.views.toLocaleString() : t("stats.views.unknown"));
     overview.createDiv({ cls: "opal-detail-bignum-label", text: t("stats.detail.totalViews") });
-    const trend = body.createDiv({ cls: "opal-detail-section" });
-    trend.createDiv({ cls: "opal-detail-section-title", text: t("stats.detail.trend") });
-    this.renderSparkline(trend, detail.daily);
+    const daily = this.createSection(body, t("stats.detail.trend"));
     const grid = body.createDiv({ cls: "opal-detail-grid" });
-    this.renderDimension(grid, t("stats.detail.referrers"), detail.referrers);
-    this.renderDimension(grid, t("stats.detail.browsers"), detail.browsers);
-    this.renderDimension(grid, t("stats.detail.systems"), detail.systems);
-    this.renderDimension(grid, t("stats.detail.locations"), detail.locations);
-    this.renderDimension(grid, t("stats.detail.languages"), detail.languages);
-    this.renderDimension(grid, t("stats.detail.sizes"), detail.sizes);
+    const slots = {
+      daily,
+      referrers: this.createSection(grid, t("stats.detail.referrers")),
+      browsers: this.createSection(grid, t("stats.detail.browsers")),
+      systems: this.createSection(grid, t("stats.detail.systems")),
+      locations: this.createSection(grid, t("stats.detail.locations")),
+      languages: this.createSection(grid, t("stats.detail.languages")),
+      sizes: this.createSection(grid, t("stats.detail.sizes"))
+    };
+    const detail = await fetchPageDetail(this.settings, this.row.shareLink, (key, value) => {
+      const slot = slots[key];
+      if (!slot) return;
+      slot.empty();
+      if (key === "daily") {
+        this.renderSparkline(slot, value);
+      } else if (key === "referrers") {
+        const referrers = value.map((r) => ({
+          ...r,
+          name: r.name || t("stats.detail.directReferrer")
+        }));
+        this.renderDimension(slot, referrers);
+      } else if (key === "sizes") {
+        const sizes = value.map((s) => ({
+          ...s,
+          name: sizeLabel(s.id)
+        }));
+        this.renderDimension(slot, sizes);
+      } else {
+        this.renderDimension(slot, value);
+      }
+    });
+    if (detail === null) {
+      body.empty();
+      body.createDiv({ cls: "opal-stats-notice", text: t("stats.notConfigured") });
+    }
   }
   onClose() {
     this.contentEl.empty();
@@ -28800,6 +28839,18 @@ var StatsDetailModal = class extends import_obsidian9.Modal {
       text: t("stats.detail.published", { time: formatDateTime2(this.row.publishedAt) })
     });
   }
+  /**
+   * Create a titled section with its own loading spinner and return the inner
+   * body element to fill once the section's data arrives. Each section loads
+   * independently, so whichever part resolves first replaces its own spinner.
+   */
+  createSection(parent, title) {
+    const section = parent.createDiv({ cls: "opal-detail-section" });
+    section.createDiv({ cls: "opal-detail-section-title", text: title });
+    const sectionBody = section.createDiv({ cls: "opal-detail-section-body" });
+    sectionBody.createDiv({ cls: "opal-detail-section-spinner opal-detail-spinner" });
+    return sectionBody;
+  }
   /** A horizontal bar chart of the daily series (height ∝ count, normalized to the max). */
   renderSparkline(parent, daily) {
     if (daily.length === 0) {
@@ -28816,16 +28867,14 @@ var StatsDetailModal = class extends import_obsidian9.Modal {
       if (point.count > 0) bar.addClass("is-active");
     }
   }
-  /** A titled, ranked list of one dimension; mini bar per row, normalized to the dimension max. */
-  renderDimension(parent, title, items) {
-    const section = parent.createDiv({ cls: "opal-detail-section" });
-    section.createDiv({ cls: "opal-detail-section-title", text: title });
+  /** A ranked list of one dimension; mini bar per row, normalized to the dimension max. */
+  renderDimension(parent, items) {
     if (items.length === 0) {
-      section.createDiv({ cls: "opal-detail-empty", text: t("stats.detail.noData") });
+      parent.createDiv({ cls: "opal-detail-empty", text: t("stats.detail.noData") });
       return;
     }
     const max = Math.max(1, ...items.map((i) => i.count));
-    const list = section.createDiv({ cls: "opal-detail-list" });
+    const list = parent.createDiv({ cls: "opal-detail-list" });
     for (const item of items) {
       const rowEl = list.createDiv({ cls: "opal-detail-row" });
       const fill = rowEl.createDiv({ cls: "opal-detail-row-fill" });

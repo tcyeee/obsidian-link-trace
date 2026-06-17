@@ -99,11 +99,25 @@ Page-view tracking uses a **self-hosted [GoatCounter](https://www.goatcounter.co
   `goatcounter` database + role** (separate from the other apps). Admin login and DB password live on
   the server only — **never commit them to this repo**.
 - **Reading view counts** for the share popover is done via GoatCounter's JSON API
-  (`GET /api/v0/stats/hits` with `Authorization: Bearer <token>`, filtered to the page's path via
-  `include_paths` + `path_by_name`). GoatCounter reports a single visitor `count` per path — there is
-  no pageviews/visitors split, so the popover shows one number. Settings store
-  `goatcounterEndpoint` (the count URL, e.g. `https://stats.viii.me/count`; the script src is that
-  URL + `.js`, and the API base is its origin + `/api/v0`) and `goatcounterApiToken`.
+  (`GET /api/v0/stats/hits`, filtered to the page's path via `include_paths` + `path_by_name`).
+  GoatCounter reports a single visitor `count` per path — there is no pageviews/visitors split, so the
+  popover shows one number. Settings store `goatcounterEndpoint` (the count URL, e.g.
+  `https://stats.viii.me/count`; the script src is that URL + `.js`, and the API base is its origin +
+  `/api/v0`) and `goatcounterApiToken` (**now optional** — see below).
+- **Public read-only proxy (no token in the client).** So the plugin can ship without leaking an API
+  token, nginx on the server exposes `/api/v0/stats/` as an **unauthenticated, read-only** proxy: that
+  `location` block **injects** `Authorization: Bearer <read-only token>` server-side (`proxy_set_header`,
+  overriding whatever the client sent), is **GET-only** (`limit_except GET { deny all }`), and is
+  rate-limited (`limit_req zone=gcpub`). The injected token has **only the "Read statistics" permission**
+  (GoatCounter permission bitmask `64`; created as the `public-stats-read` row in the `api_tokens`
+  table — `permissions` is a jsonb number). Every other `/api/v0/*` endpoint (count, export, sites) is
+  unaffected and still requires a real token, so the proxy cannot be abused for writes or site
+  management. **Trade-off accepted by design:** all share pages' visitor counts are publicly readable
+  via this endpoint (anyone can query any path) — this was a deliberate decision, the data is not
+  considered sensitive. `goatcounterApiToken` in plugin settings is therefore optional for the default
+  endpoint and only needed when pointing at a self-hosted GoatCounter without such injection
+  (`canReadAnalytics` no longer requires it; `statsHeaders()` in `analytics-client.ts` attaches
+  `Authorization` only when a token is present).
 
 ### Build specifics
 

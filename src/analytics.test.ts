@@ -158,7 +158,7 @@ describe("buildStatsRows", () => {
 });
 
 describe("parseDimensionStats", () => {
-	it("提取每条维度项的 name/count", () => {
+	it("提取每条维度项的 name/count，并保留 id（存在时）", () => {
 		const json = {
 			stats: [
 				{ id: "chrome", name: "Chrome", count: 10 },
@@ -167,8 +167,21 @@ describe("parseDimensionStats", () => {
 			more: false,
 		};
 		expect(parseDimensionStats(json)).toEqual([
-			{ name: "Chrome", count: 10 },
+			{ id: "chrome", name: "Chrome", count: 10 },
 			{ name: "Firefox", count: 3 },
+		]);
+	});
+
+	it("保留屏幕尺寸维度的 id（name 为空，标签需由 id 推导）", () => {
+		const json = {
+			stats: [
+				{ id: "desktophd", name: "", count: 3 },
+				{ id: "unknown", name: "", count: 0 },
+			],
+		};
+		expect(parseDimensionStats(json)).toEqual([
+			{ id: "desktophd", name: "", count: 3 },
+			{ id: "unknown", name: "", count: 0 },
 		]);
 	});
 
@@ -232,28 +245,17 @@ describe("parseDailySeries", () => {
 });
 
 describe("getAnalyticsInjectConfig", () => {
-	it("启用且 endpoint 非空时返回注入配置", () => {
+	it("endpoint 非空时返回注入配置（默认常开）", () => {
 		expect(
 			getAnalyticsInjectConfig({
-				analyticsEnabled: true,
 				goatcounterEndpoint: "https://stats.viii.me/count",
 			})
 		).toEqual({ endpoint: "https://stats.viii.me/count" });
 	});
 
-	it("未启用返回 undefined", () => {
+	it("缺 endpoint（仅空白）返回 undefined", () => {
 		expect(
 			getAnalyticsInjectConfig({
-				analyticsEnabled: false,
-				goatcounterEndpoint: "https://stats.viii.me/count",
-			})
-		).toBeUndefined();
-	});
-
-	it("启用但缺 endpoint 返回 undefined", () => {
-		expect(
-			getAnalyticsInjectConfig({
-				analyticsEnabled: true,
 				goatcounterEndpoint: "   ",
 			})
 		).toBeUndefined();
@@ -261,42 +263,18 @@ describe("getAnalyticsInjectConfig", () => {
 });
 
 describe("canReadAnalytics", () => {
-	it("启用且 endpoint/apiToken 均非空时为 true", () => {
+	it("endpoint 非空即为 true（无需 token，服务端注入只读 token）", () => {
 		expect(
 			canReadAnalytics({
-				analyticsEnabled: true,
 				goatcounterEndpoint: "https://stats.viii.me/count",
-				goatcounterApiToken: "tok_xxx",
 			})
 		).toBe(true);
-	});
-
-	it("未启用为 false", () => {
-		expect(
-			canReadAnalytics({
-				analyticsEnabled: false,
-				goatcounterEndpoint: "https://stats.viii.me/count",
-				goatcounterApiToken: "tok_xxx",
-			})
-		).toBe(false);
-	});
-
-	it("缺 apiToken（仅空白）为 false", () => {
-		expect(
-			canReadAnalytics({
-				analyticsEnabled: true,
-				goatcounterEndpoint: "https://stats.viii.me/count",
-				goatcounterApiToken: "   ",
-			})
-		).toBe(false);
 	});
 
 	it("缺 endpoint（仅空白）为 false", () => {
 		expect(
 			canReadAnalytics({
-				analyticsEnabled: true,
 				goatcounterEndpoint: "",
-				goatcounterApiToken: "tok_xxx",
 			})
 		).toBe(false);
 	});
