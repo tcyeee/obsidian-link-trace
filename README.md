@@ -74,6 +74,22 @@ Open **Settings → Deploy Single Note as Webpage**:
 
 > **Security:** Never commit `data.json` (where settings are stored) to version control. It is already included in `.gitignore`.
 
+## Analytics
+
+Published pages can embed a lightweight, **cookieless** page-view tracker. This project uses a self-hosted [GoatCounter](https://www.goatcounter.com/) instance:
+
+- **Dashboard:** https://stats.viii.me
+- **Tracking snippet** embedded in published pages:
+
+  ```html
+  <script data-goatcounter="https://stats.viii.me/count"
+          async src="//stats.viii.me/count.js"></script>
+  ```
+
+- View counts are surfaced in the share popover.
+
+GoatCounter collects no personal data and sets no cookies. The instance is self-hosted via Docker Compose backed by PostgreSQL.
+
 ## Development
 
 ```bash

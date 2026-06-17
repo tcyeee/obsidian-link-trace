@@ -25638,7 +25638,7 @@ __export(main_exports, {
   default: () => ShareOnlinePlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian9 = require("obsidian");
+var import_obsidian11 = require("obsidian");
 
 // src/settings.ts
 var import_obsidian = require("obsidian");
@@ -25651,7 +25651,6 @@ var zh = {
   "settings.language.desc": "\u5207\u6362\u754C\u9762\u8BED\u8A00",
   "settings.general.heading": "\u901A\u7528",
   "settings.export.heading": "\u5BFC\u51FA\u8BBE\u7F6E",
-  "settings.local.heading": "\u672C\u5730\u5BFC\u51FA",
   "settings.oss.heading": "\u901A\u8FC7\u963F\u91CC\u4E91OSS\u53D1\u5E03",
   "settings.oss.callout.item1": "\u8BF7\u786E\u4FDD OSS Bucket \u6743\u9650\u4E3A\u300C\u516C\u5171\u8BFB\u300D",
   "settings.oss.callout.item2": "OSS \u5FC5\u987B\u914D\u7F6E\u57DF\u540D\uFF0C\u5426\u5219\u94FE\u63A5\u6253\u5F00\u53EA\u4F1A\u89E6\u53D1\u4E0B\u8F7D",
@@ -25659,8 +25658,6 @@ var zh = {
   "settings.includeLinked.desc": "\u5BFC\u51FA\u5355\u4E2A\u7B14\u8BB0\u65F6\uFF0C\u540C\u65F6\u5BFC\u51FA\u8BE5\u7B14\u8BB0\u4E2D\u94FE\u63A5\u7684\u6240\u6709\u4E8C\u7EA7\u7B14\u8BB0",
   "settings.pageLinkLength.name": "\u9875\u9762\u540D\u79F0\u957F\u5EA6",
   "settings.pageLinkLength.desc": "\u751F\u6210\u5206\u4EAB\u94FE\u63A5\u65F6\u7684\u8DEF\u5F84\u957F\u5EA6\uFF0C\u8D8A\u957F\u78B0\u649E\u6982\u7387\u8D8A\u4F4E",
-  "settings.exportPath.name": "\u5BFC\u51FA\u8DEF\u5F84",
-  "settings.exportPath.desc": "\u7B14\u8BB0\u5BFC\u51FA\u7684\u76EE\u6807\u6587\u4EF6\u5939\uFF0C\u9ED8\u8BA4\u4E3A\u684C\u9762",
   "settings.ossRegion.name": "Region",
   "settings.ossRegion.desc": "\u4F8B\u5982 oss-cn-hangzhou",
   "settings.ossBucket.name": "Bucket",
@@ -25672,19 +25669,42 @@ var zh = {
   "settings.ossDomain.desc": "\u66FF\u6362\u9ED8\u8BA4\u7684 OSS \u57DF\u540D\uFF0C\u7559\u7A7A\u5219\u4F7F\u7528\u9ED8\u8BA4\u3002\u4F8B\u5982 https://cdn.example.com",
   "settings.urlPreview.label": "\u9884\u89C8\uFF1A",
   "settings.analytics.heading": "\u8BBF\u95EE\u7EDF\u8BA1",
-  "settings.analytics.callout.item1": "\u57FA\u4E8E Umami Cloud \u514D\u8D39\u6863\uFF0C\u9700\u5148\u5728 cloud.umami.is \u6CE8\u518C\u7AD9\u70B9\u5E76\u83B7\u53D6 Website ID \u4E0E API Key",
-  "settings.analytics.callout.item2": "\u811A\u672C\u7531 cloud.umami.is \u63D0\u4F9B\uFF0C\u56FD\u5185\u8BBF\u5BA2\u52A0\u8F7D\u53EF\u80FD\u4E0D\u7A33\u5B9A\uFF0C\u7EDF\u8BA1\u6216\u6709\u9057\u6F0F",
   "settings.analyticsEnabled.name": "\u542F\u7528\u8BBF\u95EE\u7EDF\u8BA1",
-  "settings.analyticsEnabled.desc": "\u5728\u53D1\u5E03/\u5BFC\u51FA\u7684\u9875\u9762\u4E2D\u5D4C\u5165 Umami \u57CB\u70B9\u811A\u672C",
-  "settings.umamiScriptUrl.name": "\u57CB\u70B9\u811A\u672C\u5730\u5740",
-  "settings.umamiScriptUrl.desc": "Umami \u7684 script.js \u5730\u5740\uFF0CCloud \u9ED8\u8BA4 https://cloud.umami.is/script.js",
-  "settings.umamiWebsiteId.name": "Website ID",
-  "settings.umamiWebsiteId.desc": "Umami \u540E\u53F0\u7AD9\u70B9\u7684 UUID\uFF08\u7528\u4F5C data-website-id\uFF09",
-  "settings.umamiApiKey.name": "API Key",
-  "settings.umamiApiKey.desc": "\u7528\u4E8E\u8BFB\u53D6\u6D4F\u89C8\u91CF\u7684 Umami Cloud API Key",
+  "settings.goatcounterApiToken.name": "API Token",
+  "settings.goatcounterApiToken.desc": "\u7528\u4E8E\u8BFB\u53D6\u6D4F\u89C8\u91CF\u7684 GoatCounter API Token",
   "modal.views.loading": "\u6D4F\u89C8 \u2026",
-  "modal.views.value": "\u{1F441} \u6D4F\u89C8 {pv} \xB7 \u8BBF\u5BA2 {uv}",
+  "modal.views.value": "\u{1F441} {count}",
   "modal.views.fail": "\u{1F441} \u2014",
+  "stats.title": "\u5206\u4EAB\u7EDF\u8BA1",
+  "stats.ribbon": "\u5206\u4EAB\u7EDF\u8BA1",
+  "stats.command": "\u6253\u5F00\u5206\u4EAB\u7EDF\u8BA1\u9875",
+  "stats.refresh": "\u5237\u65B0",
+  "stats.loading": "\u52A0\u8F7D\u4E2D \u2026",
+  "stats.card.pages": "\u6B63\u5728\u5206\u4EAB",
+  "stats.card.views": "\u603B\u6D4F\u89C8\u91CF",
+  "stats.col.title": "\u7B14\u8BB0",
+  "stats.col.url": "\u94FE\u63A5",
+  "stats.col.views": "\u8BBF\u95EE",
+  "stats.col.published": "\u53D1\u5E03\u4E8E",
+  "stats.views.unknown": "\u2014",
+  "stats.empty": "\u8FD8\u6CA1\u6709\u5DF2\u53D1\u5E03\u7684\u5206\u4EAB\u9875",
+  "stats.notConfigured": "\u672A\u914D\u7F6E GoatCounter API Token\uFF0C\u65E0\u6CD5\u8BFB\u53D6\u8BBF\u95EE\u6570\u636E\uFF08\u4EC5\u5217\u51FA\u5DF2\u53D1\u5E03\u9875\u9762\uFF09",
+  "stats.fetchFailed": "\u8BBF\u95EE\u6570\u636E\u8BFB\u53D6\u5931\u8D25\uFF0C\u4EC5\u5217\u51FA\u5DF2\u53D1\u5E03\u9875\u9762",
+  "stats.openNote": "\u6253\u5F00\u7B14\u8BB0",
+  "stats.openLink": "\u6253\u5F00\u5206\u4EAB\u9875",
+  "stats.openDetail": "\u67E5\u770B\u8BE6\u7EC6\u7EDF\u8BA1",
+  "stats.detail.totalViews": "\u603B\u6D4F\u89C8\u91CF",
+  "stats.detail.published": "\u53D1\u5E03\u4E8E {time}",
+  "stats.detail.trend": "\u8FD1 30 \u5929\u8D8B\u52BF",
+  "stats.detail.noTrend": "\u8FD1 30 \u5929\u6682\u65E0\u8BBF\u95EE",
+  "stats.detail.referrers": "\u6765\u6E90",
+  "stats.detail.browsers": "\u6D4F\u89C8\u5668",
+  "stats.detail.systems": "\u64CD\u4F5C\u7CFB\u7EDF",
+  "stats.detail.locations": "\u56FD\u5BB6\uFF0F\u5730\u533A",
+  "stats.detail.languages": "\u8BED\u8A00",
+  "stats.detail.sizes": "\u5C4F\u5E55\u5C3A\u5BF8",
+  "stats.detail.noData": "\u6682\u65E0\u6570\u636E",
+  "stats.detail.unknownName": "\uFF08\u672A\u77E5\uFF09",
   "cmd.exportLocal": "\u5BFC\u51FA\u5230\u672C\u5730",
   "cmd.exportOss": "\u5BFC\u51FA\u5230 OSS",
   "statusbar.shareNote": "\u5206\u4EAB\u7B14\u8BB0",
@@ -25736,7 +25756,6 @@ var en = {
   "settings.language.desc": "Switch interface language",
   "settings.general.heading": "General",
   "settings.export.heading": "Export Settings",
-  "settings.local.heading": "Local Export",
   "settings.oss.heading": "Publish via Aliyun OSS",
   "settings.oss.callout.item1": 'Ensure your OSS Bucket ACL is set to "Public Read"',
   "settings.oss.callout.item2": "OSS must have a custom domain configured; otherwise links will trigger a download instead of opening",
@@ -25744,8 +25763,6 @@ var en = {
   "settings.includeLinked.desc": "When exporting a note, also export all linked sub-notes",
   "settings.pageLinkLength.name": "Page Name Length",
   "settings.pageLinkLength.desc": "Length of the share link path; longer means fewer collisions",
-  "settings.exportPath.name": "Export Path",
-  "settings.exportPath.desc": "Target folder for note export, defaults to Desktop",
   "settings.ossRegion.name": "Region",
   "settings.ossRegion.desc": "e.g. oss-cn-hangzhou",
   "settings.ossBucket.name": "Bucket",
@@ -25757,19 +25774,42 @@ var en = {
   "settings.ossDomain.desc": "Replace the default OSS domain. Leave empty for default. e.g. https://cdn.example.com",
   "settings.urlPreview.label": "Preview: ",
   "settings.analytics.heading": "Analytics",
-  "settings.analytics.callout.item1": "Uses the free Umami Cloud tier \u2014 register a site at cloud.umami.is to get the Website ID and API Key",
-  "settings.analytics.callout.item2": "The script is served from cloud.umami.is; loading may be unreliable for mainland-China visitors, so counts can be undercounted",
   "settings.analyticsEnabled.name": "Enable analytics",
-  "settings.analyticsEnabled.desc": "Embed the Umami tracking script into published/exported pages",
-  "settings.umamiScriptUrl.name": "Tracking script URL",
-  "settings.umamiScriptUrl.desc": "Umami script.js URL; Cloud default is https://cloud.umami.is/script.js",
-  "settings.umamiWebsiteId.name": "Website ID",
-  "settings.umamiWebsiteId.desc": "The Umami site UUID (used as data-website-id)",
-  "settings.umamiApiKey.name": "API Key",
-  "settings.umamiApiKey.desc": "Umami Cloud API Key used to read page views",
+  "settings.goatcounterApiToken.name": "API Token",
+  "settings.goatcounterApiToken.desc": "GoatCounter API Token used to read page views",
   "modal.views.loading": "Views \u2026",
-  "modal.views.value": "\u{1F441} {pv} views \xB7 {uv} visitors",
+  "modal.views.value": "\u{1F441} {count}",
   "modal.views.fail": "\u{1F441} \u2014",
+  "stats.title": "Share Stats",
+  "stats.ribbon": "Share stats",
+  "stats.command": "Open share stats page",
+  "stats.refresh": "Refresh",
+  "stats.loading": "Loading \u2026",
+  "stats.card.pages": "Sharing",
+  "stats.card.views": "Total views",
+  "stats.col.title": "Note",
+  "stats.col.url": "Link",
+  "stats.col.views": "Views",
+  "stats.col.published": "Published",
+  "stats.views.unknown": "\u2014",
+  "stats.empty": "No published share pages yet",
+  "stats.notConfigured": "No GoatCounter API Token configured \u2014 listing pages only, without view counts",
+  "stats.fetchFailed": "Failed to read view data \u2014 listing pages only",
+  "stats.openNote": "Open note",
+  "stats.openLink": "Open share page",
+  "stats.openDetail": "View detailed stats",
+  "stats.detail.totalViews": "Total views",
+  "stats.detail.published": "Published {time}",
+  "stats.detail.trend": "Last 30 days",
+  "stats.detail.noTrend": "No visits in the last 30 days",
+  "stats.detail.referrers": "Referrers",
+  "stats.detail.browsers": "Browsers",
+  "stats.detail.systems": "Operating systems",
+  "stats.detail.locations": "Countries / regions",
+  "stats.detail.languages": "Languages",
+  "stats.detail.sizes": "Screen sizes",
+  "stats.detail.noData": "No data",
+  "stats.detail.unknownName": "(unknown)",
   "cmd.exportLocal": "Export to local",
   "cmd.exportOss": "Export to OSS",
   "statusbar.shareNote": "Share note",
@@ -25868,9 +25908,8 @@ var DEFAULT_SETTINGS = {
   ossDomain: "",
   pageLinkLength: 3,
   analyticsEnabled: false,
-  umamiScriptUrl: "https://cloud.umami.is/script.js",
-  umamiWebsiteId: "",
-  umamiApiKey: "",
+  goatcounterEndpoint: "https://stats.viii.me/count",
+  goatcounterApiToken: "",
   language: "zh"
 };
 var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
@@ -25935,18 +25974,6 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
         previewEl == null ? void 0 : previewEl.setText(this.buildPreviewUrl());
       });
     });
-    const localDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
-    localDetails.setAttribute("open", "");
-    localDetails.createEl("summary", {
-      cls: "opal-collapsible-heading",
-      text: t("settings.local.heading")
-    });
-    new import_obsidian.Setting(localDetails).setName(t("settings.exportPath.name")).setDesc(t("settings.exportPath.desc")).addText(
-      (text) => text.setPlaceholder(DEFAULT_SETTINGS.exportPath).setValue(this.plugin.settings.exportPath).onChange(async (value) => {
-        this.plugin.settings.exportPath = value.trim() || DEFAULT_SETTINGS.exportPath;
-        await this.plugin.saveSettings();
-      })
-    );
     const ossDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
     ossDetails.createEl("summary", {
       cls: "opal-collapsible-heading",
@@ -25956,6 +25983,9 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
     const ossCalloutList = ossCallout.createEl("ul");
     ossCalloutList.createEl("li", { text: t("settings.oss.callout.item1") });
     ossCalloutList.createEl("li", { text: t("settings.oss.callout.item2") });
+    const previewWrap = ossCallout.createDiv({ cls: "opal-url-preview" });
+    previewWrap.createSpan({ cls: "opal-url-preview-label", text: t("settings.urlPreview.label") });
+    previewEl = previewWrap.createSpan({ cls: "opal-url-preview-url", text: this.buildPreviewUrl() });
     new import_obsidian.Setting(ossDetails).setName(t("settings.ossRegion.name")).setDesc(t("settings.ossRegion.desc")).addText(
       (text) => text.setPlaceholder("oss-cn-hangzhou").setValue(this.plugin.settings.ossRegion).onChange(async (value) => {
         this.plugin.settings.ossRegion = value.trim();
@@ -25998,43 +26028,28 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
         previewEl == null ? void 0 : previewEl.setText(this.buildPreviewUrl());
       })
     );
-    const previewWrap = ossDetails.createDiv({ cls: "opal-url-preview" });
-    previewWrap.createSpan({ cls: "opal-url-preview-label", text: t("settings.urlPreview.label") });
-    previewEl = previewWrap.createSpan({ cls: "opal-url-preview-url", text: this.buildPreviewUrl() });
     const analyticsDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
     analyticsDetails.createEl("summary", {
       cls: "opal-collapsible-heading",
       text: t("settings.analytics.heading")
     });
-    const analyticsCallout = analyticsDetails.createDiv({ cls: "opal-oss-callout" });
-    const analyticsCalloutList = analyticsCallout.createEl("ul");
-    analyticsCalloutList.createEl("li", { text: t("settings.analytics.callout.item1") });
-    analyticsCalloutList.createEl("li", { text: t("settings.analytics.callout.item2") });
-    new import_obsidian.Setting(analyticsDetails).setName(t("settings.analyticsEnabled.name")).setDesc(t("settings.analyticsEnabled.desc")).addToggle(
+    new import_obsidian.Setting(analyticsDetails).setName(t("settings.analyticsEnabled.name")).addToggle(
       (toggle) => toggle.setValue(this.plugin.settings.analyticsEnabled).onChange(async (value) => {
         this.plugin.settings.analyticsEnabled = value;
+        this.plugin.settings.goatcounterEndpoint = DEFAULT_SETTINGS.goatcounterEndpoint;
         await this.plugin.saveSettings();
+        this.buildUI();
       })
     );
-    new import_obsidian.Setting(analyticsDetails).setName(t("settings.umamiScriptUrl.name")).setDesc(t("settings.umamiScriptUrl.desc")).addText(
-      (text) => text.setPlaceholder(DEFAULT_SETTINGS.umamiScriptUrl).setValue(this.plugin.settings.umamiScriptUrl).onChange(async (value) => {
-        this.plugin.settings.umamiScriptUrl = value.trim() || DEFAULT_SETTINGS.umamiScriptUrl;
-        await this.plugin.saveSettings();
-      })
-    );
-    new import_obsidian.Setting(analyticsDetails).setName(t("settings.umamiWebsiteId.name")).setDesc(t("settings.umamiWebsiteId.desc")).addText(
-      (text) => text.setPlaceholder("xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx").setValue(this.plugin.settings.umamiWebsiteId).onChange(async (value) => {
-        this.plugin.settings.umamiWebsiteId = value.trim();
-        await this.plugin.saveSettings();
-      })
-    );
-    new import_obsidian.Setting(analyticsDetails).setName(t("settings.umamiApiKey.name")).setDesc(t("settings.umamiApiKey.desc")).addText((text) => {
-      text.setPlaceholder("api_xxx").setValue(this.plugin.settings.umamiApiKey).onChange(async (value) => {
-        this.plugin.settings.umamiApiKey = value.trim();
-        await this.plugin.saveSettings();
+    if (this.plugin.settings.analyticsEnabled) {
+      new import_obsidian.Setting(analyticsDetails).setName(t("settings.goatcounterApiToken.name")).setDesc(t("settings.goatcounterApiToken.desc")).addText((text) => {
+        text.setPlaceholder("xxxxxxxxxxxxxxxx").setValue(this.plugin.settings.goatcounterApiToken).onChange(async (value) => {
+          this.plugin.settings.goatcounterApiToken = value.trim();
+          await this.plugin.saveSettings();
+        });
+        text.inputEl.type = "password";
       });
-      text.inputEl.type = "password";
-    });
+    }
   }
 };
 
@@ -26500,7 +26515,7 @@ async function renderBaseAsTable(app, baseFile, images, viewName) {
     return renderCards(app, baseFile, config, view, matched, formulas, properties, vaultName, images);
   }
   if (viewType === "list") {
-    return renderList(app, view, matched, formulas, properties, vaultName);
+    return renderList(app, view, matched, formulas, vaultName);
   }
   const order = viewOrder(view, formulas);
   const colSize = (_g = view.columnSize) != null ? _g : {};
@@ -26551,21 +26566,32 @@ function renderCards(app, baseFile, config, view, matched, formulas, properties,
   }).join("\n");
   return `<div class="base-cards">${cards}</div>`;
 }
-function renderList(app, view, matched, formulas, properties, vaultName) {
+function formatListItem(values, opts = {}) {
   var _a;
+  const sep = (_a = opts.separator) != null ? _a : " ";
+  const nonEmpty = values.filter((v) => v !== "");
+  if (nonEmpty.length === 0) return "";
+  if (opts.indentProperties && nonEmpty.length > 1) {
+    const [first, ...rest] = nonEmpty;
+    const restHtml = rest.map((v) => `<div class="base-list-sub">${v}</div>`).join("");
+    return `<li class="base-list-item">${first}${restHtml}</li>`;
+  }
+  return `<li class="base-list-item">${nonEmpty.join(sep)}</li>`;
+}
+function renderList(app, view, matched, formulas, vaultName) {
+  var _a, _b, _c;
   const order = viewOrder(view, formulas);
-  const colSize = (_a = view.columnSize) != null ? _a : {};
+  const separator = (_a = view.separator) != null ? _a : " ";
+  const markers = ((_b = view.markers) != null ? _b : "bullet").toLowerCase();
+  const indentProperties = (_c = view.indentProperties) != null ? _c : false;
   const items = matched.map((f) => {
     const ctx = makeCtx(app, f, vaultName);
-    const cells = order.map((col) => {
-      const val = cellValue(col, ctx, formulas);
-      const width = colSize[col] ? ` style="flex:0 0 ${colSize[col]}px"` : "";
-      const label = colLabel(col, properties);
-      return `<div class="base-list-cell"${width} title="${escapeHtml(label)}">${val}</div>`;
-    }).join("");
-    return `<div class="base-list-item">${cells}</div>`;
-  }).join("\n");
-  return `<div class="base-list">${items}</div>`;
+    const values = order.map((col) => cellValue(col, ctx, formulas));
+    return formatListItem(values, { separator, indentProperties });
+  }).filter(Boolean).join("\n");
+  const tag = markers === "number" ? "ol" : "ul";
+  const cls = markers === "none" ? "base-list base-list-plain" : "base-list";
+  return `<${tag} class="${cls}">${items}</${tag}>`;
 }
 function resolveBaseEmbeds(content) {
   return content.replace(
@@ -26582,10 +26608,10 @@ function resolveBaseEmbeds(content) {
 function escapeAttr(value) {
   return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
 }
-function getUmamiScriptTag(cfg) {
-  const src = escapeAttr(cfg.scriptUrl);
-  const id = escapeAttr(cfg.websiteId);
-  return `<script defer src="${src}" data-website-id="${id}"></script>`;
+function getGoatCounterScriptTag(cfg) {
+  const endpoint = escapeAttr(cfg.endpoint);
+  const scriptSrc = escapeAttr(cfg.endpoint + ".js");
+  return `<script data-goatcounter="${endpoint}" async src="${scriptSrc}"></script>`;
 }
 function extractPathname(shareLink) {
   try {
@@ -26594,23 +26620,93 @@ function extractPathname(shareLink) {
     return null;
   }
 }
+function deriveApiBase(endpoint) {
+  try {
+    return new URL(endpoint).origin + "/api/v0";
+  } catch (e) {
+    return null;
+  }
+}
 function parseStatsResponse(json) {
   if (!json || typeof json !== "object") return null;
   const obj = json;
-  const pv = obj.pageviews;
-  const uv = obj.visitors;
-  if (typeof (pv == null ? void 0 : pv.value) !== "number" || typeof (uv == null ? void 0 : uv.value) !== "number") return null;
-  return { pageviews: pv.value, visitors: uv.value };
+  const hits = obj.hits;
+  if (Array.isArray(hits)) {
+    let sum = 0;
+    let found = false;
+    for (const h of hits) {
+      const count = h == null ? void 0 : h.count;
+      if (typeof count === "number") {
+        sum += count;
+        found = true;
+      }
+    }
+    if (found || hits.length === 0) return { views: sum };
+  }
+  if (typeof obj.total === "number") return { views: obj.total };
+  return null;
+}
+function parseHitsList(json) {
+  if (!json || typeof json !== "object") return null;
+  const hits = json.hits;
+  if (!Array.isArray(hits)) return null;
+  const out = [];
+  for (const h of hits) {
+    const obj = h;
+    if (obj && typeof obj.path === "string" && typeof obj.count === "number") {
+      const id = obj.path_id;
+      out.push({ path: obj.path, count: obj.count, pathId: typeof id === "number" ? id : null });
+    }
+  }
+  return out;
+}
+function parseDimensionStats(json) {
+  if (!json || typeof json !== "object") return null;
+  const stats = json.stats;
+  if (!Array.isArray(stats)) return null;
+  const out = [];
+  for (const s of stats) {
+    const obj = s;
+    if (obj && typeof obj.name === "string" && typeof obj.count === "number") {
+      out.push({ name: obj.name, count: obj.count });
+    }
+  }
+  return out;
+}
+function parseDailySeries(json) {
+  var _a;
+  if (!json || typeof json !== "object") return null;
+  const hits = json.hits;
+  if (!Array.isArray(hits)) return null;
+  if (hits.length === 0) return [];
+  const stats = (_a = hits[0]) == null ? void 0 : _a.stats;
+  if (!Array.isArray(stats)) return [];
+  const out = [];
+  for (const p of stats) {
+    const obj = p;
+    if (obj && typeof obj.day === "string" && typeof obj.daily === "number") {
+      out.push({ day: obj.day, count: obj.daily });
+    }
+  }
+  return out;
+}
+function buildStatsRows(pages, hitsByPath) {
+  return pages.map((p) => {
+    var _a;
+    return { ...p, views: (_a = hitsByPath.get(p.path)) != null ? _a : 0 };
+  }).sort((a, b) => {
+    var _a, _b;
+    return b.views - a.views || ((_a = b.publishedAt) != null ? _a : 0) - ((_b = a.publishedAt) != null ? _b : 0);
+  });
 }
 function getAnalyticsInjectConfig(s) {
   if (!s.analyticsEnabled) return void 0;
-  const scriptUrl = s.umamiScriptUrl.trim();
-  const websiteId = s.umamiWebsiteId.trim();
-  if (!scriptUrl || !websiteId) return void 0;
-  return { scriptUrl, websiteId };
+  const endpoint = s.goatcounterEndpoint.trim();
+  if (!endpoint) return void 0;
+  return { endpoint };
 }
 function canReadAnalytics(s) {
-  return s.analyticsEnabled && !!s.umamiApiKey.trim() && !!s.umamiWebsiteId.trim();
+  return s.analyticsEnabled && !!s.goatcounterEndpoint.trim() && !!s.goatcounterApiToken.trim();
 }
 
 // src/note-hash.ts
@@ -26852,7 +26948,7 @@ function buildHtml(title, htmlBody, css, katexBase, analytics) {
   const katexJsTag = hasMath ? `
   <script src="${base}/katex.min.js"></script>` : "";
   const analyticsTag = analytics ? `
-  ${getUmamiScriptTag(analytics)}` : "";
+  ${getGoatCounterScriptTag(analytics)}` : "";
   return `<!DOCTYPE html>
 <html lang="zh">
 <head>
@@ -27490,6 +27586,10 @@ blockquote p { color: #81888D; font-size: 14px; margin: 0; }
 /* \u2500\u2500 Task list \u2500\u2500 */
 .contains-task-list { list-style: none; padding-left: 0.25em; }
 .task-list-item { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.5em; margin: 0.3em 0; }
+/* Loose lists wrap item text in a block <p>; let it fill the remaining row width
+   and wrap its text internally, instead of its max-content width bumping the
+   whole block onto a new flex line (which would strand the checkbox alone). */
+.task-list-item > p { flex: 1 1 0; min-width: 0; }
 .task-list-item > ul, .task-list-item > ol { flex: 0 0 100%; padding-left: 1.5em; margin: 0.2em 0 0; }
 .task-list-item-checkbox {
   -webkit-appearance: none;
@@ -27516,6 +27616,14 @@ blockquote p { color: #81888D; font-size: 14px; margin: 0; }
 /* \u2500\u2500 Lists \u2500\u2500 */
 ul, ol { padding-left: 1.5em; margin: 0.8em 0; }
 li { margin: 0.3em 0; }
+/* A blank line inside a list makes it "loose": each item's text is wrapped in a
+   <p> whose margins open a large gap. Collapse them so it renders like a normal
+   tight list (matching standard markdown), keeping separation only between
+   multiple paragraphs in the same item. */
+li > p { margin: 0; }
+li > p + p { margin-top: 0.5em; }
+/* Hide stray empty paragraphs left by blank lines. */
+p:empty { display: none; }
 
 /* \u2500\u2500 Table \u2500\u2500 */
 .table-wrapper {
@@ -27752,30 +27860,22 @@ em { font-style: italic; }
 
 /* \u2500\u2500 Base list view \u2500\u2500 */
 .base-list {
-  display: flex;
-  flex-direction: column;
   margin: 1em 0;
-  border: 1px solid #DADCDE;
-  border-radius: 8px;
-  overflow: hidden;
+  padding-left: 1.5em;
+}
+.base-list-plain {
+  list-style: none;
+  padding-left: 0;
 }
 .base-list-item {
-  display: flex;
-  align-items: baseline;
-  gap: 16px;
-  padding: 7px 12px;
-  border-bottom: 1px solid #EDEEF0;
-}
-.base-list-item:last-child { border-bottom: none; }
-.base-list-cell {
   font-size: 0.9em;
-  line-height: 1.5;
+  line-height: 1.6;
   color: #333;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 1 1 0;
-  min-width: 0;
+  margin: 0.25em 0;
+}
+.base-list-sub {
+  padding-left: 1.2em;
+  color: #666;
 }
 
 /* \u2500\u2500 Dataview list \u2500\u2500 */
@@ -27917,22 +28017,25 @@ var import_obsidian6 = require("obsidian");
 
 // src/analytics-client.ts
 var import_obsidian5 = require("obsidian");
-var UMAMI_API_BASE = "https://api.umami.is/v1";
-var STATS_START_AT = Date.parse("2020-01-01T00:00:00Z");
+var STATS_START = "2020-01-01T00:00:00Z";
 async function fetchPageViews(settings, shareLink) {
   if (!canReadAnalytics(settings)) return null;
-  const apiKey = settings.umamiApiKey.trim();
-  const websiteId = settings.umamiWebsiteId.trim();
+  const apiToken = settings.goatcounterApiToken.trim();
+  const apiBase = deriveApiBase(settings.goatcounterEndpoint.trim());
+  if (!apiBase) return null;
   const urlPath = extractPathname(shareLink);
   if (!urlPath) return null;
-  const endAt = Date.now();
-  const query = `?startAt=${STATS_START_AT}&endAt=${endAt}&url=${encodeURIComponent(urlPath)}`;
-  const url = `${UMAMI_API_BASE}/websites/${encodeURIComponent(websiteId)}/stats${query}`;
+  const end = (/* @__PURE__ */ new Date()).toISOString();
+  const query = `?start=${encodeURIComponent(STATS_START)}&end=${encodeURIComponent(end)}&path_by_name=true&include_paths=${encodeURIComponent(urlPath)}&limit=1`;
+  const url = `${apiBase}/stats/hits${query}`;
   try {
     const res = await (0, import_obsidian5.requestUrl)({
       url,
       method: "GET",
-      headers: { "x-umami-api-key": apiKey, accept: "application/json" },
+      headers: {
+        Authorization: `Bearer ${apiToken}`,
+        accept: "application/json"
+      },
       throw: false
     });
     if (res.status < 200 || res.status >= 300) return null;
@@ -27940,6 +28043,93 @@ async function fetchPageViews(settings, shareLink) {
   } catch (e) {
     return null;
   }
+}
+var MAX_HITS_PAGES = 100;
+async function fetchAllPathHits(settings) {
+  if (!canReadAnalytics(settings)) return null;
+  const apiToken = settings.goatcounterApiToken.trim();
+  const apiBase = deriveApiBase(settings.goatcounterEndpoint.trim());
+  if (!apiBase) return null;
+  const end = (/* @__PURE__ */ new Date()).toISOString();
+  const byPath = /* @__PURE__ */ new Map();
+  const seenIds = [];
+  let gotAnyPage = false;
+  try {
+    for (let page = 0; page < MAX_HITS_PAGES; page++) {
+      const exclude = seenIds.map((id) => `&exclude_paths=${id}`).join("");
+      const url = `${apiBase}/stats/hits?start=${encodeURIComponent(STATS_START)}&end=${encodeURIComponent(end)}&limit=100${exclude}`;
+      const res = await (0, import_obsidian5.requestUrl)({
+        url,
+        method: "GET",
+        headers: { Authorization: `Bearer ${apiToken}`, accept: "application/json" },
+        throw: false
+      });
+      if (res.status < 200 || res.status >= 300) return gotAnyPage ? byPath : null;
+      let body;
+      try {
+        body = res.json;
+      } catch (e) {
+        return gotAnyPage ? byPath : null;
+      }
+      const list = parseHitsList(body);
+      if (list === null) return gotAnyPage ? byPath : null;
+      gotAnyPage = true;
+      for (const hit of list) {
+        byPath.set(hit.path, hit.count);
+        if (hit.pathId != null) seenIds.push(hit.pathId);
+      }
+      const more = (body == null ? void 0 : body.more) === true;
+      if (!more || list.length === 0) break;
+    }
+    return byPath;
+  } catch (e) {
+    return gotAnyPage ? byPath : null;
+  }
+}
+var DETAIL_DIMENSION_LIMIT = 10;
+var DETAIL_TREND_DAYS = 30;
+var DETAIL_DIMENSIONS = [
+  "toprefs",
+  "browsers",
+  "systems",
+  "sizes",
+  "locations",
+  "languages"
+];
+async function fetchPageDetail(settings, shareLink) {
+  if (!canReadAnalytics(settings)) return null;
+  const apiToken = settings.goatcounterApiToken.trim();
+  const apiBase = deriveApiBase(settings.goatcounterEndpoint.trim());
+  if (!apiBase) return null;
+  const urlPath = extractPathname(shareLink);
+  if (!urlPath) return null;
+  const end = (/* @__PURE__ */ new Date()).toISOString();
+  const trendStart = new Date(Date.now() - DETAIL_TREND_DAYS * 864e5).toISOString();
+  const scope = `&path_by_name=true&include_paths=${encodeURIComponent(urlPath)}`;
+  const get = async (query, parse, fallback) => {
+    var _a;
+    try {
+      const res = await (0, import_obsidian5.requestUrl)({
+        url: `${apiBase}${query}`,
+        method: "GET",
+        headers: { Authorization: `Bearer ${apiToken}`, accept: "application/json" },
+        throw: false
+      });
+      if (res.status < 200 || res.status >= 300) return fallback;
+      return (_a = parse(res.json)) != null ? _a : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  };
+  const dailyQuery = `/stats/hits?start=${encodeURIComponent(trendStart)}&end=${encodeURIComponent(end)}&daily=true&limit=1${scope}`;
+  const dimQuery = (page) => `/stats/${page}?start=${encodeURIComponent(STATS_START)}&end=${encodeURIComponent(end)}&limit=${DETAIL_DIMENSION_LIMIT}${scope}`;
+  const [daily, referrers, browsers, systems, sizes, locations, languages] = await Promise.all([
+    get(dailyQuery, parseDailySeries, []),
+    ...DETAIL_DIMENSIONS.map(
+      (page) => get(dimQuery(page), parseDimensionStats, [])
+    )
+  ]);
+  return { daily, referrers, browsers, systems, sizes, locations, languages };
 }
 
 // src/share-modal.ts
@@ -28060,10 +28250,7 @@ var ShareModal = class extends import_obsidian6.Modal {
     void fetchPageViews(this.plugin.settings, shareLink).then((stats) => {
       if (!span.isConnected) return;
       span.setText(
-        stats ? t("modal.views.value", {
-          pv: String(stats.pageviews),
-          uv: String(stats.visitors)
-        }) : t("modal.views.fail")
+        stats ? t("modal.views.value", { count: String(stats.views) }) : t("modal.views.fail")
       );
     }).catch(() => {
       if (span.isConnected) span.setText(t("modal.views.fail"));
@@ -28547,8 +28734,275 @@ var SharePopover = class {
   }
 };
 
+// src/stats-view.ts
+var import_obsidian10 = require("obsidian");
+
+// src/stats-detail-modal.ts
+var import_obsidian9 = require("obsidian");
+function formatDateTime2(ms) {
+  if (ms == null) return t("stats.views.unknown");
+  const d = new Date(ms);
+  if (isNaN(d.getTime())) return t("stats.views.unknown");
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+var StatsDetailModal = class extends import_obsidian9.Modal {
+  constructor(app, settings, row, countsAvailable) {
+    super(app);
+    this.settings = settings;
+    this.row = row;
+    this.countsAvailable = countsAvailable;
+  }
+  async onOpen() {
+    this.modalEl.addClass("opal-detail-modal");
+    const { contentEl } = this;
+    contentEl.empty();
+    contentEl.addClass("opal-detail");
+    this.renderHeader(contentEl);
+    const body = contentEl.createDiv({ cls: "opal-detail-body" });
+    body.createDiv({ cls: "opal-detail-loading", text: t("stats.loading") });
+    const detail = await fetchPageDetail(this.settings, this.row.shareLink);
+    body.empty();
+    if (detail === null) {
+      body.createDiv({ cls: "opal-stats-notice", text: t("stats.notConfigured") });
+      return;
+    }
+    const overview = body.createDiv({ cls: "opal-detail-overview" });
+    const numEl = overview.createDiv({ cls: "opal-detail-bignum" });
+    numEl.setText(this.countsAvailable ? this.row.views.toLocaleString() : t("stats.views.unknown"));
+    overview.createDiv({ cls: "opal-detail-bignum-label", text: t("stats.detail.totalViews") });
+    const trend = body.createDiv({ cls: "opal-detail-section" });
+    trend.createDiv({ cls: "opal-detail-section-title", text: t("stats.detail.trend") });
+    this.renderSparkline(trend, detail.daily);
+    const grid = body.createDiv({ cls: "opal-detail-grid" });
+    this.renderDimension(grid, t("stats.detail.referrers"), detail.referrers);
+    this.renderDimension(grid, t("stats.detail.browsers"), detail.browsers);
+    this.renderDimension(grid, t("stats.detail.systems"), detail.systems);
+    this.renderDimension(grid, t("stats.detail.locations"), detail.locations);
+    this.renderDimension(grid, t("stats.detail.languages"), detail.languages);
+    this.renderDimension(grid, t("stats.detail.sizes"), detail.sizes);
+  }
+  onClose() {
+    this.contentEl.empty();
+  }
+  renderHeader(parent) {
+    const header = parent.createDiv({ cls: "opal-detail-header" });
+    header.createDiv({ cls: "opal-detail-title", text: this.row.title });
+    const urlEl = header.createDiv({ cls: "opal-detail-url" });
+    const linkIcon = urlEl.createSpan({ cls: "opal-detail-url-icon" });
+    (0, import_obsidian9.setIcon)(linkIcon, "external-link");
+    const linkText = urlEl.createSpan({ cls: "opal-detail-url-text", text: this.row.shareLink });
+    const open = () => window.open(this.row.shareLink, "_blank");
+    urlEl.addEventListener("click", open);
+    linkText.addEventListener("click", open);
+    header.createDiv({
+      cls: "opal-detail-published",
+      text: t("stats.detail.published", { time: formatDateTime2(this.row.publishedAt) })
+    });
+  }
+  /** A horizontal bar chart of the daily series (height ∝ count, normalized to the max). */
+  renderSparkline(parent, daily) {
+    if (daily.length === 0) {
+      parent.createDiv({ cls: "opal-detail-empty", text: t("stats.detail.noTrend") });
+      return;
+    }
+    const max = Math.max(1, ...daily.map((d) => d.count));
+    const chart = parent.createDiv({ cls: "opal-detail-spark" });
+    for (const point of daily) {
+      const bar = chart.createDiv({ cls: "opal-detail-spark-bar" });
+      bar.setCssProps({ "--opal-bar-h": `${Math.round(point.count / max * 100)}%` });
+      bar.setAttribute("aria-label", `${point.day}: ${point.count}`);
+      bar.setAttribute("data-tooltip-position", "top");
+      if (point.count > 0) bar.addClass("is-active");
+    }
+  }
+  /** A titled, ranked list of one dimension; mini bar per row, normalized to the dimension max. */
+  renderDimension(parent, title, items) {
+    const section = parent.createDiv({ cls: "opal-detail-section" });
+    section.createDiv({ cls: "opal-detail-section-title", text: title });
+    if (items.length === 0) {
+      section.createDiv({ cls: "opal-detail-empty", text: t("stats.detail.noData") });
+      return;
+    }
+    const max = Math.max(1, ...items.map((i) => i.count));
+    const list = section.createDiv({ cls: "opal-detail-list" });
+    for (const item of items) {
+      const rowEl = list.createDiv({ cls: "opal-detail-row" });
+      const fill = rowEl.createDiv({ cls: "opal-detail-row-fill" });
+      fill.setCssProps({ "--opal-bar-w": `${Math.round(item.count / max * 100)}%` });
+      const label = rowEl.createDiv({ cls: "opal-detail-row-label" });
+      label.setText(item.name || t("stats.detail.unknownName"));
+      rowEl.createDiv({ cls: "opal-detail-row-count", text: item.count.toLocaleString() });
+    }
+  }
+};
+
+// src/stats-view.ts
+var VIEW_TYPE_SHARE_STATS = "share-stats-view";
+function formatDate(ms) {
+  if (ms == null) return t("stats.views.unknown");
+  const d = new Date(ms);
+  if (isNaN(d.getTime())) return t("stats.views.unknown");
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+function collectPublishedPages(app) {
+  var _a;
+  const pages = [];
+  for (const file of app.vault.getMarkdownFiles()) {
+    const fm = (_a = app.metadataCache.getFileCache(file)) == null ? void 0 : _a.frontmatter;
+    const shareLink = fm == null ? void 0 : fm["share_link"];
+    if (typeof shareLink !== "string" || !shareLink) continue;
+    const path3 = extractPathname(shareLink);
+    if (!path3) continue;
+    const shareTime = fm["share_time"];
+    const parsed = typeof shareTime === "string" ? Date.parse(shareTime) : NaN;
+    pages.push({
+      path: path3,
+      title: file.basename,
+      shareLink,
+      publishedAt: isNaN(parsed) ? null : parsed,
+      filePath: file.path
+    });
+  }
+  return pages;
+}
+var ShareStatsView = class extends import_obsidian10.ItemView {
+  constructor(leaf, plugin) {
+    super(leaf);
+    this.plugin = plugin;
+    this.loading = false;
+  }
+  getViewType() {
+    return VIEW_TYPE_SHARE_STATS;
+  }
+  getDisplayText() {
+    return t("stats.title");
+  }
+  getIcon() {
+    return "bar-chart-3";
+  }
+  async onOpen() {
+    this.contentEl.addClass("opal-stats-view");
+    await this.render();
+  }
+  async onClose() {
+    this.contentEl.empty();
+  }
+  /** Rebuild the whole view: header + (loading → table). Re-entrancy guarded. */
+  async render() {
+    if (this.loading) return;
+    this.loading = true;
+    const root = this.contentEl;
+    root.empty();
+    const header = root.createDiv({ cls: "opal-stats-header" });
+    const headLeft = header.createDiv({ cls: "opal-stats-headleft" });
+    const titleRow = headLeft.createDiv({ cls: "opal-stats-titlerow" });
+    const titleIcon = titleRow.createDiv({ cls: "opal-stats-titleicon" });
+    (0, import_obsidian10.setIcon)(titleIcon, "bar-chart-3");
+    titleRow.createSpan({ cls: "opal-stats-title", text: t("stats.title") });
+    const cardsEl = headLeft.createDiv({ cls: "opal-stats-cards" });
+    const refreshBtn = header.createDiv({ cls: "opal-stats-refresh" });
+    (0, import_obsidian10.setIcon)(refreshBtn, "refresh-cw");
+    (0, import_obsidian10.setTooltip)(refreshBtn, t("stats.refresh"));
+    refreshBtn.addEventListener("click", () => void this.render());
+    const body = root.createDiv({ cls: "opal-stats-body" });
+    body.createDiv({ cls: "opal-stats-loading", text: t("stats.loading") });
+    try {
+      const pages = collectPublishedPages(this.app);
+      const configured = canReadAnalytics(this.plugin.settings);
+      const hits = configured ? await fetchAllPathHits(this.plugin.settings) : null;
+      const countsAvailable = hits !== null;
+      const rows = buildStatsRows(pages, hits != null ? hits : /* @__PURE__ */ new Map());
+      const totalViews = countsAvailable ? rows.reduce((sum, r) => sum + r.views, 0) : null;
+      this.renderCards(cardsEl, pages.length, totalViews);
+      body.empty();
+      if (!configured) {
+        body.createDiv({ cls: "opal-stats-notice", text: t("stats.notConfigured") });
+      } else if (!countsAvailable) {
+        body.createDiv({ cls: "opal-stats-notice", text: t("stats.fetchFailed") });
+      }
+      if (rows.length === 0) {
+        body.createDiv({ cls: "opal-stats-empty", text: t("stats.empty") });
+        return;
+      }
+      this.renderTable(body, rows, countsAvailable);
+    } catch (err) {
+      body.empty();
+      body.createDiv({ cls: "opal-stats-notice", text: t("stats.fetchFailed") });
+      console.error(err);
+    } finally {
+      this.loading = false;
+    }
+  }
+  /** Render the two header stat cards: published page count + total views. */
+  renderCards(parent, pageCount, totalViews) {
+    parent.empty();
+    const card = (value, label) => {
+      const el = parent.createDiv({ cls: "opal-stat-card" });
+      el.createDiv({ cls: "opal-stat-card-value", text: value });
+      el.createDiv({ cls: "opal-stat-card-label", text: label });
+    };
+    card(pageCount.toLocaleString(), t("stats.card.pages"));
+    card(
+      totalViews == null ? t("stats.views.unknown") : totalViews.toLocaleString(),
+      t("stats.card.views")
+    );
+  }
+  renderTable(parent, rows, countsAvailable) {
+    const table = parent.createEl("table", { cls: "opal-stats-table" });
+    const thead = table.createEl("thead").createEl("tr");
+    thead.createEl("th", { text: t("stats.col.title") });
+    thead.createEl("th", { cls: "opal-stats-url", text: t("stats.col.url") });
+    thead.createEl("th", { cls: "opal-stats-num", text: t("stats.col.views") });
+    thead.createEl("th", { cls: "opal-stats-date", text: t("stats.col.published") });
+    const tbody = table.createEl("tbody");
+    for (const row of rows) {
+      const tr = tbody.createEl("tr", { cls: "opal-stats-row" });
+      (0, import_obsidian10.setTooltip)(tr, t("stats.openDetail"));
+      tr.addEventListener(
+        "click",
+        () => new StatsDetailModal(this.app, this.plugin.settings, row, countsAvailable).open()
+      );
+      const titleTd = tr.createEl("td", { cls: "opal-stats-titlecol" });
+      const titleWrap = titleTd.createDiv({ cls: "opal-stats-titlecell" });
+      const nameEl = titleWrap.createSpan({ cls: "opal-stats-notename", text: row.title });
+      (0, import_obsidian10.setTooltip)(nameEl, t("stats.openNote"));
+      nameEl.addEventListener("click", (e) => {
+        e.stopPropagation();
+        void this.openNote(row.filePath);
+      });
+      const linkEl = titleWrap.createSpan({ cls: "opal-stats-openlink" });
+      (0, import_obsidian10.setIcon)(linkEl, "external-link");
+      (0, import_obsidian10.setTooltip)(linkEl, t("stats.openLink"));
+      linkEl.addEventListener("click", (e) => {
+        e.stopPropagation();
+        window.open(row.shareLink, "_blank");
+      });
+      const urlTd = tr.createEl("td", { cls: "opal-stats-url" });
+      const urlEl = urlTd.createSpan({ cls: "opal-stats-urltext", text: row.path });
+      (0, import_obsidian10.setTooltip)(urlEl, row.shareLink);
+      urlEl.addEventListener("click", (e) => {
+        e.stopPropagation();
+        window.open(row.shareLink, "_blank");
+      });
+      tr.createEl("td", {
+        cls: "opal-stats-num",
+        text: countsAvailable ? row.views.toLocaleString() : t("stats.views.unknown")
+      });
+      tr.createEl("td", { cls: "opal-stats-date", text: formatDate(row.publishedAt) });
+    }
+  }
+  async openNote(filePath) {
+    const file = this.app.vault.getAbstractFileByPath(filePath);
+    if (file instanceof import_obsidian10.TFile) {
+      await this.app.workspace.getLeaf(false).openFile(file);
+    }
+  }
+};
+
 // main.ts
-var ShareOnlinePlugin = class extends import_obsidian9.Plugin {
+var ShareOnlinePlugin = class extends import_obsidian11.Plugin {
   async onload() {
     await this.loadSettings();
     this.addSettingTab(new ShareOnlineSettingTab(this.app, this));
@@ -28563,10 +29017,17 @@ var ShareOnlinePlugin = class extends import_obsidian9.Plugin {
       name: t("cmd.exportOss"),
       callback: () => this.exportCurrentNote(true)
     });
+    this.registerView(VIEW_TYPE_SHARE_STATS, (leaf) => new ShareStatsView(leaf, this));
+    this.addRibbonIcon("bar-chart-3", t("stats.ribbon"), () => void this.activateStatsView());
+    this.addCommand({
+      id: "open-share-stats",
+      name: t("stats.command"),
+      callback: () => void this.activateStatsView()
+    });
     this.statusBarEl = this.addStatusBarItem();
     this.statusBarEl.addClass("opal-status-bar-btn");
-    (0, import_obsidian9.setTooltip)(this.statusBarEl, t("statusbar.shareNote"));
-    (0, import_obsidian9.setIcon)(this.statusBarEl, "share-2");
+    (0, import_obsidian11.setTooltip)(this.statusBarEl, t("statusbar.shareNote"));
+    (0, import_obsidian11.setIcon)(this.statusBarEl, "share-2");
     void this.updateStatusBar();
     this.statusBarEl.addEventListener("click", () => void this.sharePopover.toggle(this.statusBarEl));
     this.registerEvent(
@@ -28586,7 +29047,7 @@ var ShareOnlinePlugin = class extends import_obsidian9.Plugin {
     this.registerEvent(
       this.app.workspace.on("layout-change", () => this.sharePopover.close())
     );
-    const debouncedStatusRefresh = (0, import_obsidian9.debounce)(() => void this.updateStatusBar(), 500, true);
+    const debouncedStatusRefresh = (0, import_obsidian11.debounce)(() => void this.updateStatusBar(), 500, true);
     this.registerEvent(
       this.app.workspace.on("editor-change", () => debouncedStatusRefresh())
     );
@@ -28597,6 +29058,18 @@ var ShareOnlinePlugin = class extends import_obsidian9.Plugin {
   }
   async saveSettings() {
     await this.saveData(this.settings);
+  }
+  /** Reveal the share-stats tab, reusing an open one or opening a new main-area tab. */
+  async activateStatsView() {
+    const { workspace } = this.app;
+    const existing = workspace.getLeavesOfType(VIEW_TYPE_SHARE_STATS);
+    if (existing.length > 0) {
+      await workspace.revealLeaf(existing[0]);
+      return;
+    }
+    const leaf = workspace.getLeaf(true);
+    await leaf.setViewState({ type: VIEW_TYPE_SHARE_STATS, active: true });
+    await workspace.revealLeaf(leaf);
   }
   // ── Frontmatter helpers ───────────────────────────────────────────────
   getShareLink(file) {
@@ -28639,7 +29112,7 @@ var ShareOnlinePlugin = class extends import_obsidian9.Plugin {
     if (((_a = this.app.workspace.getActiveFile()) == null ? void 0 : _a.path) !== file.path) return;
     this.statusBarEl.toggleClass("opal-status-published", published && !stale);
     this.statusBarEl.toggleClass("opal-status-stale", published && stale);
-    (0, import_obsidian9.setTooltip)(
+    (0, import_obsidian11.setTooltip)(
       this.statusBarEl,
       !published ? t("statusbar.shareNote") : stale ? t("statusbar.stale") : t("statusbar.published")
     );
@@ -28653,7 +29126,7 @@ var ShareOnlinePlugin = class extends import_obsidian9.Plugin {
     var _a, _b, _c, _d;
     const shareHash = (_c = (_b = (_a = this.app.metadataCache.getFileCache(file)) == null ? void 0 : _a.frontmatter) == null ? void 0 : _b["share_hash"]) != null ? _c : "";
     if (!shareHash) return true;
-    const view = this.app.workspace.getActiveViewOfType(import_obsidian9.MarkdownView);
+    const view = this.app.workspace.getActiveViewOfType(import_obsidian11.MarkdownView);
     const raw = ((_d = view == null ? void 0 : view.file) == null ? void 0 : _d.path) === file.path && view.editor ? view.editor.getValue() : await this.app.vault.cachedRead(file);
     return hashBody(stripFrontmatter(raw)) !== shareHash;
   }
@@ -28781,7 +29254,7 @@ var ShareOnlinePlugin = class extends import_obsidian9.Plugin {
   async exportCurrentNote(toOss = false) {
     const file = this.app.workspace.getActiveFile();
     if (!this.isMarkdown(file)) {
-      new import_obsidian9.Notice(t("notice.onlyMarkdown.publish"));
+      new import_obsidian11.Notice(t("notice.onlyMarkdown.publish"));
       return;
     }
     if (toOss) {
@@ -28791,14 +29264,33 @@ var ShareOnlinePlugin = class extends import_obsidian9.Plugin {
       await this.exportFile(file);
     }
   }
+  /**
+   * 打开 Electron 原生文件夹选择框（desktop-only），默认定位到上次导出目录。
+   * 取消返回 null。
+   */
+  async pickExportDir() {
+    var _a, _b, _c;
+    const electron = require("electron");
+    const dialog = (_b = (_a = electron == null ? void 0 : electron.remote) == null ? void 0 : _a.dialog) != null ? _b : require("@electron/remote").dialog;
+    const result = await dialog.showOpenDialog({
+      properties: ["openDirectory", "createDirectory"],
+      defaultPath: this.settings.exportPath || DEFAULT_SETTINGS.exportPath
+    });
+    if (result.canceled || !((_c = result.filePaths) == null ? void 0 : _c.length)) return null;
+    return result.filePaths[0];
+  }
   async exportFile(file) {
+    const dir = await this.pickExportDir();
+    if (!dir) return;
+    this.settings.exportPath = dir;
+    await this.saveSettings();
     this.sharePopover.showBusy(this.statusBarEl, t("toast.exporting"));
     try {
       await exportToLocal(
         this.app,
         this.app.vault,
         file,
-        this.settings.exportPath || DEFAULT_SETTINGS.exportPath,
+        dir,
         this.settings.includeLinkedNotes,
         this.settings.pageLinkLength,
         getAnalyticsInjectConfig(this.settings)

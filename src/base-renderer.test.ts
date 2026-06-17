@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { TFile, CachedMetadata } from "obsidian";
-import { evalExpr, evalFilterAtom, type EvalCtx } from "./base-renderer";
+import { evalExpr, evalFilterAtom, formatListItem, type EvalCtx } from "./base-renderer";
 
 /* ── Test fixtures ──────────────────────────────────────────────────────── */
 
@@ -130,5 +130,35 @@ describe("evalExpr", () => {
   it("renders date formatting on a frontmatter field", () => {
     const ctx = fakeCtx({ fm: { created: "2024-03-09T00:00:00" } });
     expect(evalExpr('created.format("YYYY-MM-DD")', ctx)).toBe("2024-03-09");
+  });
+});
+
+/* ── List view row formatting (the list-vs-table bug) ───────────────────── */
+
+describe("formatListItem", () => {
+  it("joins property values inline with the separator (Obsidian list semantics)", () => {
+    // A list view shows one line per record, values joined by separator — NOT a
+    // columnar table layout. Default separator is a single space.
+    expect(formatListItem(["2024-01-02", "<a>Doc</a>"], { separator: " " }))
+      .toBe('<li class="base-list-item">2024-01-02 <a>Doc</a></li>');
+  });
+
+  it("honors a custom separator", () => {
+    expect(formatListItem(["a", "b"], { separator: " · " }))
+      .toBe('<li class="base-list-item">a · b</li>');
+  });
+
+  it("skips empty values so there is no dangling separator", () => {
+    expect(formatListItem(["2024-01-02", ""], { separator: " " }))
+      .toBe('<li class="base-list-item">2024-01-02</li>');
+  });
+
+  it("indents trailing properties when indentProperties is set", () => {
+    expect(formatListItem(["Title", "meta1", "meta2"], { separator: " ", indentProperties: true }))
+      .toBe('<li class="base-list-item">Title<div class="base-list-sub">meta1</div><div class="base-list-sub">meta2</div></li>');
+  });
+
+  it("returns empty string when there are no non-empty values", () => {
+    expect(formatListItem(["", ""], { separator: " " })).toBe("");
   });
 });

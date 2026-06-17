@@ -1,7 +1,7 @@
 import { App, TFile, MarkdownRenderer, Component, FileSystemAdapter } from "obsidian";
 import { renderBaseAsTable, resolveBaseEmbeds } from "./base-renderer";
 import { registerImage, processImgsBlocks } from "./imgs-renderer";
-import { getUmamiScriptTag, type UmamiInjectConfig } from "./analytics";
+import { getGoatCounterScriptTag, type GoatCounterInjectConfig } from "./analytics";
 import { stripFrontmatter } from "./note-hash";
 
 const THEME = "#65A692";
@@ -271,7 +271,7 @@ export function containsMath(htmlBody: string): boolean {
  * falls back to the jsdelivr CDN. KaTeX assets are referenced only when the
  * page actually contains math, so math-free pages load nothing extra.
  */
-export function buildHtml(title: string, htmlBody: string, css: string, katexBase?: string, analytics?: UmamiInjectConfig): string {
+export function buildHtml(title: string, htmlBody: string, css: string, katexBase?: string, analytics?: GoatCounterInjectConfig): string {
   const svgCopy = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
   const svgCheck = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${THEME}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
 
@@ -311,7 +311,7 @@ export function buildHtml(title: string, htmlBody: string, css: string, katexBas
   const katexJsTag = hasMath
     ? `\n  <script src="${base}/katex.min.js"></script>`
     : "";
-  const analyticsTag = analytics ? `\n  ${getUmamiScriptTag(analytics)}` : "";
+  const analyticsTag = analytics ? `\n  ${getGoatCounterScriptTag(analytics)}` : "";
 
   return `<!DOCTYPE html>
 <html lang="zh">
@@ -952,6 +952,10 @@ blockquote p { color: #81888D; font-size: 14px; margin: 0; }
 /* ── Task list ── */
 .contains-task-list { list-style: none; padding-left: 0.25em; }
 .task-list-item { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.5em; margin: 0.3em 0; }
+/* Loose lists wrap item text in a block <p>; let it fill the remaining row width
+   and wrap its text internally, instead of its max-content width bumping the
+   whole block onto a new flex line (which would strand the checkbox alone). */
+.task-list-item > p { flex: 1 1 0; min-width: 0; }
 .task-list-item > ul, .task-list-item > ol { flex: 0 0 100%; padding-left: 1.5em; margin: 0.2em 0 0; }
 .task-list-item-checkbox {
   -webkit-appearance: none;
@@ -978,6 +982,14 @@ blockquote p { color: #81888D; font-size: 14px; margin: 0; }
 /* ── Lists ── */
 ul, ol { padding-left: 1.5em; margin: 0.8em 0; }
 li { margin: 0.3em 0; }
+/* A blank line inside a list makes it "loose": each item's text is wrapped in a
+   <p> whose margins open a large gap. Collapse them so it renders like a normal
+   tight list (matching standard markdown), keeping separation only between
+   multiple paragraphs in the same item. */
+li > p { margin: 0; }
+li > p + p { margin-top: 0.5em; }
+/* Hide stray empty paragraphs left by blank lines. */
+p:empty { display: none; }
 
 /* ── Table ── */
 .table-wrapper {
@@ -1214,30 +1226,22 @@ em { font-style: italic; }
 
 /* ── Base list view ── */
 .base-list {
-  display: flex;
-  flex-direction: column;
   margin: 1em 0;
-  border: 1px solid #DADCDE;
-  border-radius: 8px;
-  overflow: hidden;
+  padding-left: 1.5em;
+}
+.base-list-plain {
+  list-style: none;
+  padding-left: 0;
 }
 .base-list-item {
-  display: flex;
-  align-items: baseline;
-  gap: 16px;
-  padding: 7px 12px;
-  border-bottom: 1px solid #EDEEF0;
-}
-.base-list-item:last-child { border-bottom: none; }
-.base-list-cell {
   font-size: 0.9em;
-  line-height: 1.5;
+  line-height: 1.6;
   color: #333;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 1 1 0;
-  min-width: 0;
+  margin: 0.25em 0;
+}
+.base-list-sub {
+  padding-left: 1.2em;
+  color: #666;
 }
 
 /* ── Dataview list ── */

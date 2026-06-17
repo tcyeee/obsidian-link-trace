@@ -7,6 +7,7 @@ import { t, setLanguage } from "./src/i18n";
 import { getAnalyticsInjectConfig } from "./src/analytics";
 import { hashBody, stripFrontmatter } from "./src/note-hash";
 import { SharePopover } from "./src/share-popover";
+import { ShareStatsView, VIEW_TYPE_SHARE_STATS } from "./src/stats-view";
 
 export default class ShareOnlinePlugin extends Plugin {
 	settings: ShareOnlineSettings;
@@ -28,6 +29,15 @@ export default class ShareOnlinePlugin extends Plugin {
 			id: "export-current-note-to-oss",
 			name: t("cmd.exportOss"),
 			callback: () => this.exportCurrentNote(true),
+		});
+
+		// ── Share-stats page (dedicated tab + ribbon + command) ──────────────
+		this.registerView(VIEW_TYPE_SHARE_STATS, (leaf) => new ShareStatsView(leaf, this));
+		this.addRibbonIcon("bar-chart-3", t("stats.ribbon"), () => void this.activateStatsView());
+		this.addCommand({
+			id: "open-share-stats",
+			name: t("stats.command"),
+			callback: () => void this.activateStatsView(),
 		});
 
 		// ── Status bar share button ──────────────────────────────────────
@@ -73,6 +83,19 @@ export default class ShareOnlinePlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+	}
+
+	/** Reveal the share-stats tab, reusing an open one or opening a new main-area tab. */
+	async activateStatsView(): Promise<void> {
+		const { workspace } = this.app;
+		const existing = workspace.getLeavesOfType(VIEW_TYPE_SHARE_STATS);
+		if (existing.length > 0) {
+			await workspace.revealLeaf(existing[0]);
+			return;
+		}
+		const leaf = workspace.getLeaf(true);
+		await leaf.setViewState({ type: VIEW_TYPE_SHARE_STATS, active: true });
+		await workspace.revealLeaf(leaf);
 	}
 
 	// ── Frontmatter helpers ───────────────────────────────────────────────
@@ -328,14 +351,35 @@ export default class ShareOnlinePlugin extends Plugin {
 		}
 	}
 
+	/**
+	 * 打开 Electron 原生文件夹选择框（desktop-only），默认定位到上次导出目录。
+	 * 取消返回 null。
+	 */
+	private async pickExportDir(): Promise<string | null> {
+		// eslint-disable-next-line @typescript-eslint/no-var-requires
+		const electron = require("electron");
+		const dialog = electron?.remote?.dialog ?? require("@electron/remote").dialog;
+		const result = await dialog.showOpenDialog({
+			properties: ["openDirectory", "createDirectory"],
+			defaultPath: this.settings.exportPath || DEFAULT_SETTINGS.exportPath,
+		});
+		if (result.canceled || !result.filePaths?.length) return null;
+		return result.filePaths[0] as string;
+	}
+
 	private async exportFile(file: TFile): Promise<void> {
+		const dir = await this.pickExportDir();
+		if (!dir) return; // 用户取消
+		this.settings.exportPath = dir;
+		await this.saveSettings();
+
 		this.sharePopover.showBusy(this.statusBarEl, t("toast.exporting"));
 		try {
 			await exportToLocal(
 				this.app,
 				this.app.vault,
 				file,
-				this.settings.exportPath || DEFAULT_SETTINGS.exportPath,
+				dir,
 				this.settings.includeLinkedNotes,
 				this.settings.pageLinkLength,
 				getAnalyticsInjectConfig(this.settings)

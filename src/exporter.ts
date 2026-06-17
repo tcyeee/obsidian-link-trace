@@ -4,7 +4,7 @@ import { App, Vault, TFile } from "obsidian";
 import * as fs from "fs";
 import * as path from "path";
 import { renderNote, buildHtml, containsMath } from "./renderer";
-import type { UmamiInjectConfig } from "./analytics";
+import type { GoatCounterInjectConfig } from "./analytics";
 
 /** Base36 alphabet size — names are drawn from [0-9a-z]. */
 const NAME_ALPHABET_SIZE = 36;
@@ -134,7 +134,7 @@ export async function prepareExport(
 	file: TFile,
 	noteName: string,
 	katexBase?: string,
-	analytics?: UmamiInjectConfig
+	analytics?: GoatCounterInjectConfig
 ): Promise<ExportResult> {
 	const raw = await vault.read(file);
 	const { html: htmlBody, css, images } = await renderNote(app, file, raw);
@@ -150,7 +150,7 @@ export async function exportToLocal(
 	exportRoot: string,
 	includeLinkedNotes = false,
 	pageLinkLength = 3,
-	analytics?: UmamiInjectConfig
+	analytics?: GoatCounterInjectConfig
 ): Promise<ExportResult> {
 	// All names generated in this export share one set so they never collide.
 	const usedNames = new Set<string>();

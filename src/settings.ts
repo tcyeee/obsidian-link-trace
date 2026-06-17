@@ -5,6 +5,7 @@ import type ShareOnlinePlugin from "../main";
 import { Language, t, setLanguage, formatPageCount } from "./i18n";
 
 export interface ShareOnlineSettings {
+	/** 上次本地导出选择的目录（静默记忆，无设置项；首次默认桌面）。 */
 	exportPath: string;
 	includeLinkedNotes: boolean;
 	ossRegion: string;
@@ -15,9 +16,8 @@ export interface ShareOnlineSettings {
 	ossDomain: string;
 	pageLinkLength: number;
 	analyticsEnabled: boolean;
-	umamiScriptUrl: string;
-	umamiWebsiteId: string;
-	umamiApiKey: string;
+	goatcounterEndpoint: string;
+	goatcounterApiToken: string;
 	language: Language;
 }
 
@@ -32,9 +32,8 @@ export const DEFAULT_SETTINGS: ShareOnlineSettings = {
 	ossDomain: "",
 	pageLinkLength: 3,
 	analyticsEnabled: false,
-	umamiScriptUrl: "https://cloud.umami.is/script.js",
-	umamiWebsiteId: "",
-	umamiApiKey: "",
+	goatcounterEndpoint: "https://stats.viii.me/count",
+	goatcounterApiToken: "",
 	language: "zh",
 };
 
@@ -135,27 +134,6 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 					});
 			});
 
-		// ── 本地导出 / Local Export ───────────────
-		const localDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
-		localDetails.setAttribute("open", "");
-		localDetails.createEl("summary", {
-			cls: "opal-collapsible-heading",
-			text: t("settings.local.heading"),
-		});
-
-		new Setting(localDetails)
-			.setName(t("settings.exportPath.name"))
-			.setDesc(t("settings.exportPath.desc"))
-			.addText((text) =>
-				text
-					.setPlaceholder(DEFAULT_SETTINGS.exportPath)
-					.setValue(this.plugin.settings.exportPath)
-					.onChange(async (value) => {
-						this.plugin.settings.exportPath = value.trim() || DEFAULT_SETTINGS.exportPath;
-						await this.plugin.saveSettings();
-					})
-			);
-
 		// ── 阿里云 OSS / Aliyun OSS ─ collapsible ──
 		const ossDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
 		ossDetails.createEl("summary", {
@@ -167,6 +145,10 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 		const ossCalloutList = ossCallout.createEl("ul");
 		ossCalloutList.createEl("li", { text: t("settings.oss.callout.item1") });
 		ossCalloutList.createEl("li", { text: t("settings.oss.callout.item2") });
+
+		const previewWrap = ossCallout.createDiv({ cls: "opal-url-preview" });
+		previewWrap.createSpan({ cls: "opal-url-preview-label", text: t("settings.urlPreview.label") });
+		previewEl = previewWrap.createSpan({ cls: "opal-url-preview-url", text: this.buildPreviewUrl() });
 
 		new Setting(ossDetails)
 			.setName(t("settings.ossRegion.name"))
@@ -249,10 +231,6 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 					})
 			);
 
-		const previewWrap = ossDetails.createDiv({ cls: "opal-url-preview" });
-		previewWrap.createSpan({ cls: "opal-url-preview-label", text: t("settings.urlPreview.label") });
-		previewEl = previewWrap.createSpan({ cls: "opal-url-preview-url", text: this.buildPreviewUrl() });
-
 		// ── 访问统计 / Analytics ─ collapsible ──
 		const analyticsDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
 		analyticsDetails.createEl("summary", {
@@ -260,62 +238,35 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 			text: t("settings.analytics.heading"),
 		});
 
-		const analyticsCallout = analyticsDetails.createDiv({ cls: "opal-oss-callout" });
-		const analyticsCalloutList = analyticsCallout.createEl("ul");
-		analyticsCalloutList.createEl("li", { text: t("settings.analytics.callout.item1") });
-		analyticsCalloutList.createEl("li", { text: t("settings.analytics.callout.item2") });
-
 		new Setting(analyticsDetails)
 			.setName(t("settings.analyticsEnabled.name"))
-			.setDesc(t("settings.analyticsEnabled.desc"))
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.plugin.settings.analyticsEnabled)
 					.onChange(async (value) => {
 						this.plugin.settings.analyticsEnabled = value;
+						// 固定使用统一的 Count 端点
+						this.plugin.settings.goatcounterEndpoint = DEFAULT_SETTINGS.goatcounterEndpoint;
 						await this.plugin.saveSettings();
+						this.buildUI();
 					})
 			);
 
-		new Setting(analyticsDetails)
-			.setName(t("settings.umamiScriptUrl.name"))
-			.setDesc(t("settings.umamiScriptUrl.desc"))
-			.addText((text) =>
-				text
-					.setPlaceholder(DEFAULT_SETTINGS.umamiScriptUrl)
-					.setValue(this.plugin.settings.umamiScriptUrl)
-					.onChange(async (value) => {
-						this.plugin.settings.umamiScriptUrl =
-							value.trim() || DEFAULT_SETTINGS.umamiScriptUrl;
-						await this.plugin.saveSettings();
-					})
-			);
-
-		new Setting(analyticsDetails)
-			.setName(t("settings.umamiWebsiteId.name"))
-			.setDesc(t("settings.umamiWebsiteId.desc"))
-			.addText((text) =>
-				text
-					.setPlaceholder("xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx")
-					.setValue(this.plugin.settings.umamiWebsiteId)
-					.onChange(async (value) => {
-						this.plugin.settings.umamiWebsiteId = value.trim();
-						await this.plugin.saveSettings();
-					})
-			);
-
-		new Setting(analyticsDetails)
-			.setName(t("settings.umamiApiKey.name"))
-			.setDesc(t("settings.umamiApiKey.desc"))
-			.addText((text) => {
-				text
-					.setPlaceholder("api_xxx")
-					.setValue(this.plugin.settings.umamiApiKey)
-					.onChange(async (value) => {
-						this.plugin.settings.umamiApiKey = value.trim();
-						await this.plugin.saveSettings();
-					});
-				text.inputEl.type = "password";
-			});
+		// API Token 仅在启用访问统计时显示
+		if (this.plugin.settings.analyticsEnabled) {
+			new Setting(analyticsDetails)
+				.setName(t("settings.goatcounterApiToken.name"))
+				.setDesc(t("settings.goatcounterApiToken.desc"))
+				.addText((text) => {
+					text
+						.setPlaceholder("xxxxxxxxxxxxxxxx")
+						.setValue(this.plugin.settings.goatcounterApiToken)
+						.onChange(async (value) => {
+							this.plugin.settings.goatcounterApiToken = value.trim();
+							await this.plugin.saveSettings();
+						});
+					text.inputEl.type = "password";
+				});
+		}
 	}
 }

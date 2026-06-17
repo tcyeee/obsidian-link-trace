@@ -379,3 +379,348 @@ details[open] > .opal-collapsible-heading::before {
   width: 15px;
   height: 15px;
 }
+
+/* ── Share-stats view ──────────────────────────────────────────────── */
+.opal-stats-view {
+  padding: 16px 18px;
+  overflow: auto;
+}
+.opal-stats-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.opal-stats-titlerow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.opal-stats-titleicon {
+  display: flex;
+  color: var(--text-accent);
+}
+.opal-stats-titleicon svg {
+  width: 18px;
+  height: 18px;
+}
+.opal-stats-title {
+  font-size: var(--h4-size);
+  font-weight: var(--font-bold);
+  color: var(--text-normal);
+}
+.opal-stats-summary {
+  margin-top: 4px;
+  font-size: var(--font-ui-small);
+  color: var(--text-muted);
+}
+.opal-stats-refresh {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-s);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.opal-stats-refresh:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+.opal-stats-refresh svg {
+  width: 15px;
+  height: 15px;
+}
+.opal-stats-loading,
+.opal-stats-empty {
+  padding: 24px 4px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+}
+.opal-stats-notice {
+  margin-bottom: 10px;
+  padding: 7px 10px;
+  border-left: 3px solid var(--color-orange);
+  background: rgba(var(--color-orange-rgb), 0.08);
+  border-radius: var(--radius-s);
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+.opal-stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: var(--font-ui-small);
+}
+.opal-stats-table th.opal-stats-num,
+.opal-stats-table td.opal-stats-num {
+  width: 72px;
+}
+.opal-stats-table th.opal-stats-date,
+.opal-stats-table td.opal-stats-date {
+  width: 104px;
+}
+.opal-stats-table th,
+.opal-stats-table td {
+  padding: 7px 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.opal-stats-table th {
+  color: var(--text-muted);
+  font-weight: var(--font-medium);
+  font-size: var(--font-ui-smaller);
+}
+.opal-stats-table tbody tr:hover {
+  background: var(--background-modifier-hover);
+}
+.opal-stats-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.opal-stats-date {
+  text-align: right;
+  white-space: nowrap;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.opal-stats-titlecell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.opal-stats-notename {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-normal);
+  cursor: pointer;
+}
+.opal-stats-notename:hover {
+  color: var(--text-accent);
+  text-decoration: underline;
+}
+.opal-stats-openlink {
+  display: flex;
+  flex-shrink: 0;
+  color: var(--text-faint);
+  cursor: pointer;
+}
+.opal-stats-openlink:hover {
+  color: var(--text-accent);
+}
+.opal-stats-openlink svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* ── Header stat cards ── */
+.opal-stats-cards {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+.opal-stat-card {
+  min-width: 120px;
+  padding: 10px 14px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  background: var(--background-secondary);
+}
+.opal-stat-card-value {
+  font-size: var(--h2-size);
+  font-weight: var(--font-bold);
+  line-height: 1.1;
+  color: var(--text-normal);
+  font-variant-numeric: tabular-nums;
+}
+.opal-stat-card-label {
+  margin-top: 3px;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+
+/* ── Table: URL column + clickable rows ── */
+.opal-stats-table th.opal-stats-url,
+.opal-stats-table td.opal-stats-url {
+  width: 132px;
+}
+.opal-stats-row {
+  cursor: pointer;
+}
+.opal-stats-urltext {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.opal-stats-urltext:hover {
+  color: var(--text-accent);
+  text-decoration: underline;
+}
+
+/* ── Detail modal ── */
+.opal-detail-modal {
+  max-width: 580px;
+  animation: opal-detail-in 0.18s ease-out;
+}
+@keyframes opal-detail-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+.opal-detail-header {
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.opal-detail-title {
+  font-size: var(--h3-size);
+  font-weight: var(--font-bold);
+  color: var(--text-normal);
+}
+.opal-detail-url {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  color: var(--text-accent);
+  cursor: pointer;
+}
+.opal-detail-url-icon {
+  display: flex;
+  flex-shrink: 0;
+}
+.opal-detail-url-icon svg {
+  width: 13px;
+  height: 13px;
+}
+.opal-detail-url-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-ui-smaller);
+}
+.opal-detail-url:hover .opal-detail-url-text {
+  text-decoration: underline;
+}
+.opal-detail-published {
+  margin-top: 5px;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+.opal-detail-loading {
+  padding: 28px 4px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+}
+.opal-detail-overview {
+  margin-bottom: 16px;
+}
+.opal-detail-bignum {
+  font-size: 2.2em;
+  font-weight: var(--font-bold);
+  line-height: 1.1;
+  color: var(--text-normal);
+  font-variant-numeric: tabular-nums;
+}
+.opal-detail-bignum-label {
+  margin-top: 2px;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+.opal-detail-section {
+  margin-bottom: 16px;
+}
+.opal-detail-section-title {
+  margin-bottom: 7px;
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-medium);
+  color: var(--text-muted);
+}
+.opal-detail-empty {
+  padding: 8px 0;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-faint);
+}
+
+/* Daily trend sparkline */
+.opal-detail-spark {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 56px;
+  padding: 4px 0;
+}
+.opal-detail-spark-bar {
+  flex: 1;
+  min-height: 2px;
+  height: var(--opal-bar-h, 0%);
+  border-radius: 1px;
+  background: var(--background-modifier-border);
+}
+.opal-detail-spark-bar.is-active {
+  background: var(--interactive-accent);
+}
+
+/* Dimension grid + ranked lists */
+.opal-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 20px;
+}
+.opal-detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.opal-detail-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 7px;
+  border-radius: var(--radius-s);
+  overflow: hidden;
+}
+.opal-detail-row-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--opal-bar-w, 0%);
+  background: var(--background-modifier-hover);
+}
+.opal-detail-row-label {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-normal);
+}
+.opal-detail-row-count {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}

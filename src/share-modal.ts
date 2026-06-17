@@ -163,10 +163,7 @@ export class ShareModal extends Modal {
                 if (!span.isConnected) return;
                 span.setText(
                     stats
-                        ? t("modal.views.value", {
-                              pv: String(stats.pageviews),
-                              uv: String(stats.visitors),
-                          })
+                        ? t("modal.views.value", { count: String(stats.views) })
                         : t("modal.views.fail")
                 );
             })

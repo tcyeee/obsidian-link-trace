@@ -18,6 +18,9 @@ interface BaseConfig {
     cardSize?:         number;   // card width in px
     columnSize?:       Record<string, number>;  // per-column width in px
     filters?:          { and?: string[]; or?: string[] };  // view-level filters
+    separator?:        string;   // list view: string joining property values (default " ")
+    markers?:          string;   // list view: "bullet" | "number" | "none"
+    indentProperties?: boolean;  // list view: drop trailing properties onto indented sub-lines
   }>;
 }
 
@@ -568,7 +571,7 @@ export async function renderBaseAsTable(
     return renderCards(app, baseFile, config, view, matched, formulas, properties, vaultName, images);
   }
   if (viewType === "list") {
-    return renderList(app, view, matched, formulas, properties, vaultName);
+    return renderList(app, view, matched, formulas, vaultName);
   }
 
   // ── Table view ──
@@ -650,33 +653,56 @@ function renderCards(
 /* ── List renderer ──────────────────────────────────────────────────────── */
 
 /**
- * Render a Bases `list` view: one full-width row per record, with each column
- * laid out horizontally and sized from the view's `columnSize` map (matching
- * Obsidian's native list layout more closely than the card grid did).
+ * Format one Bases `list` view row.
+ *
+ * Obsidian's list view shows each record as a single line: the ordered property
+ * values joined by `separator` (default a space) — NOT a columnar table. Empty
+ * values are skipped so there is no dangling separator. When `indentProperties`
+ * is set, the first property stays on the line and the rest drop onto indented
+ * sub-lines.
+ */
+export function formatListItem(
+  values: string[],
+  opts: { separator?: string; indentProperties?: boolean } = {},
+): string {
+  const sep = opts.separator ?? " ";
+  const nonEmpty = values.filter(v => v !== "");
+  if (nonEmpty.length === 0) return "";
+
+  if (opts.indentProperties && nonEmpty.length > 1) {
+    const [first, ...rest] = nonEmpty;
+    const restHtml = rest.map(v => `<div class="base-list-sub">${v}</div>`).join("");
+    return `<li class="base-list-item">${first}${restHtml}</li>`;
+  }
+  return `<li class="base-list-item">${nonEmpty.join(sep)}</li>`;
+}
+
+/**
+ * Render a Bases `list` view: a bulleted list with one record per line, the
+ * ordered property values joined inline by the view's `separator`. Honors the
+ * `markers` (bullet / number / none) and `indentProperties` view options.
  */
 function renderList(
   app: App,
   view: NonNullable<BaseConfig["views"]>[number],
   matched: TFile[],
   formulas: Record<string, string>,
-  properties: BaseConfig["properties"],
   vaultName: string,
 ): string {
-  const order   = viewOrder(view, formulas);
-  const colSize = view.columnSize ?? {};
+  const order            = viewOrder(view, formulas);
+  const separator        = view.separator ?? " ";
+  const markers          = (view.markers ?? "bullet").toLowerCase();
+  const indentProperties = view.indentProperties ?? false;
 
   const items = matched.map(f => {
     const ctx = makeCtx(app, f, vaultName);
-    const cells = order.map(col => {
-      const val = cellValue(col, ctx, formulas);
-      const width = colSize[col] ? ` style="flex:0 0 ${colSize[col]}px"` : "";
-      const label = colLabel(col, properties);
-      return `<div class="base-list-cell"${width} title="${escapeHtml(label)}">${val}</div>`;
-    }).join("");
-    return `<div class="base-list-item">${cells}</div>`;
-  }).join("\n");
+    const values = order.map(col => cellValue(col, ctx, formulas));
+    return formatListItem(values, { separator, indentProperties });
+  }).filter(Boolean).join("\n");
 
-  return `<div class="base-list">${items}</div>`;
+  const tag = markers === "number" ? "ol" : "ul";
+  const cls = markers === "none" ? "base-list base-list-plain" : "base-list";
+  return `<${tag} class="${cls}">${items}</${tag}>`;
 }
 
 /** Replace ![[*.base]] embeds with data-base-embed placeholder markers.
