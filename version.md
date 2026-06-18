@@ -5,6 +5,20 @@
 
 ---
 
+## Version 0.1.7
+
+- Added a dedicated Share Stats page (ribbon icon + "Open share stats" command) listing every published page and its cumulative view count
+- Added view count and recent activity to the share popover so you can see how a page is doing at a glance
+- Changed the analytics backend to a self-hosted, privacy-friendly GoatCounter instance; the analytics API token is now optional
+- Added support for all three Obsidian Bases views (list, table, cards) when rendering `.base` embeds
+- Fixed code blocks inside task list items overflowing the page width on exported pages
+
+- 新增独立的「分享统计」页面（功能区图标 +「打开分享统计」命令），集中列出每个已发布页面及其累计访问量
+- 分享卡片新增访问量与近期活动展示，一眼掌握页面表现
+- 分析后端改为自托管、隐私友好的 GoatCounter 实例；分析 API token 现为可选项
+- 渲染 `.base` 嵌入时支持全部三种 Obsidian Bases 视图（列表、表格、卡片）
+- 修复任务列表项内代码块在导出页面中超出页面宽度的问题
+
 ## Version 0.1.6
 
 - Added Umami Cloud analytics: published pages can track page views, and view counts show in the share modal
