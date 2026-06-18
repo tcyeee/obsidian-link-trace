@@ -120,6 +120,9 @@ const zh: Translations = {
 	"popover.copy": "复制链接",
 	"popover.unpublished.title": "尚未发布",
 	"popover.unpublished.subline": "发布后可获得分享链接",
+	"popover.stats.views": "阅读量",
+	"popover.stats.refresh": "刷新阅读量",
+	"popover.stats.detail": "查看详情",
 };
 
 const en: Translations = {
@@ -240,6 +243,9 @@ const en: Translations = {
 	"popover.copy": "Copy link",
 	"popover.unpublished.title": "Not published yet",
 	"popover.unpublished.subline": "Publish to get a shareable link",
+	"popover.stats.views": "Views",
+	"popover.stats.refresh": "Refresh views",
+	"popover.stats.detail": "View details",
 };
 
 const translations: Record<Language, Translations> = { zh, en };

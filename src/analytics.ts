@@ -150,6 +150,125 @@ export function parseDimensionStats(json: unknown): DimensionItem[] | null {
 }
 
 /**
+ * GoatCounter 地区维度的英文省/州名（来自 GeoLite2-City）→ 中文。
+ * 覆盖中国 34 个省级行政区，并附常见别名（如 "Nei Mongol"/"Xizang"/"Macau"）。
+ * 未命中的名称按英文原样回退，不丢数据。
+ */
+export const CN_PROVINCE_ZH: Record<string, string> = {
+	Beijing: "北京",
+	Tianjin: "天津",
+	Hebei: "河北",
+	Shanxi: "山西",
+	"Inner Mongolia": "内蒙古",
+	"Nei Mongol": "内蒙古",
+	Liaoning: "辽宁",
+	Jilin: "吉林",
+	Heilongjiang: "黑龙江",
+	Shanghai: "上海",
+	Jiangsu: "江苏",
+	Zhejiang: "浙江",
+	Anhui: "安徽",
+	Fujian: "福建",
+	Jiangxi: "江西",
+	Shandong: "山东",
+	Henan: "河南",
+	Hubei: "湖北",
+	Hunan: "湖南",
+	Guangdong: "广东",
+	Guangxi: "广西",
+	"Guangxi Zhuangzu": "广西",
+	Hainan: "海南",
+	Chongqing: "重庆",
+	Sichuan: "四川",
+	Guizhou: "贵州",
+	Yunnan: "云南",
+	Tibet: "西藏",
+	Xizang: "西藏",
+	Shaanxi: "陕西",
+	Gansu: "甘肃",
+	Qinghai: "青海",
+	Ningxia: "宁夏",
+	"Ningxia Huizu": "宁夏",
+	Xinjiang: "新疆",
+	"Xinjiang Uygur": "新疆",
+	Taiwan: "台湾",
+	"Hong Kong": "香港",
+	Macao: "澳门",
+	Macau: "澳门",
+};
+
+/**
+ * 国家/地区 ISO 码（GoatCounter 地区维度的 id）→ 中文。常见来源国家即可，
+ * 港澳台冠以「中国」前缀。未命中按英文国家名回退。
+ */
+export const COUNTRY_ZH: Record<string, string> = {
+	CN: "中国",
+	HK: "中国香港",
+	MO: "中国澳门",
+	TW: "中国台湾",
+	US: "美国",
+	JP: "日本",
+	KR: "韩国",
+	SG: "新加坡",
+	GB: "英国",
+	DE: "德国",
+	FR: "法国",
+	CA: "加拿大",
+	AU: "澳大利亚",
+	RU: "俄罗斯",
+	IN: "印度",
+	MY: "马来西亚",
+	TH: "泰国",
+	VN: "越南",
+};
+
+/** 英文省/州名 → 中文，未知按原文回退。 */
+export function provinceLabel(name: string): string {
+	return CN_PROVINCE_ZH[name] ?? name;
+}
+
+/** 国家 ISO 码 → 中文，未知按 GoatCounter 给的英文名回退，再退到码本身。 */
+export function countryLabel(code: string, fallbackName: string): string {
+	return COUNTRY_ZH[code] ?? (fallbackName || code);
+}
+
+/**
+ * 把「国家维度 + 各国省份下钻」合成为「国家-省份」中文标签的可读列表。
+ * - 某国有具名省份 → 逐省输出 `中国-广东`；该国内未识别到省份的剩余访问以国家名单列 `中国`。
+ * - 某国无省份数据（非 collect_regions 国家）→ 仅按国家名输出。
+ * 结果按 count 降序、截断到 limit。纯函数，可直接单测。
+ *
+ * @param countries     /stats/locations 的国家级结果（含 id=ISO 码）。
+ * @param regionsByCode ISO 码 → /stats/locations/<code> 的省份结果（name 为英文省名，"" 表未知）。
+ */
+export function buildLocationRows(
+	countries: DimensionItem[],
+	regionsByCode: Record<string, DimensionItem[]>,
+	limit: number
+): DimensionItem[] {
+	const rows: DimensionItem[] = [];
+	for (const c of countries) {
+		const code = c.id ?? "";
+		const countryZh = countryLabel(code, c.name);
+		const regions = code ? regionsByCode[code] : undefined;
+		const named = regions?.filter((r) => r.name.trim() !== "") ?? [];
+		if (named.length > 0) {
+			for (const r of named) {
+				rows.push({ name: `${countryZh}-${provinceLabel(r.name)}`, count: r.count });
+			}
+			const unknown = regions!
+				.filter((r) => r.name.trim() === "")
+				.reduce((sum, r) => sum + r.count, 0);
+			if (unknown > 0) rows.push({ name: countryZh, count: unknown });
+		} else {
+			rows.push({ name: countryZh, count: c.count });
+		}
+	}
+	rows.sort((a, b) => b.count - a.count);
+	return rows.slice(0, limit);
+}
+
+/**
  * 解析 GoatCounter /api/v0/stats/hits?daily=true 响应里第一条路径的每日序列。
  * 形如：{ hits: [{ path, count, stats: [{ day, daily }] }] }。
  * 路径无访问（hits 为空）或该路径无 stats → 返回空序列 []；逐条跳过缺 day/daily 的点；
@@ -170,6 +289,18 @@ export function parseDailySeries(json: unknown): DailyPoint[] | null {
 		}
 	}
 	return out;
+}
+
+/**
+ * 从每日序列中取「最近有访问的若干天」，供分享气泡的「最近三条」展示。
+ * 过滤出 count > 0 的点，按 day 字符串降序（新→旧），取前 limit 条。
+ * 纯函数、无副作用，可直接单测。
+ */
+export function recentActiveDays(points: DailyPoint[], limit: number): DailyPoint[] {
+	return points
+		.filter((p) => p.count > 0)
+		.sort((a, b) => (a.day < b.day ? 1 : a.day > b.day ? -1 : 0))
+		.slice(0, limit);
 }
 
 /**

@@ -25750,7 +25750,10 @@ var zh = {
   "popover.copied": "\u94FE\u63A5\u5DF2\u590D\u5236",
   "popover.copy": "\u590D\u5236\u94FE\u63A5",
   "popover.unpublished.title": "\u5C1A\u672A\u53D1\u5E03",
-  "popover.unpublished.subline": "\u53D1\u5E03\u540E\u53EF\u83B7\u5F97\u5206\u4EAB\u94FE\u63A5"
+  "popover.unpublished.subline": "\u53D1\u5E03\u540E\u53EF\u83B7\u5F97\u5206\u4EAB\u94FE\u63A5",
+  "popover.stats.views": "\u9605\u8BFB\u91CF",
+  "popover.stats.refresh": "\u5237\u65B0\u9605\u8BFB\u91CF",
+  "popover.stats.detail": "\u67E5\u770B\u8BE6\u60C5"
 };
 var en = {
   "settings.language": "\u8BED\u8A00 / Language",
@@ -25856,7 +25859,10 @@ var en = {
   "popover.copied": "Link copied",
   "popover.copy": "Copy link",
   "popover.unpublished.title": "Not published yet",
-  "popover.unpublished.subline": "Publish to get a shareable link"
+  "popover.unpublished.subline": "Publish to get a shareable link",
+  "popover.stats.views": "Views",
+  "popover.stats.refresh": "Refresh views",
+  "popover.stats.detail": "View details"
 };
 var translations = { zh, en };
 var currentLanguage = "zh";
@@ -26653,6 +26659,97 @@ function parseDimensionStats(json) {
   }
   return out;
 }
+var CN_PROVINCE_ZH = {
+  Beijing: "\u5317\u4EAC",
+  Tianjin: "\u5929\u6D25",
+  Hebei: "\u6CB3\u5317",
+  Shanxi: "\u5C71\u897F",
+  "Inner Mongolia": "\u5185\u8499\u53E4",
+  "Nei Mongol": "\u5185\u8499\u53E4",
+  Liaoning: "\u8FBD\u5B81",
+  Jilin: "\u5409\u6797",
+  Heilongjiang: "\u9ED1\u9F99\u6C5F",
+  Shanghai: "\u4E0A\u6D77",
+  Jiangsu: "\u6C5F\u82CF",
+  Zhejiang: "\u6D59\u6C5F",
+  Anhui: "\u5B89\u5FBD",
+  Fujian: "\u798F\u5EFA",
+  Jiangxi: "\u6C5F\u897F",
+  Shandong: "\u5C71\u4E1C",
+  Henan: "\u6CB3\u5357",
+  Hubei: "\u6E56\u5317",
+  Hunan: "\u6E56\u5357",
+  Guangdong: "\u5E7F\u4E1C",
+  Guangxi: "\u5E7F\u897F",
+  "Guangxi Zhuangzu": "\u5E7F\u897F",
+  Hainan: "\u6D77\u5357",
+  Chongqing: "\u91CD\u5E86",
+  Sichuan: "\u56DB\u5DDD",
+  Guizhou: "\u8D35\u5DDE",
+  Yunnan: "\u4E91\u5357",
+  Tibet: "\u897F\u85CF",
+  Xizang: "\u897F\u85CF",
+  Shaanxi: "\u9655\u897F",
+  Gansu: "\u7518\u8083",
+  Qinghai: "\u9752\u6D77",
+  Ningxia: "\u5B81\u590F",
+  "Ningxia Huizu": "\u5B81\u590F",
+  Xinjiang: "\u65B0\u7586",
+  "Xinjiang Uygur": "\u65B0\u7586",
+  Taiwan: "\u53F0\u6E7E",
+  "Hong Kong": "\u9999\u6E2F",
+  Macao: "\u6FB3\u95E8",
+  Macau: "\u6FB3\u95E8"
+};
+var COUNTRY_ZH = {
+  CN: "\u4E2D\u56FD",
+  HK: "\u4E2D\u56FD\u9999\u6E2F",
+  MO: "\u4E2D\u56FD\u6FB3\u95E8",
+  TW: "\u4E2D\u56FD\u53F0\u6E7E",
+  US: "\u7F8E\u56FD",
+  JP: "\u65E5\u672C",
+  KR: "\u97E9\u56FD",
+  SG: "\u65B0\u52A0\u5761",
+  GB: "\u82F1\u56FD",
+  DE: "\u5FB7\u56FD",
+  FR: "\u6CD5\u56FD",
+  CA: "\u52A0\u62FF\u5927",
+  AU: "\u6FB3\u5927\u5229\u4E9A",
+  RU: "\u4FC4\u7F57\u65AF",
+  IN: "\u5370\u5EA6",
+  MY: "\u9A6C\u6765\u897F\u4E9A",
+  TH: "\u6CF0\u56FD",
+  VN: "\u8D8A\u5357"
+};
+function provinceLabel(name) {
+  var _a;
+  return (_a = CN_PROVINCE_ZH[name]) != null ? _a : name;
+}
+function countryLabel(code, fallbackName) {
+  var _a;
+  return (_a = COUNTRY_ZH[code]) != null ? _a : fallbackName || code;
+}
+function buildLocationRows(countries, regionsByCode, limit) {
+  var _a, _b;
+  const rows = [];
+  for (const c of countries) {
+    const code = (_a = c.id) != null ? _a : "";
+    const countryZh = countryLabel(code, c.name);
+    const regions = code ? regionsByCode[code] : void 0;
+    const named = (_b = regions == null ? void 0 : regions.filter((r) => r.name.trim() !== "")) != null ? _b : [];
+    if (named.length > 0) {
+      for (const r of named) {
+        rows.push({ name: `${countryZh}-${provinceLabel(r.name)}`, count: r.count });
+      }
+      const unknown = regions.filter((r) => r.name.trim() === "").reduce((sum, r) => sum + r.count, 0);
+      if (unknown > 0) rows.push({ name: countryZh, count: unknown });
+    } else {
+      rows.push({ name: countryZh, count: c.count });
+    }
+  }
+  rows.sort((a, b) => b.count - a.count);
+  return rows.slice(0, limit);
+}
 function parseDailySeries(json) {
   var _a;
   if (!json || typeof json !== "object") return null;
@@ -26669,6 +26766,9 @@ function parseDailySeries(json) {
     }
   }
   return out;
+}
+function recentActiveDays(points, limit) {
+  return points.filter((p) => p.count > 0).sort((a, b) => a.day < b.day ? 1 : a.day > b.day ? -1 : 0).slice(0, limit);
 }
 function buildStatsRows(pages, hitsByPath) {
   return pages.map((p) => {
@@ -27486,7 +27586,7 @@ pre code {
 }
 
 /* \u2500\u2500 pre wrapper (allows label to escape overflow:auto clipping) \u2500\u2500 */
-.pre-wrapper { position: relative; }
+.pre-wrapper { position: relative; min-width: 0; max-width: 100%; }
 
 /* \u2500\u2500 Code language label \u2500\u2500 */
 .code-lang {
@@ -27570,6 +27670,12 @@ blockquote p { color: #81888D; font-size: 14px; margin: 0; }
    whole block onto a new flex line (which would strand the checkbox alone). */
 .task-list-item > p { flex: 1 1 0; min-width: 0; }
 .task-list-item > ul, .task-list-item > ol { flex: 0 0 100%; padding-left: 1.5em; margin: 0.2em 0 0; }
+/* A code block nested in a task item is wrapped in .pre-wrapper (a flex item).
+   Without min-width:0 its non-wrapping min-content (longest code line) becomes the
+   flex floor and bumps the whole row wider than the viewport \u2014 horizontal page
+   scroll on narrow screens. Pin it to its own full-width line and let it shrink so
+   the inner pre's overflow:auto handles long lines. */
+.task-list-item > .pre-wrapper, .task-list-item > pre { flex: 0 0 100%; min-width: 0; }
 .task-list-item-checkbox {
   -webkit-appearance: none;
   appearance: none;
@@ -28021,6 +28127,26 @@ async function fetchPageViews(settings, shareLink) {
     return null;
   }
 }
+async function fetchRecentActiveDays(settings, shareLink, opts) {
+  if (!canReadAnalytics(settings)) return null;
+  const apiBase = deriveApiBase(settings.goatcounterEndpoint.trim());
+  if (!apiBase) return null;
+  const urlPath = extractPathname(shareLink);
+  if (!urlPath) return null;
+  const end = (/* @__PURE__ */ new Date()).toISOString();
+  const start = new Date(Date.now() - opts.days * 864e5).toISOString();
+  const query = `?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}&daily=true&path_by_name=true&include_paths=${encodeURIComponent(urlPath)}&limit=1`;
+  const url = `${apiBase}/stats/hits${query}`;
+  try {
+    const res = await (0, import_obsidian5.requestUrl)({ url, method: "GET", headers: STATS_HEADERS, throw: false });
+    if (res.status < 200 || res.status >= 300) return null;
+    const points = parseDailySeries(res.json);
+    if (points === null) return null;
+    return recentActiveDays(points, opts.limit);
+  } catch (e) {
+    return null;
+  }
+}
 var MAX_HITS_PAGES = 100;
 async function fetchAllPathHits(settings) {
   if (!canReadAnalytics(settings)) return null;
@@ -28118,11 +28244,25 @@ async function fetchPageDetail(settings, shareLink, onPart) {
   };
   const dailyQuery = `/stats/hits?start=${encodeURIComponent(trendStart)}&end=${encodeURIComponent(end)}&daily=true&limit=1${scope}`;
   const dimQuery = (page) => `/stats/${page}?start=${encodeURIComponent(STATS_START)}&end=${encodeURIComponent(end)}&limit=${DETAIL_DIMENSION_LIMIT}${scope}`;
+  const expandLocations = async (countries) => {
+    const regionsByCode = {};
+    for (const c of countries) {
+      const code = c.id;
+      if (!code) continue;
+      regionsByCode[code] = await get(
+        dimQuery(`locations/${encodeURIComponent(code)}`),
+        parseDimensionStats,
+        []
+      );
+    }
+    return buildLocationRows(countries, regionsByCode, DETAIL_DIMENSION_LIMIT);
+  };
   const daily = await get(dailyQuery, parseDailySeries, []);
   onPart == null ? void 0 : onPart("daily", daily);
   const dims = {};
   for (const page of DETAIL_DIMENSIONS) {
-    const items = await get(dimQuery(page), parseDimensionStats, []);
+    let items = await get(dimQuery(page), parseDimensionStats, []);
+    if (page === "locations") items = await expandLocations(items);
     dims[page] = items;
     onPart == null ? void 0 : onPart(DIMENSION_TO_KEY[page], items);
   }
@@ -28652,6 +28792,7 @@ var SharePopover = class {
         text: t("popover.published", { time: formatDateTime(publishedAt) })
       });
     }
+    this.renderAnalytics(card, shareLink);
     if (stale) {
       const hint = card.createDiv({ cls: "opal-share-popover-hint" });
       hint.createSpan({ text: t("popover.hint.stale") });
@@ -28729,6 +28870,69 @@ var SharePopover = class {
       this.close();
       void this.plugin.exportFromUi(file);
     });
+  }
+  /**
+   * Render the published-state analytics: a view-count block (only when analytics
+   * is configured) followed by a "View details" entry to the global stats page.
+   * The entry is structural navigation — it always renders, independent of the
+   * fetch or whether analytics is configured.
+   */
+  renderAnalytics(card, shareLink) {
+    if (canReadAnalytics(this.plugin.settings)) {
+      const block = card.createDiv({ cls: "opal-share-popover-stats" });
+      const viewsRow = block.createDiv({ cls: "opal-share-popover-statsviews" });
+      viewsRow.createSpan({ cls: "opal-share-popover-statslabel", text: t("popover.stats.views") });
+      const num = viewsRow.createSpan({ cls: "opal-share-popover-statsnum" });
+      const refresh = viewsRow.createDiv({ cls: "opal-share-popover-statsrefresh" });
+      (0, import_obsidian8.setIcon)(refresh, "refresh-cw");
+      (0, import_obsidian8.setTooltip)(refresh, t("popover.stats.refresh"));
+      const recent = block.createDiv({ cls: "opal-share-popover-statsrecent" });
+      const load = () => {
+        num.setText("\u2026");
+        num.removeClass("is-error");
+        recent.empty();
+        void this.loadAnalytics(card, shareLink, num, recent);
+      };
+      refresh.addEventListener("click", (e) => {
+        e.preventDefault();
+        load();
+      });
+      load();
+    }
+    const entry = card.createDiv({ cls: "opal-share-popover-statsentry" });
+    const link = entry.createSpan({
+      cls: "opal-share-popover-detaillink",
+      text: `${t("popover.stats.detail")} \u2192`
+    });
+    link.addEventListener("click", () => {
+      this.close();
+      void this.plugin.activateStatsView();
+    });
+  }
+  /**
+   * Fetch this page's cumulative views + recent active days and fill the block.
+   * Serial (not parallel) to avoid GoatCounter's burst rate-limit. Each write is
+   * guarded against a stale/closed card (same guard `showResult` uses).
+   */
+  async loadAnalytics(card, shareLink, num, recent) {
+    const settings = this.plugin.settings;
+    const stats = await fetchPageViews(settings, shareLink);
+    if (this.el !== card || !card.isConnected) return;
+    if (stats === null) {
+      num.setText("\u2014");
+      num.addClass("is-error");
+    } else {
+      num.setText(stats.views.toLocaleString());
+    }
+    const days = await fetchRecentActiveDays(settings, shareLink, { days: 90, limit: 3 });
+    if (this.el !== card || !card.isConnected) return;
+    recent.empty();
+    if (!days || days.length === 0) return;
+    for (const d of days) {
+      const row = recent.createDiv({ cls: "opal-share-popover-statsday" });
+      row.createSpan({ cls: "opal-share-popover-statsdaydate", text: d.day.slice(5) });
+      row.createSpan({ cls: "opal-share-popover-statsdaycount", text: `\xB7 ${d.count}` });
+    }
   }
   iconAction(parent, icon, tooltip, onClick, danger = false) {
     const btn = parent.createDiv({ cls: "opal-share-popover-action" });

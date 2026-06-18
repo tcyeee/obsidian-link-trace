@@ -1,6 +1,8 @@
 import { TFile, setIcon, setTooltip } from "obsidian";
 import type ShareOnlinePlugin from "../main";
 import { t } from "./i18n";
+import { canReadAnalytics } from "./analytics";
+import { fetchPageViews, fetchRecentActiveDays } from "./analytics-client";
 
 const POPOVER_CLASS = "opal-share-popover";
 
@@ -277,6 +279,10 @@ export class SharePopover {
 			});
 		}
 
+		// Analytics: a view-count block (only when analytics is configured) plus a
+		// structural "View details" entry to the global stats page (always shown).
+		this.renderAnalytics(card, shareLink);
+
 		// Stale hint + emphasized re-publish
 		if (stale) {
 			const hint = card.createDiv({ cls: "opal-share-popover-hint" });
@@ -361,6 +367,85 @@ export class SharePopover {
 			this.close();
 			void this.plugin.exportFromUi(file);
 		});
+	}
+
+	/**
+	 * Render the published-state analytics: a view-count block (only when analytics
+	 * is configured) followed by a "View details" entry to the global stats page.
+	 * The entry is structural navigation — it always renders, independent of the
+	 * fetch or whether analytics is configured.
+	 */
+	private renderAnalytics(card: HTMLElement, shareLink: string): void {
+		if (canReadAnalytics(this.plugin.settings)) {
+			const block = card.createDiv({ cls: "opal-share-popover-stats" });
+
+			// Views row: label + number + refresh button.
+			const viewsRow = block.createDiv({ cls: "opal-share-popover-statsviews" });
+			viewsRow.createSpan({ cls: "opal-share-popover-statslabel", text: t("popover.stats.views") });
+			const num = viewsRow.createSpan({ cls: "opal-share-popover-statsnum" });
+			const refresh = viewsRow.createDiv({ cls: "opal-share-popover-statsrefresh" });
+			setIcon(refresh, "refresh-cw");
+			setTooltip(refresh, t("popover.stats.refresh"));
+
+			// Recent active days appear below the views row once fetched.
+			const recent = block.createDiv({ cls: "opal-share-popover-statsrecent" });
+
+			const load = () => {
+				num.setText("…");
+				num.removeClass("is-error");
+				recent.empty();
+				void this.loadAnalytics(card, shareLink, num, recent);
+			};
+			refresh.addEventListener("click", (e) => {
+				e.preventDefault();
+				load();
+			});
+			load();
+		}
+
+		// "View details" → open the global stats page. Always present when published.
+		const entry = card.createDiv({ cls: "opal-share-popover-statsentry" });
+		const link = entry.createSpan({
+			cls: "opal-share-popover-detaillink",
+			text: `${t("popover.stats.detail")} →`,
+		});
+		link.addEventListener("click", () => {
+			this.close();
+			void this.plugin.activateStatsView();
+		});
+	}
+
+	/**
+	 * Fetch this page's cumulative views + recent active days and fill the block.
+	 * Serial (not parallel) to avoid GoatCounter's burst rate-limit. Each write is
+	 * guarded against a stale/closed card (same guard `showResult` uses).
+	 */
+	private async loadAnalytics(
+		card: HTMLElement,
+		shareLink: string,
+		num: HTMLElement,
+		recent: HTMLElement
+	): Promise<void> {
+		const settings = this.plugin.settings;
+
+		const stats = await fetchPageViews(settings, shareLink);
+		if (this.el !== card || !card.isConnected) return;
+		if (stats === null) {
+			num.setText("—");
+			num.addClass("is-error");
+		} else {
+			num.setText(stats.views.toLocaleString());
+		}
+
+		const days = await fetchRecentActiveDays(settings, shareLink, { days: 90, limit: 3 });
+		if (this.el !== card || !card.isConnected) return;
+		recent.empty();
+		if (!days || days.length === 0) return;
+		for (const d of days) {
+			const row = recent.createDiv({ cls: "opal-share-popover-statsday" });
+			row.createSpan({ cls: "opal-share-popover-statsdaydate", text: d.day.slice(5) });
+			row.createSpan({ cls: "opal-share-popover-statsdaycount", text: `· ${d.count}` });
+		}
 	}
 
 	private iconAction(

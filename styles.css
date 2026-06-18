@@ -281,6 +281,83 @@ details[open] > .opal-collapsible-heading::before {
   font-size: 12px;
   color: var(--text-muted);
 }
+
+/* Analytics block: this page's view count + recent active days */
+.opal-share-popover-stats {
+  margin-top: 11px;
+  padding-top: 11px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+.opal-share-popover-statsviews {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.opal-share-popover-statslabel {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.opal-share-popover-statsnum {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-normal);
+  font-variant-numeric: tabular-nums;
+}
+.opal-share-popover-statsnum.is-error {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+.opal-share-popover-statsrefresh {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-left: auto;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+.opal-share-popover-statsrefresh svg {
+  width: 14px;
+  height: 14px;
+}
+.opal-share-popover-statsrefresh:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+.opal-share-popover-statsrecent {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+}
+.opal-share-popover-statsday {
+  display: flex;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.opal-share-popover-statsdaydate {
+  color: var(--text-normal);
+}
+
+/* "View details" entry to the global stats page (always shown when published) */
+.opal-share-popover-statsentry {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 9px;
+}
+.opal-share-popover-detaillink {
+  font-size: 12px;
+  color: var(--text-accent);
+  cursor: pointer;
+}
+.opal-share-popover-detaillink:hover {
+  text-decoration: underline;
+}
+
 .opal-share-popover-hint {
   display: flex;
   align-items: center;

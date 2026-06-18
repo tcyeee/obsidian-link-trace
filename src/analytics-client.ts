@@ -5,12 +5,15 @@ import {
 	parseHitsList,
 	parseDimensionStats,
 	parseDailySeries,
+	recentActiveDays,
+	buildLocationRows,
 	extractPathname,
 	deriveApiBase,
 	canReadAnalytics,
 	type PageViewStats,
 	type PageDetail,
 	type DimensionItem,
+	type DailyPoint,
 } from "./analytics";
 
 /** 统计起点：取一个足够早的固定时刻，等效“全部累计”。 */
@@ -61,6 +64,43 @@ export async function fetchPageViews(
 		// res.json is a getter that throws on a non-JSON body (e.g. an HTML error
 		// page from a proxy); the outer catch turns that into a null result.
 		return parseStatsResponse(res.json);
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * 读取某个已发布页面「最近有访问的若干天」，供分享气泡的「最近三条」展示。
+ * 发一次 /stats/hits?daily=true（最近 days 天窗口），解析每日序列后取最近 limit 个
+ * count > 0 的日期（新→旧）。任意失败（未配置 / 非法链接 / 网络 / 结构异常）返回 null，
+ * 调用方据此降级（不渲染最近列表）；窗口内无任何访问则返回空数组。
+ */
+export async function fetchRecentActiveDays(
+	settings: ShareOnlineSettings,
+	shareLink: string,
+	opts: { days: number; limit: number }
+): Promise<DailyPoint[] | null> {
+	if (!canReadAnalytics(settings)) return null;
+
+	const apiBase = deriveApiBase(settings.goatcounterEndpoint.trim());
+	if (!apiBase) return null;
+
+	const urlPath = extractPathname(shareLink);
+	if (!urlPath) return null;
+
+	const end = new Date().toISOString();
+	const start = new Date(Date.now() - opts.days * 86_400_000).toISOString();
+	const query =
+		`?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}` +
+		`&daily=true&path_by_name=true&include_paths=${encodeURIComponent(urlPath)}&limit=1`;
+	const url = `${apiBase}/stats/hits${query}`;
+
+	try {
+		const res = await requestUrl({ url, method: "GET", headers: STATS_HEADERS, throw: false });
+		if (res.status < 200 || res.status >= 300) return null;
+		const points = parseDailySeries(res.json);
+		if (points === null) return null;
+		return recentActiveDays(points, opts.limit);
 	} catch {
 		return null;
 	}
@@ -216,13 +256,30 @@ export async function fetchPageDetail(
 		`/stats/${page}?start=${encodeURIComponent(STATS_START)}&end=${encodeURIComponent(end)}` +
 		`&limit=${DETAIL_DIMENSION_LIMIT}${scope}`;
 
+	// 地区维度：GoatCounter /stats/locations 只到国家级，省份要逐国下钻
+	// /stats/locations/<ISO>。把国家+省份合成「中国-广东」中文标签（buildLocationRows）。
+	const expandLocations = async (countries: DimensionItem[]): Promise<DimensionItem[]> => {
+		const regionsByCode: Record<string, DimensionItem[]> = {};
+		for (const c of countries) {
+			const code = c.id;
+			if (!code) continue;
+			regionsByCode[code] = await get(
+				dimQuery(`locations/${encodeURIComponent(code)}`),
+				parseDimensionStats,
+				[] as DimensionItem[]
+			);
+		}
+		return buildLocationRows(countries, regionsByCode, DETAIL_DIMENSION_LIMIT);
+	};
+
 	// 顺序请求（而非 Promise.all 并发），避免 GoatCounter 对突发请求限流（429）；
 	// get 内仍带 429 退避重试兜底。每块到手即回调，让弹窗逐块渲染。
 	const daily = await get(dailyQuery, parseDailySeries, [] as PageDetail["daily"]);
 	onPart?.("daily", daily);
 	const dims: Record<string, DimensionItem[]> = {};
 	for (const page of DETAIL_DIMENSIONS) {
-		const items = await get(dimQuery(page), parseDimensionStats, [] as DimensionItem[]);
+		let items = await get(dimQuery(page), parseDimensionStats, [] as DimensionItem[]);
+		if (page === "locations") items = await expandLocations(items);
 		dims[page] = items;
 		onPart?.(DIMENSION_TO_KEY[page], items);
 	}

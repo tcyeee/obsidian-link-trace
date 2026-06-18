@@ -10,6 +10,11 @@ import {
 	canReadAnalytics,
 	parseDimensionStats,
 	parseDailySeries,
+	recentActiveDays,
+	provinceLabel,
+	countryLabel,
+	buildLocationRows,
+	type DimensionItem,
 	type PublishedPage,
 } from "./analytics";
 
@@ -244,6 +249,44 @@ describe("parseDailySeries", () => {
 	});
 });
 
+describe("recentActiveDays", () => {
+	it("过滤掉 count 为 0 的日期，按 day 降序，截断到 limit", () => {
+		const points = [
+			{ day: "2026-06-01", count: 5 },
+			{ day: "2026-06-02", count: 0 },
+			{ day: "2026-06-03", count: 8 },
+			{ day: "2026-06-04", count: 12 },
+			{ day: "2026-06-05", count: 0 },
+		];
+		expect(recentActiveDays(points, 3)).toEqual([
+			{ day: "2026-06-04", count: 12 },
+			{ day: "2026-06-03", count: 8 },
+			{ day: "2026-06-01", count: 5 },
+		]);
+	});
+
+	it("有访问的日期不足 limit 时全部返回", () => {
+		const points = [
+			{ day: "2026-06-01", count: 0 },
+			{ day: "2026-06-02", count: 3 },
+		];
+		expect(recentActiveDays(points, 3)).toEqual([{ day: "2026-06-02", count: 3 }]);
+	});
+
+	it("全为 0 或空数组时返回空数组", () => {
+		expect(recentActiveDays([{ day: "2026-06-01", count: 0 }], 3)).toEqual([]);
+		expect(recentActiveDays([], 3)).toEqual([]);
+	});
+
+	it("跳过 count 为负数的异常点", () => {
+		const points = [
+			{ day: "2026-06-01", count: -2 },
+			{ day: "2026-06-02", count: 4 },
+		];
+		expect(recentActiveDays(points, 3)).toEqual([{ day: "2026-06-02", count: 4 }]);
+	});
+});
+
 describe("getAnalyticsInjectConfig", () => {
 	it("endpoint 非空时返回注入配置（默认常开）", () => {
 		expect(
@@ -277,5 +320,70 @@ describe("canReadAnalytics", () => {
 				goatcounterEndpoint: "",
 			})
 		).toBe(false);
+	});
+});
+
+describe("provinceLabel / countryLabel", () => {
+	it("英文省名映射为中文", () => {
+		expect(provinceLabel("Guangdong")).toBe("广东");
+		expect(provinceLabel("Shanghai")).toBe("上海");
+	});
+	it("省名别名也能命中", () => {
+		expect(provinceLabel("Nei Mongol")).toBe("内蒙古");
+		expect(provinceLabel("Xizang")).toBe("西藏");
+		expect(provinceLabel("Macau")).toBe("澳门");
+	});
+	it("未知省名按英文原样回退", () => {
+		expect(provinceLabel("Atlantis")).toBe("Atlantis");
+	});
+	it("国家码映射为中文，港澳台带「中国」前缀", () => {
+		expect(countryLabel("CN", "China")).toBe("中国");
+		expect(countryLabel("HK", "Hong Kong")).toBe("中国香港");
+	});
+	it("未知国家码回退英文名，无名再回退码本身", () => {
+		expect(countryLabel("ZZ", "Zedonia")).toBe("Zedonia");
+		expect(countryLabel("ZZ", "")).toBe("ZZ");
+	});
+});
+
+describe("buildLocationRows", () => {
+	const cn: DimensionItem = { id: "CN", name: "China", count: 12 };
+
+	it("把国家+省份下钻合成「中国-广东」标签", () => {
+		const rows = buildLocationRows(
+			[cn],
+			{ CN: [{ name: "", count: 11 }, { name: "Guangdong", count: 1 }] },
+			10
+		);
+		expect(rows).toEqual([
+			{ name: "中国", count: 11 }, // 未识别省份的剩余访问，仅国家名
+			{ name: "中国-广东", count: 1 },
+		]);
+	});
+
+	it("无省份数据时仅按国家名输出", () => {
+		const us: DimensionItem = { id: "US", name: "United States", count: 3 };
+		const rows = buildLocationRows([us], { US: [] }, 10);
+		expect(rows).toEqual([{ name: "美国", count: 3 }]);
+	});
+
+	it("跨国家按 count 降序合并并截断到 limit", () => {
+		const rows = buildLocationRows(
+			[cn, { id: "US", name: "United States", count: 5 }],
+			{
+				CN: [{ name: "Guangdong", count: 7 }, { name: "Shanghai", count: 5 }],
+				US: [{ name: "California", count: 5 }],
+			},
+			2
+		);
+		expect(rows).toEqual([
+			{ name: "中国-广东", count: 7 },
+			{ name: "中国-上海", count: 5 },
+		]);
+	});
+
+	it("country 缺 id 时退化为按 name 输出整国计数", () => {
+		const rows = buildLocationRows([{ name: "China", count: 4 }], {}, 10);
+		expect(rows).toEqual([{ name: "China", count: 4 }]);
 	});
 });
