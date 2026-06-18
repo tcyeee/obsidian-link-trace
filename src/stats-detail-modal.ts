@@ -22,7 +22,7 @@ function formatDateTime(ms: number | null): string {
  * returns its value in `id` (phone/tablet/desktop/desktophd/unknown) with `name`
  * always empty, so the label must be derived here; unknown/missing → "(unknown)".
  */
-function sizeLabel(id: string | undefined): string {
+export function sizeLabel(id: string | undefined): string {
 	switch (id) {
 		case "phone":
 			return t("stats.detail.size.phone");

@@ -1,10 +1,45 @@
 import { TFile, setIcon, setTooltip } from "obsidian";
 import type ShareOnlinePlugin from "../main";
 import { t } from "./i18n";
-import { canReadAnalytics } from "./analytics";
-import { fetchPageViews, fetchRecentActiveDays } from "./analytics-client";
+import { canReadAnalytics, type DailyPoint, type DimensionItem } from "./analytics";
+import {
+	fetchPageViews,
+	fetchDailyTrend,
+	fetchPopoverDimensions,
+	type PopoverDimensionKey,
+} from "./analytics-client";
+import { sizeLabel } from "./stats-detail-modal";
+import { collectLinkedNotesWithStatus } from "./exporter";
+
+/** A linked note plus its current share link (empty when not yet published). */
+type SubNoteStatus = { file: TFile; shareLink: string };
+
+/** Which lifecycle action the inline confirm panel is gathering a confirmation for. */
+type ConfirmMode = "publish" | "unpublish";
 
 const POPOVER_CLASS = "opal-share-popover";
+
+/** 分享气泡趋势小图的回看天数。 */
+const POPOVER_TREND_DAYS = 14;
+
+/**
+ * 单个分享页统计数据的会话内缓存项（按 shareLink 区分）。命中后立即渲染、
+ * 不闪烁，再后台刷新顶替。维度存原始 items（sizes 标签在渲染时再推导）。
+ */
+interface PopoverStatsCacheEntry {
+	views?: number;
+	trend?: DailyPoint[];
+	dimensions?: Record<PopoverDimensionKey, DimensionItem[]>;
+}
+
+/**
+ * The banner pinned at the very top of the card: either a publish/update result
+ * ("更新成功") or live progress while an operation runs. Both occupy the same slot
+ * above the published/unpublished details, so progress and success line up.
+ */
+type TopBanner =
+	| { kind: "success"; text: string }
+	| { kind: "progress"; label: string; pct: number | null };
 
 /** Format a date as 24-hour local time, e.g. "2026-06-15 18:54:15". */
 function formatDateTime(d: Date): string {
@@ -26,6 +61,20 @@ export class SharePopover {
 	private anchor: HTMLElement | null = null;
 	private onDocPointerDown?: (e: MouseEvent) => void;
 	private onKeyDown?: (e: KeyboardEvent) => void;
+	/** 统计数据的会话内缓存（按 shareLink 区分），让气泡重开时立即展示旧数据。 */
+	private statsCache = new Map<string, PopoverStatsCacheEntry>();
+	/** 进度态的可复用节点引用，用于多次上报时就地更新（不重建、条形可过渡）。 */
+	private progressLabel: HTMLElement | null = null;
+	private progressFill: HTMLElement | null = null;
+	/**
+	 * 假进度引擎：点击触发忙碌态的那一刻起，进度条就开始向 ~90% 缓动爬升的
+	 * 计时器（`fakeTimer`/`fakePct`），给单页发布也带来即时的“正在进行”反馈；
+	 * 真实步骤上报的 `realPct` 只作为下限，能把条形推得比假动画更高，完成时再
+	 * 一口气填到 100%。展示值始终取两者较大者。
+	 */
+	private fakeTimer = 0;
+	private fakePct = 0;
+	private realPct = 0;
 
 	constructor(private plugin: ShareOnlinePlugin) {}
 
@@ -51,6 +100,7 @@ export class SharePopover {
 		}
 		this.onDocPointerDown = undefined;
 		this.onKeyDown = undefined;
+		this.resetProgress();
 		const el = this.el;
 		this.el = null;
 		this.anchor = null;
@@ -62,29 +112,135 @@ export class SharePopover {
 	private async open(anchor: HTMLElement): Promise<void> {
 		const file = this.plugin.app.workspace.getActiveFile();
 		if (!file || file.extension !== "md") return;
-
 		const card = this.ensureCard(anchor);
+		await this.renderState(card, file);
+	}
+
+	/** Render the card's normal published/unpublished state and wire up dismissal. */
+	private async renderState(card: HTMLElement, file: TFile): Promise<void> {
 		const shareLink = this.plugin.getShareLink(file);
 		if (shareLink) {
 			const stale = await this.plugin.isStale(file);
+			if (this.el !== card) return;
 			this.renderPublished(card, file, shareLink, this.readPublishedAt(file), stale);
 		} else {
 			this.renderUnpublished(card, file);
 		}
-		this.position(card, anchor);
-		this.registerDismiss(card, anchor);
+		this.position(card, this.anchor ?? card);
+		this.registerDismiss(card, this.anchor ?? card);
 	}
 
 	// ── Publish lifecycle (success/progress merged into this card, no separate toast) ──
 
 	/** Open (or re-render) the card in a busy state while a publish/update runs. */
 	showBusy(anchor: HTMLElement, text: string): void {
+		this.showProgress(anchor, text);
+	}
+
+	/**
+	 * Show busy state in the card, with a progress bar that animates from the moment
+	 * the operation begins.
+	 *
+	 * The progress is drawn as a banner pinned at the top of the card (the same
+	 * slot the "更新成功" success banner lands in), while the card's normal
+	 * published/unpublished details stay visible below it (action buttons are
+	 * disabled via the `--busy` class). The bar always shows: a fake ramp creeps it
+	 * toward ~90% on a timer so even a single-page publish gets immediate motion,
+	 * and any real `done/total` reported here raises a floor that can push the bar
+	 * past the fake ramp (see {@link startFakeRamp}).
+	 *
+	 * Called repeatedly during a publish: if a progress banner from a previous
+	 * step is already mounted it updates in place (no flicker, the bar keeps
+	 * animating), instead of tearing down and rebuilding the card on every step.
+	 */
+	showProgress(anchor: HTMLElement, label: string, done?: number, total?: number): void {
+		if (typeof done === "number" && typeof total === "number" && total > 0) {
+			this.realPct = Math.round(Math.max(0, Math.min(1, done / total)) * 100);
+		}
+
+		// In-place update when a progress banner from a previous step is still mounted.
+		if (this.el?.hasClass(`${POPOVER_CLASS}--busy`) && this.progressLabel?.isConnected) {
+			this.progressLabel.setText(label);
+			this.applyProgress();
+			this.position(this.el, anchor);
+			return;
+		}
+
+		// First step: reset the ramp, render the card in its current publish state with
+		// the progress banner on top, then start the fake ramp climbing. While busy we
+		// render the published card as fresh (no stale badge/hint) — the operation in
+		// flight is bringing it up to date anyway.
+		this.fakePct = 8;
+		this.realPct = typeof done === "number" && typeof total === "number" && total > 0 ? this.realPct : 0;
+		const file = this.plugin.app.workspace.getActiveFile();
 		const card = this.ensureCard(anchor);
-		card.addClass(`${POPOVER_CLASS}--progress`);
-		const row = card.createDiv({ cls: "opal-share-popover-progress" });
-		row.createDiv({ cls: "opal-share-popover-spinner" });
-		row.createSpan({ text });
+		card.addClass(`${POPOVER_CLASS}--busy`);
+		const banner: TopBanner = { kind: "progress", label, pct: this.displayPct() };
+		const shareLink = file ? this.plugin.getShareLink(file) : "";
+		if (file && shareLink) {
+			this.renderPublished(card, file, shareLink, this.readPublishedAt(file), false, banner);
+		} else if (file) {
+			this.renderUnpublished(card, file, banner);
+		} else {
+			this.renderTopBanner(card, banner);
+		}
+		this.startFakeRamp();
 		this.position(card, anchor);
+	}
+
+	/** The bar's displayed percentage: the higher of the fake ramp and the real floor. */
+	private displayPct(): number {
+		return Math.round(Math.max(this.fakePct, this.realPct));
+	}
+
+	/** Push the current displayed percentage into the (live) fill node, if mounted. */
+	private applyProgress(): void {
+		if (this.progressFill?.isConnected) {
+			this.progressFill.setCssProps({ "--opal-progress": `${this.displayPct()}%` });
+		}
+	}
+
+	/**
+	 * Start the fake-progress timer: every tick the bar eases a fraction of the way
+	 * toward a ~90% cap (decelerating as it approaches), so it climbs fast at first
+	 * then lingers just short of full until the operation actually completes. The
+	 * CSS width transition smooths each step. No-op if already running.
+	 */
+	private startFakeRamp(): void {
+		if (this.fakeTimer) return;
+		const cap = 90;
+		this.fakeTimer = window.setInterval(() => {
+			this.fakePct += (cap - this.fakePct) * 0.06;
+			this.applyProgress();
+		}, 150);
+	}
+
+	/** Stop the ramp timer and zero the progress state (no visual completion). */
+	private resetProgress(): void {
+		if (this.fakeTimer) {
+			window.clearInterval(this.fakeTimer);
+			this.fakeTimer = 0;
+		}
+		this.fakePct = 0;
+		this.realPct = 0;
+	}
+
+	/**
+	 * Finish the bar before the result is shown: stop the ramp, snap the fill to
+	 * 100% and let the CSS transition play out briefly so the user sees it complete,
+	 * then reset the state. Awaited by {@link showResult} before it rebuilds the card.
+	 */
+	private async finishProgress(): Promise<void> {
+		if (this.fakeTimer) {
+			window.clearInterval(this.fakeTimer);
+			this.fakeTimer = 0;
+		}
+		if (this.progressFill?.isConnected) {
+			this.progressFill.setCssProps({ "--opal-progress": "100%" });
+			await new Promise((resolve) => window.setTimeout(resolve, 220));
+		}
+		this.fakePct = 0;
+		this.realPct = 0;
 	}
 
 	/**
@@ -100,7 +256,10 @@ export class SharePopover {
 		successText: string,
 		state?: string | null
 	): Promise<void> {
+		// Fill the bar to 100% and let it settle before swapping in the result card.
+		await this.finishProgress();
 		const card = this.ensureCard(anchor);
+		const banner: TopBanner = { kind: "success", text: successText };
 		const pinned = state !== undefined;
 		const shareLink = pinned ? state : this.plugin.getShareLink(file);
 		if (shareLink) {
@@ -108,9 +267,9 @@ export class SharePopover {
 			const stale = pinned ? false : await this.plugin.isStale(file);
 			if (this.el !== card) return;
 			const publishedAt = pinned ? new Date() : this.readPublishedAt(file);
-			this.renderPublished(card, file, shareLink, publishedAt, stale, successText);
+			this.renderPublished(card, file, shareLink, publishedAt, stale, banner);
 		} else {
-			this.renderUnpublished(card, file, successText);
+			this.renderUnpublished(card, file, banner);
 		}
 		this.position(card, anchor);
 		this.registerDismiss(card, anchor);
@@ -118,6 +277,7 @@ export class SharePopover {
 
 	/** Re-render the busy card to show a publish failure. */
 	showError(anchor: HTMLElement, text: string): void {
+		this.resetProgress();
 		const card = this.ensureCard(anchor);
 		card.addClass(`${POPOVER_CLASS}--error`);
 		const row = card.createDiv({ cls: "opal-share-popover-progress" });
@@ -137,7 +297,8 @@ export class SharePopover {
 				`${POPOVER_CLASS}--fresh`,
 				`${POPOVER_CLASS}--stale`,
 				`${POPOVER_CLASS}--unpublished`,
-				`${POPOVER_CLASS}--progress`,
+				`${POPOVER_CLASS}--busy`,
+				`${POPOVER_CLASS}--confirm`,
 				`${POPOVER_CLASS}--error`
 			);
 			return this.el;
@@ -212,23 +373,45 @@ export class SharePopover {
 		});
 	}
 
+	/**
+	 * Render the banner pinned at the top of the card. A success banner is the
+	 * green "更新成功" line; a progress banner is a spinner + stage label (plus a
+	 * determinate bar when `pct` is set), whose label/bar nodes are stashed so
+	 * later `showProgress` steps can update them in place without a rebuild.
+	 */
+	private renderTopBanner(card: HTMLElement, banner: TopBanner): void {
+		if (banner.kind === "success") {
+			this.progressLabel = null;
+			this.progressFill = null;
+			const el = card.createDiv({ cls: "opal-share-popover-success" });
+			const check = el.createDiv({ cls: "opal-share-popover-successicon" });
+			setIcon(check, "check");
+			el.createSpan({ text: banner.text });
+			return;
+		}
+		const el = card.createDiv({ cls: "opal-share-popover-busybanner" });
+		const row = el.createDiv({ cls: "opal-share-popover-busyrow" });
+		row.createDiv({ cls: "opal-share-popover-spinner" });
+		this.progressLabel = row.createSpan({ cls: "opal-share-popover-busylabel", text: banner.label });
+		// The bar always renders now (the fake ramp animates it even with no real
+		// step count), so a single-page publish still shows motion from the click.
+		const bar = el.createDiv({ cls: "opal-share-popover-progressbar" });
+		this.progressFill = bar.createDiv({ cls: "opal-share-popover-progressfill" });
+		this.progressFill.setCssProps({ "--opal-progress": `${banner.pct ?? 0}%` });
+	}
+
 	private renderPublished(
 		card: HTMLElement,
 		file: TFile,
 		shareLink: string,
 		publishedAt: Date | null,
 		stale: boolean,
-		successText?: string
+		banner?: TopBanner
 	): void {
 		card.addClass(stale ? `${POPOVER_CLASS}--stale` : `${POPOVER_CLASS}--fresh`);
 
-		// Success banner: shown right after a publish/update completes in this card.
-		if (successText) {
-			const banner = card.createDiv({ cls: "opal-share-popover-success" });
-			const check = banner.createDiv({ cls: "opal-share-popover-successicon" });
-			setIcon(check, "check");
-			banner.createSpan({ text: successText });
-		}
+		// Top banner: live progress while busy, or the success line after completion.
+		if (banner) this.renderTopBanner(card, banner);
 
 		// Header: icon avatar + title/time + status badge
 		const header = card.createDiv({ cls: "opal-share-popover-header" });
@@ -279,8 +462,8 @@ export class SharePopover {
 			});
 		}
 
-		// Analytics: a view-count block (only when analytics is configured) plus a
-		// structural "View details" entry to the global stats page (always shown).
+		// Analytics: view count + a 14-day trend, plus an expandable per-dimension
+		// breakdown. Only rendered when analytics is configured.
 		this.renderAnalytics(card, shareLink);
 
 		// Stale hint + emphasized re-publish
@@ -297,43 +480,43 @@ export class SharePopover {
 			});
 		}
 
-		// Action row: compact icon buttons (re-publish lives in the hint when stale)
+		// Action row: compact icon buttons (re-publish lives in the hint when stale).
+		// Primary actions sit on the left; a stats-page shortcut sits on the right.
 		const actions = card.createDiv({ cls: "opal-share-popover-actions" });
-		this.iconAction(actions, "external-link", t("menu.openLink"), () => {
+		const left = actions.createDiv({ cls: "opal-share-popover-actions-left" });
+		this.iconAction(left, "external-link", t("menu.openLink"), () => {
 			this.close();
 			this.plugin.openShareLink(file);
 		});
 		if (!stale) {
-			this.iconAction(actions, "refresh-cw", t("menu.update"), () => {
+			this.iconAction(left, "refresh-cw", t("menu.update"), () => {
 				this.close();
 				void this.plugin.updateFromUi(file);
 			});
 		}
-		this.iconAction(actions, "download", t("menu.exportLocal"), () => {
+		this.iconAction(left, "download", t("menu.exportLocal"), () => {
 			this.close();
 			void this.plugin.exportFromUi(file);
 		});
 		this.iconAction(
-			actions,
-			"eye-off",
+			left,
+			"trash-2",
 			t("menu.unpublish"),
-			() => {
-				this.close();
-				this.plugin.unpublishFromUi(file);
-			},
+			() => this.showConfirm(file, "unpublish"),
 			true
 		);
+
+		const right = actions.createDiv({ cls: "opal-share-popover-actions-right" });
+		this.iconAction(right, "bar-chart-3", t("stats.title"), () => {
+			this.close();
+			void this.plugin.activateStatsView();
+		});
 	}
 
-	private renderUnpublished(card: HTMLElement, file: TFile, successText?: string): void {
+	private renderUnpublished(card: HTMLElement, file: TFile, banner?: TopBanner): void {
 		card.addClass(`${POPOVER_CLASS}--unpublished`);
 
-		if (successText) {
-			const banner = card.createDiv({ cls: "opal-share-popover-success" });
-			const check = banner.createDiv({ cls: "opal-share-popover-successicon" });
-			setIcon(check, "check");
-			banner.createSpan({ text: successText });
-		}
+		if (banner) this.renderTopBanner(card, banner);
 
 		const header = card.createDiv({ cls: "opal-share-popover-header" });
 		const icon = header.createDiv({ cls: "opal-share-popover-icon" });
@@ -356,8 +539,7 @@ export class SharePopover {
 		publishBtn.disabled = !ossReady;
 		publishBtn.addEventListener("click", () => {
 			if (!ossReady) return;
-			this.close();
-			this.plugin.publishFromUi(file);
+			this.showConfirm(file, "publish");
 		});
 		const exportBtn = actions.createEl("button", {
 			cls: "opal-share-popover-textbtn",
@@ -369,82 +551,370 @@ export class SharePopover {
 		});
 	}
 
-	/**
-	 * Render the published-state analytics: a view-count block (only when analytics
-	 * is configured) followed by a "View details" entry to the global stats page.
-	 * The entry is structural navigation — it always renders, independent of the
-	 * fetch or whether analytics is configured.
-	 */
-	private renderAnalytics(card: HTMLElement, shareLink: string): void {
-		if (canReadAnalytics(this.plugin.settings)) {
-			const block = card.createDiv({ cls: "opal-share-popover-stats" });
+	// ── Inline publish/unpublish confirmation (replaces the old ShareModal) ──
 
-			// Views row: label + number + refresh button.
-			const viewsRow = block.createDiv({ cls: "opal-share-popover-statsviews" });
-			viewsRow.createSpan({ cls: "opal-share-popover-statslabel", text: t("popover.stats.views") });
-			const num = viewsRow.createSpan({ cls: "opal-share-popover-statsnum" });
-			const refresh = viewsRow.createDiv({ cls: "opal-share-popover-statsrefresh" });
-			setIcon(refresh, "refresh-cw");
-			setTooltip(refresh, t("popover.stats.refresh"));
-
-			// Recent active days appear below the views row once fetched.
-			const recent = block.createDiv({ cls: "opal-share-popover-statsrecent" });
-
-			const load = () => {
-				num.setText("…");
-				num.removeClass("is-error");
-				recent.empty();
-				void this.loadAnalytics(card, shareLink, num, recent);
-			};
-			refresh.addEventListener("click", (e) => {
-				e.preventDefault();
-				load();
-			});
-			load();
-		}
-
-		// "View details" → open the global stats page. Always present when published.
-		const entry = card.createDiv({ cls: "opal-share-popover-statsentry" });
-		const link = entry.createSpan({
-			cls: "opal-share-popover-detaillink",
-			text: `${t("popover.stats.detail")} →`,
-		});
-		link.addEventListener("click", () => {
-			this.close();
-			void this.plugin.activateStatsView();
-		});
+	/** Swap the card to the inline confirm panel for a publish/unpublish action. */
+	private showConfirm(file: TFile, mode: ConfirmMode): void {
+		const anchor = this.anchor;
+		if (!anchor) return;
+		const card = this.ensureCard(anchor);
+		this.renderConfirm(card, file, mode);
+		this.position(card, anchor);
+		this.registerDismiss(card, anchor);
 	}
 
 	/**
-	 * Fetch this page's cumulative views + recent active days and fill the block.
-	 * Serial (not parallel) to avoid GoatCounter's burst rate-limit. Each write is
-	 * guarded against a stale/closed card (same guard `showResult` uses).
+	 * Render the inline confirm panel, mirroring the normal card's layout: an
+	 * icon-avatar header, the body (main note + linked sub-notes), then the same
+	 * full-width Cancel / Confirm button row used elsewhere. Publish lists sub-notes
+	 * read-only (each tagged "will upload" / "already linked", with view counts);
+	 * unpublish gives each already-published sub-note a checkbox (default on) and
+	 * shows no view counts. Cancel restores the normal card; Confirm hands the
+	 * selection to the plugin, whose progress + result render back into this card.
+	 */
+	private renderConfirm(card: HTMLElement, file: TFile, mode: ConfirmMode): void {
+		card.addClass(`${POPOVER_CLASS}--confirm`);
+		const isPublish = mode === "publish";
+		const subNotes: SubNoteStatus[] = this.plugin.settings.includeLinkedNotes
+			? collectLinkedNotesWithStatus(this.plugin.app, file)
+			: [];
+		const checkStates = new Map<string, boolean>();
+
+		// Header: icon avatar + title, matching the published/unpublished views.
+		const header = card.createDiv({ cls: "opal-share-popover-header" });
+		const icon = header.createDiv({ cls: "opal-share-popover-icon" });
+		if (!isPublish) icon.addClass("opal-share-popover-icon--danger");
+		setIcon(icon, isPublish ? "globe" : "trash-2");
+		const headText = header.createDiv({ cls: "opal-share-popover-headtext" });
+		headText.createDiv({
+			cls: "opal-share-popover-title",
+			text: isPublish ? t("modal.publish.title") : t("modal.unpublish.title"),
+		});
+
+		const body = card.createDiv({ cls: "opal-share-popover-confirm-body" });
+
+		// Main note.
+		body.createDiv({
+			cls: "opal-share-popover-confirm-label",
+			text: isPublish ? t("modal.mainNote") : t("modal.mainNote.stopping"),
+		});
+		const mainRow = body.createDiv({ cls: "opal-share-popover-confirm-item" });
+		setIcon(mainRow.createDiv({ cls: "opal-share-popover-confirm-icon" }), "file-text");
+		mainRow.createSpan({ cls: "opal-share-popover-confirm-name", text: file.basename + ".md" });
+		if (isPublish) this.showConfirmViews(mainRow, this.plugin.getShareLink(file));
+
+		// Linked sub-notes (only when "include linked notes" is on and some exist).
+		if (subNotes.length > 0) {
+			body.createDiv({
+				cls: "opal-share-popover-confirm-label",
+				text: isPublish
+					? t("modal.subNotes.publish", { count: String(subNotes.length) })
+					: t("modal.subNotes.unpublish"),
+			});
+			for (const sn of subNotes) {
+				const row = body.createDiv({ cls: "opal-share-popover-confirm-item" });
+				if (!isPublish) {
+					if (sn.shareLink) {
+						checkStates.set(sn.file.path, true);
+						const cb = row.createEl("input", { cls: "opal-share-popover-confirm-check" });
+						cb.type = "checkbox";
+						cb.checked = true;
+						cb.addEventListener("change", () => checkStates.set(sn.file.path, cb.checked));
+					} else {
+						row.createDiv({ cls: "opal-share-popover-confirm-check-placeholder" });
+					}
+				}
+				setIcon(row.createDiv({ cls: "opal-share-popover-confirm-icon" }), "file-text");
+				row.createSpan({ cls: "opal-share-popover-confirm-name", text: sn.file.basename + ".md" });
+				if (isPublish) {
+					row.createSpan({
+						cls: "opal-share-popover-confirm-badge",
+						text: sn.shareLink ? t("modal.badge.hasLink") : t("modal.badge.willUpload"),
+					});
+				}
+				if (isPublish && sn.shareLink) this.showConfirmViews(row, sn.shareLink);
+				if (!sn.shareLink) row.addClass("is-skip");
+			}
+		}
+
+		// Cancel / confirm — same full-width button row as the unpublished view.
+		const actions = card.createDiv({
+			cls: "opal-share-popover-actions opal-share-popover-actions--text",
+		});
+		const cancel = actions.createEl("button", {
+			cls: "opal-share-popover-textbtn",
+			text: t("modal.btn.cancel"),
+		});
+		cancel.addEventListener("click", () => {
+			const c = this.ensureCard(this.anchor as HTMLElement);
+			void this.renderState(c, file);
+		});
+		const confirm = actions.createEl("button", {
+			cls: "opal-share-popover-textbtn mod-cta",
+			text: isPublish ? t("modal.btn.confirmPublish") : t("modal.btn.confirmUnpublish"),
+		});
+		confirm.addEventListener("click", () => {
+			if (isPublish) {
+				this.plugin.publishFromUi(file, subNotes);
+			} else {
+				const selected = subNotes.filter((sn) => sn.shareLink && checkStates.get(sn.file.path));
+				this.plugin.unpublishFromUi(file, selected);
+			}
+		});
+	}
+
+	/** Async-load a sub-note/main-note's view count into the confirm row (best-effort). */
+	private showConfirmViews(item: HTMLElement, shareLink: string): void {
+		if (!shareLink || !canReadAnalytics(this.plugin.settings)) return;
+		const span = item.createSpan({
+			cls: "opal-share-popover-confirm-views",
+			text: t("modal.views.loading"),
+		});
+		void fetchPageViews(this.plugin.settings, shareLink)
+			.then((stats) => {
+				if (!span.isConnected) return;
+				span.setText(
+					stats ? t("modal.views.value", { count: String(stats.views) }) : t("modal.views.fail")
+				);
+			})
+			.catch(() => {
+				if (span.isConnected) span.setText(t("modal.views.fail"));
+			});
+	}
+
+	/**
+	 * Render the published-state analytics block (only when analytics is configured):
+	 * a view-count row, a 14-day trend sparkline, and an expandable per-dimension
+	 * breakdown (countries / OS / browsers / screen sizes), loaded lazily on expand.
+	 */
+	private renderAnalytics(card: HTMLElement, shareLink: string): void {
+		if (!canReadAnalytics(this.plugin.settings)) return;
+		const block = card.createDiv({ cls: "opal-share-popover-stats" });
+
+		// Views row: label + number + refresh button.
+		const viewsRow = block.createDiv({ cls: "opal-share-popover-statsviews" });
+		viewsRow.createSpan({ cls: "opal-share-popover-statslabel", text: t("popover.stats.views") });
+		const num = viewsRow.createSpan({ cls: "opal-share-popover-statsnum" });
+		const refresh = viewsRow.createDiv({ cls: "opal-share-popover-statsrefresh" });
+		setIcon(refresh, "refresh-cw");
+		setTooltip(refresh, t("popover.stats.refresh"));
+
+		// 14-day trend sparkline below the views row, filled once fetched.
+		const trend = block.createDiv({ cls: "opal-share-popover-statstrend" });
+
+		// 命中缓存：立即用旧数据渲染、不闪烁；未命中：显示占位 spinner。
+		const cached = this.statsCache.get(shareLink);
+		const hasCache = cached?.views !== undefined || cached?.trend !== undefined;
+		if (hasCache) {
+			if (cached?.views !== undefined) num.setText(cached.views.toLocaleString());
+			else num.setText("—");
+			this.renderTrend(trend, cached?.trend ?? null);
+		} else {
+			num.setText("…");
+			trend.createDiv({ cls: "opal-detail-spinner" });
+		}
+
+		// 刷新：有数据时只让按钮转圈、展示区不动（后台刷新）；无数据时才占位 spinner。
+		const load = () => {
+			if (refresh.hasClass("is-loading")) return; // 防抖：上一次刷新未完成时忽略
+			const keepOnError = hasCacheNow();
+			if (!keepOnError) {
+				num.setText("…");
+				num.removeClass("is-error");
+				trend.empty();
+				trend.createDiv({ cls: "opal-detail-spinner" });
+			}
+			refresh.addClass("is-loading");
+			void this.loadAnalytics(card, shareLink, num, trend, keepOnError).finally(() => {
+				refresh.removeClass("is-loading");
+			});
+		};
+		const hasCacheNow = (): boolean => {
+			const c = this.statsCache.get(shareLink);
+			return c?.views !== undefined || c?.trend !== undefined;
+		};
+		refresh.addEventListener("click", (e) => {
+			e.preventDefault();
+			load();
+		});
+		load();
+
+		this.renderExpand(block, card, shareLink);
+	}
+
+	/**
+	 * Fetch this page's cumulative views + 14-day trend and fill the block. Serial
+	 * (not parallel) to avoid GoatCounter's burst rate-limit. Each write is guarded
+	 * against a stale/closed card (same guard `showResult` uses) and the result is
+	 * cached for instant re-display. When `keepOnError` is set (a background refresh
+	 * over already-shown data), a failed fetch keeps the old data instead of clobbering
+	 * it with an error placeholder.
 	 */
 	private async loadAnalytics(
 		card: HTMLElement,
 		shareLink: string,
 		num: HTMLElement,
-		recent: HTMLElement
+		trend: HTMLElement,
+		keepOnError: boolean
 	): Promise<void> {
 		const settings = this.plugin.settings;
+		const entry = this.cacheEntry(shareLink);
 
 		const stats = await fetchPageViews(settings, shareLink);
 		if (this.el !== card || !card.isConnected) return;
 		if (stats === null) {
-			num.setText("—");
-			num.addClass("is-error");
+			if (!keepOnError) {
+				num.setText("—");
+				num.addClass("is-error");
+			}
 		} else {
 			num.setText(stats.views.toLocaleString());
+			num.removeClass("is-error");
+			entry.views = stats.views;
 		}
 
-		const days = await fetchRecentActiveDays(settings, shareLink, { days: 90, limit: 3 });
+		const series = await fetchDailyTrend(settings, shareLink, POPOVER_TREND_DAYS);
 		if (this.el !== card || !card.isConnected) return;
-		recent.empty();
-		if (!days || days.length === 0) return;
-		for (const d of days) {
-			const row = recent.createDiv({ cls: "opal-share-popover-statsday" });
-			row.createSpan({ cls: "opal-share-popover-statsdaydate", text: d.day.slice(5) });
-			row.createSpan({ cls: "opal-share-popover-statsdaycount", text: `· ${d.count}` });
+		if (series !== null) {
+			trend.empty();
+			this.renderTrend(trend, series);
+			entry.trend = series;
+		} else if (!keepOnError) {
+			trend.empty();
+			this.renderTrend(trend, null);
+		}
+		this.position(card, this.anchor as HTMLElement);
+	}
+
+	/** Get (or create) the session cache entry for a share link. */
+	private cacheEntry(shareLink: string): PopoverStatsCacheEntry {
+		let entry = this.statsCache.get(shareLink);
+		if (!entry) {
+			entry = {};
+			this.statsCache.set(shareLink, entry);
+		}
+		return entry;
+	}
+
+	/** A horizontal bar chart of the daily series (height ∝ count, normalized to the max). */
+	private renderTrend(parent: HTMLElement, series: DailyPoint[] | null): void {
+		if (!series || series.length === 0) {
+			parent.createDiv({ cls: "opal-detail-empty", text: t("popover.stats.noTrend") });
+			return;
+		}
+		const max = Math.max(1, ...series.map((d) => d.count));
+		const chart = parent.createDiv({ cls: "opal-detail-spark" });
+		for (const point of series) {
+			const bar = chart.createDiv({ cls: "opal-detail-spark-bar" });
+			bar.setCssProps({ "--opal-bar-h": `${Math.round((point.count / max) * 100)}%` });
+			bar.setAttribute("aria-label", `${point.day}: ${point.count}`);
+			bar.setAttribute("data-tooltip-position", "top");
+			if (point.count > 0) bar.addClass("is-active");
+		}
+	}
+
+	/**
+	 * Render the "expand" toggle plus its collapsed panel. The per-dimension
+	 * breakdown (countries / OS / browsers / sizes) is fetched lazily the first
+	 * time the panel is opened; re-toggling just shows/hides the cached panel.
+	 */
+	private renderExpand(block: HTMLElement, card: HTMLElement, shareLink: string): void {
+		const toggle = block.createDiv({ cls: "opal-share-popover-expand-toggle" });
+		const chevron = toggle.createSpan({ cls: "opal-share-popover-expand-chevron" });
+		setIcon(chevron, "chevron-down");
+		const label = toggle.createSpan({ text: t("popover.stats.expand") });
+
+		const panel = block.createDiv({ cls: "opal-share-popover-expand-panel is-collapsed" });
+
+		// Keep the card anchored as the panel grows/shrinks: the max-height transition
+		// changes the card's height over time, so reposition once it finishes settling.
+		panel.addEventListener("transitionend", (e) => {
+			if (e.propertyName !== "max-height") return;
+			this.position(card, this.anchor as HTMLElement);
+		});
+
+		let expanded = false;
+		let loaded = false;
+		toggle.addEventListener("click", () => {
+			expanded = !expanded;
+			toggle.toggleClass("is-expanded", expanded);
+			panel.toggleClass("is-collapsed", !expanded);
+			label.setText(t(expanded ? "popover.stats.collapse" : "popover.stats.expand"));
+			if (expanded && !loaded) {
+				loaded = true;
+				void this.loadExpand(card, shareLink, panel);
+			}
+			this.position(card, this.anchor as HTMLElement);
+		});
+	}
+
+	/**
+	 * Fetch the four breakdown dimensions and fill the expand panel. Each section
+	 * shows its own spinner and fills the moment its slice arrives (parts are fetched
+	 * separately). Writes are guarded against a stale/closed card.
+	 */
+	private async loadExpand(card: HTMLElement, shareLink: string, panel: HTMLElement): Promise<void> {
+		const titles: Record<PopoverDimensionKey, string> = {
+			locations: t("stats.detail.locations"),
+			systems: t("stats.detail.systems"),
+			browsers: t("stats.detail.browsers"),
+			sizes: t("stats.detail.sizes"),
+		};
+		const order: PopoverDimensionKey[] = ["locations", "systems", "browsers", "sizes"];
+		const cached = this.statsCache.get(shareLink)?.dimensions;
+		const slots = {} as Record<PopoverDimensionKey, HTMLElement>;
+		for (const key of order) {
+			const section = panel.createDiv({ cls: "opal-detail-section" });
+			section.createDiv({ cls: "opal-detail-section-title", text: titles[key] });
+			const body = section.createDiv({ cls: "opal-detail-section-body" });
+			// 命中缓存：立即填旧数据、不闪烁；未命中：占位 spinner，等后台到手顶替。
+			if (cached?.[key]) this.fillDimension(body, key, cached[key]);
+			else body.createDiv({ cls: "opal-detail-section-spinner opal-detail-spinner" });
+			slots[key] = body;
+		}
+
+		const result = await fetchPopoverDimensions(this.plugin.settings, shareLink, (key, items) => {
+			if (this.el !== card || !card.isConnected) return;
+			const body = slots[key];
+			if (!body) return;
+			this.fillDimension(body, key, items);
+			const entry = this.cacheEntry(shareLink);
+			(entry.dimensions ??= {} as Record<PopoverDimensionKey, DimensionItem[]>)[key] = items;
+			this.position(card, this.anchor as HTMLElement);
+		});
+
+		if (this.el !== card || !card.isConnected) return;
+		// 拉取失败：有缓存就保留旧数据，否则才提示未配置。
+		if (result === null && !cached) {
+			panel.empty();
+			panel.createDiv({ cls: "opal-stats-notice", text: t("stats.notConfigured") });
+			this.position(card, this.anchor as HTMLElement);
+		}
+	}
+
+	/** Render one dimension slot, deriving readable size labels (name is always empty for sizes). */
+	private fillDimension(body: HTMLElement, key: PopoverDimensionKey, items: DimensionItem[]): void {
+		body.empty();
+		// 屏幕尺寸维度 name 恒为空，可读标签需由 id 推导（与详情弹窗一致）。
+		const mapped = key === "sizes" ? items.map((s) => ({ ...s, name: sizeLabel(s.id) })) : items;
+		this.renderDimension(body, mapped);
+	}
+
+	/** A ranked list of one dimension; mini bar per row, normalized to the dimension max. */
+	private renderDimension(parent: HTMLElement, items: DimensionItem[]): void {
+		if (items.length === 0) {
+			parent.createDiv({ cls: "opal-detail-empty", text: t("stats.detail.noData") });
+			return;
+		}
+		const max = Math.max(1, ...items.map((i) => i.count));
+		const list = parent.createDiv({ cls: "opal-detail-list" });
+		for (const item of items) {
+			const rowEl = list.createDiv({ cls: "opal-detail-row" });
+			const fill = rowEl.createDiv({ cls: "opal-detail-row-fill" });
+			fill.setCssProps({ "--opal-bar-w": `${Math.round((item.count / max) * 100)}%` });
+			const label = rowEl.createDiv({ cls: "opal-detail-row-label" });
+			label.setText(item.name || t("stats.detail.unknownName"));
+			rowEl.createDiv({ cls: "opal-detail-row-count", text: item.count.toLocaleString() });
 		}
 	}
 

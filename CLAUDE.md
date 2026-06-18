@@ -71,7 +71,8 @@ hash against `share_hash` to show **published (green) vs stale** state.
   [Analytics backend](#analytics-backend).
 - `i18n.ts` — `t(key, replacements?)` translation; language set from settings. User-facing strings go here.
 - `settings.ts` — `ShareOnlineSettings` + settings tab (OSS creds, export path, link length, analytics).
-- `share-popover.ts` / `share-modal.ts` — the status-bar popover UI and the sub-note-selection modal.
+- `share-popover.ts` — the status-bar popover UI, including the inline publish/unpublish
+  confirmation panel (main note + linked sub-note selection) that replaced the old `ShareModal`.
 - `stats-view.ts` — the **share-stats page**: a dedicated `ItemView` (`VIEW_TYPE_SHARE_STATS`, opened
   via a ribbon icon + the `open-share-stats` command) listing every published share page and its
   cumulative views. The page list is the canonical local record — `collectPublishedPages()` scans all

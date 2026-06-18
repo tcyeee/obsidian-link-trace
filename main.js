@@ -25638,7 +25638,7 @@ __export(main_exports, {
   default: () => ShareOnlinePlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian11 = require("obsidian");
+var import_obsidian10 = require("obsidian");
 
 // src/settings.ts
 var import_obsidian = require("obsidian");
@@ -25710,6 +25710,11 @@ var zh = {
   "statusbar.published": "\u5DF2\u53D1\u5E03 \u2014 \u70B9\u51FB\u7BA1\u7406",
   "statusbar.stale": "\u5185\u5BB9\u6709\u66F4\u65B0 \u2014 \u70B9\u51FB\u7BA1\u7406",
   "toast.uploading": "\u4E0A\u4F20\u4E2D...",
+  "toast.progress.rendering": "\u6B63\u5728\u6E32\u67D3\u9875\u9762...",
+  "toast.progress.subPage": "\u4E0A\u4F20\u5173\u8054\u9875 {done}/{total}...",
+  "toast.progress.mainPage": "\u4E0A\u4F20\u4E3B\u9875\u9762...",
+  "toast.progress.deleteSub": "\u5220\u9664\u5173\u8054\u9875 {done}/{total}...",
+  "toast.progress.deleteMain": "\u5220\u9664\u4E3B\u9875\u9762...",
   "toast.uploadSuccess": "\u4E0A\u4F20\u6210\u529F",
   "toast.exporting": "\u5BFC\u51FA\u4E2D...",
   "toast.exportSuccess": "\u5DF2\u4E0B\u8F7D ZIP",
@@ -25751,7 +25756,9 @@ var zh = {
   "popover.unpublished.subline": "\u53D1\u5E03\u540E\u53EF\u83B7\u5F97\u5206\u4EAB\u94FE\u63A5",
   "popover.stats.views": "\u9605\u8BFB\u91CF",
   "popover.stats.refresh": "\u5237\u65B0\u9605\u8BFB\u91CF",
-  "popover.stats.detail": "\u67E5\u770B\u8BE6\u60C5"
+  "popover.stats.noTrend": "\u8FD1 14 \u5929\u6682\u65E0\u8BBF\u95EE",
+  "popover.stats.expand": "\u5C55\u5F00",
+  "popover.stats.collapse": "\u6536\u8D77"
 };
 var en = {
   "settings.language": "\u8BED\u8A00 / Language",
@@ -25819,6 +25826,11 @@ var en = {
   "statusbar.published": "Published \u2014 click to manage",
   "statusbar.stale": "Content changed \u2014 click to manage",
   "toast.uploading": "Uploading...",
+  "toast.progress.rendering": "Rendering page...",
+  "toast.progress.subPage": "Uploading linked page {done}/{total}...",
+  "toast.progress.mainPage": "Uploading main page...",
+  "toast.progress.deleteSub": "Deleting linked page {done}/{total}...",
+  "toast.progress.deleteMain": "Deleting main page...",
   "toast.uploadSuccess": "Upload successful",
   "toast.exporting": "Exporting...",
   "toast.exportSuccess": "ZIP downloaded",
@@ -25860,7 +25872,9 @@ var en = {
   "popover.unpublished.subline": "Publish to get a shareable link",
   "popover.stats.views": "Views",
   "popover.stats.refresh": "Refresh views",
-  "popover.stats.detail": "View details"
+  "popover.stats.noTrend": "No visits in the last 14 days",
+  "popover.stats.expand": "Expand",
+  "popover.stats.collapse": "Collapse"
 };
 var translations = { zh, en };
 var currentLanguage = "zh";
@@ -27477,9 +27491,6 @@ function parseDailySeries(json) {
   }
   return out;
 }
-function recentActiveDays(points, limit) {
-  return points.filter((p) => p.count > 0).sort((a, b) => a.day < b.day ? 1 : a.day > b.day ? -1 : 0).slice(0, limit);
-}
 function buildStatsRows(pages, hitsByPath) {
   return pages.map((p) => {
     var _a2;
@@ -28799,317 +28810,8 @@ async function exportToZip(app, vault, file, includeLinkedNotes = false, pageLin
   return { result, zip };
 }
 
-// src/share-modal.ts
-var import_obsidian6 = require("obsidian");
-
-// src/analytics-client.ts
-var import_obsidian5 = require("obsidian");
-var STATS_START = "2020-01-01T00:00:00Z";
-var sleep = (ms) => new Promise((r) => window.setTimeout(r, ms));
-var STATS_HEADERS = { accept: "application/json" };
-async function fetchPageViews(settings, shareLink) {
-  if (!canReadAnalytics(settings)) return null;
-  const apiBase = deriveApiBase(settings.goatcounterEndpoint.trim());
-  if (!apiBase) return null;
-  const urlPath = extractPathname(shareLink);
-  if (!urlPath) return null;
-  const end = (/* @__PURE__ */ new Date()).toISOString();
-  const query = `?start=${encodeURIComponent(STATS_START)}&end=${encodeURIComponent(end)}&path_by_name=true&include_paths=${encodeURIComponent(urlPath)}&limit=1`;
-  const url = `${apiBase}/stats/hits${query}`;
-  try {
-    const res = await (0, import_obsidian5.requestUrl)({
-      url,
-      method: "GET",
-      headers: STATS_HEADERS,
-      throw: false
-    });
-    if (res.status < 200 || res.status >= 300) return null;
-    return parseStatsResponse(res.json);
-  } catch (e) {
-    return null;
-  }
-}
-async function fetchRecentActiveDays(settings, shareLink, opts) {
-  if (!canReadAnalytics(settings)) return null;
-  const apiBase = deriveApiBase(settings.goatcounterEndpoint.trim());
-  if (!apiBase) return null;
-  const urlPath = extractPathname(shareLink);
-  if (!urlPath) return null;
-  const end = (/* @__PURE__ */ new Date()).toISOString();
-  const start = new Date(Date.now() - opts.days * 864e5).toISOString();
-  const query = `?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}&daily=true&path_by_name=true&include_paths=${encodeURIComponent(urlPath)}&limit=1`;
-  const url = `${apiBase}/stats/hits${query}`;
-  try {
-    const res = await (0, import_obsidian5.requestUrl)({ url, method: "GET", headers: STATS_HEADERS, throw: false });
-    if (res.status < 200 || res.status >= 300) return null;
-    const points = parseDailySeries(res.json);
-    if (points === null) return null;
-    return recentActiveDays(points, opts.limit);
-  } catch (e) {
-    return null;
-  }
-}
-var MAX_HITS_PAGES = 100;
-async function fetchAllPathHits(settings) {
-  if (!canReadAnalytics(settings)) return null;
-  const apiBase = deriveApiBase(settings.goatcounterEndpoint.trim());
-  if (!apiBase) return null;
-  const end = (/* @__PURE__ */ new Date()).toISOString();
-  const byPath = /* @__PURE__ */ new Map();
-  const seenIds = [];
-  let gotAnyPage = false;
-  try {
-    for (let page = 0; page < MAX_HITS_PAGES; page++) {
-      const exclude = seenIds.map((id) => `&exclude_paths=${id}`).join("");
-      const url = `${apiBase}/stats/hits?start=${encodeURIComponent(STATS_START)}&end=${encodeURIComponent(end)}&limit=100${exclude}`;
-      const res = await (0, import_obsidian5.requestUrl)({
-        url,
-        method: "GET",
-        headers: STATS_HEADERS,
-        throw: false
-      });
-      if (res.status < 200 || res.status >= 300) return gotAnyPage ? byPath : null;
-      let body;
-      try {
-        body = res.json;
-      } catch (e) {
-        return gotAnyPage ? byPath : null;
-      }
-      const list = parseHitsList(body);
-      if (list === null) return gotAnyPage ? byPath : null;
-      gotAnyPage = true;
-      for (const hit of list) {
-        byPath.set(hit.path, hit.count);
-        if (hit.pathId != null) seenIds.push(hit.pathId);
-      }
-      const more = (body == null ? void 0 : body.more) === true;
-      if (!more || list.length === 0) break;
-    }
-    return byPath;
-  } catch (e) {
-    return gotAnyPage ? byPath : null;
-  }
-}
-var DETAIL_DIMENSION_LIMIT = 10;
-var DETAIL_TREND_DAYS = 30;
-var DETAIL_DIMENSIONS = [
-  "toprefs",
-  "browsers",
-  "systems",
-  "sizes",
-  "locations",
-  "languages"
-];
-var DIMENSION_TO_KEY = {
-  toprefs: "referrers",
-  browsers: "browsers",
-  systems: "systems",
-  sizes: "sizes",
-  locations: "locations",
-  languages: "languages"
-};
-async function fetchPageDetail(settings, shareLink, onPart) {
-  if (!canReadAnalytics(settings)) return null;
-  const apiBase = deriveApiBase(settings.goatcounterEndpoint.trim());
-  if (!apiBase) return null;
-  const urlPath = extractPathname(shareLink);
-  if (!urlPath) return null;
-  const end = (/* @__PURE__ */ new Date()).toISOString();
-  const trendStart = new Date(Date.now() - DETAIL_TREND_DAYS * 864e5).toISOString();
-  const scope = `&path_by_name=true&include_paths=${encodeURIComponent(urlPath)}`;
-  const parseRetryMs = (text) => {
-    const m = /try again in ([\d.]+)ms/.exec(text);
-    const ms = m ? Number(m[1]) : NaN;
-    return Number.isFinite(ms) ? Math.ceil(ms) + 50 : 500;
-  };
-  const get = async (query, parse, fallback) => {
-    var _a2;
-    for (let attempt = 0; attempt < 4; attempt++) {
-      try {
-        const res = await (0, import_obsidian5.requestUrl)({
-          url: `${apiBase}${query}`,
-          method: "GET",
-          headers: STATS_HEADERS,
-          throw: false
-        });
-        if (res.status === 429) {
-          await sleep(parseRetryMs(res.text));
-          continue;
-        }
-        if (res.status < 200 || res.status >= 300) return fallback;
-        return (_a2 = parse(res.json)) != null ? _a2 : fallback;
-      } catch (e) {
-        return fallback;
-      }
-    }
-    return fallback;
-  };
-  const dailyQuery = `/stats/hits?start=${encodeURIComponent(trendStart)}&end=${encodeURIComponent(end)}&daily=true&limit=1${scope}`;
-  const dimQuery = (page) => `/stats/${page}?start=${encodeURIComponent(STATS_START)}&end=${encodeURIComponent(end)}&limit=${DETAIL_DIMENSION_LIMIT}${scope}`;
-  const expandLocations = async (countries) => {
-    const regionsByCode = {};
-    for (const c of countries) {
-      const code = c.id;
-      if (!code) continue;
-      regionsByCode[code] = await get(
-        dimQuery(`locations/${encodeURIComponent(code)}`),
-        parseDimensionStats,
-        []
-      );
-    }
-    return buildLocationRows(countries, regionsByCode, DETAIL_DIMENSION_LIMIT);
-  };
-  const daily = await get(dailyQuery, parseDailySeries, []);
-  onPart == null ? void 0 : onPart("daily", daily);
-  const dims = {};
-  for (const page of DETAIL_DIMENSIONS) {
-    let items = await get(dimQuery(page), parseDimensionStats, []);
-    if (page === "locations") items = await expandLocations(items);
-    dims[page] = items;
-    onPart == null ? void 0 : onPart(DIMENSION_TO_KEY[page], items);
-  }
-  return {
-    daily,
-    referrers: dims.toprefs,
-    browsers: dims.browsers,
-    systems: dims.systems,
-    sizes: dims.sizes,
-    locations: dims.locations,
-    languages: dims.languages
-  };
-}
-
-// src/share-modal.ts
-var ShareModal = class extends import_obsidian6.Modal {
-  constructor(app, plugin, file, mode, onConfirm) {
-    super(app);
-    this.subNotes = [];
-    this.checkStates = /* @__PURE__ */ new Map();
-    this.plugin = plugin;
-    this.file = file;
-    this.mode = mode;
-    this.onConfirm = onConfirm;
-  }
-  onOpen() {
-    const { contentEl } = this;
-    contentEl.empty();
-    contentEl.addClass("opal-share-modal");
-    this.subNotes = this.plugin.settings.includeLinkedNotes ? collectLinkedNotesWithStatus(this.app, this.file) : [];
-    contentEl.createEl("h2", {
-      text: this.mode === "publish" ? t("modal.publish.title") : t("modal.unpublish.title"),
-      cls: "opal-modal-title"
-    });
-    const mainSection = contentEl.createDiv({ cls: "opal-modal-section" });
-    mainSection.createEl("p", {
-      cls: "opal-modal-section-label",
-      text: this.mode === "publish" ? t("modal.mainNote") : t("modal.mainNote.stopping")
-    });
-    const mainItem = this.renderNoteItem(mainSection, this.file.basename + ".md", null);
-    this.showViews(mainItem, this.plugin.getShareLink(this.file));
-    if (this.mode === "publish") {
-      this.renderPublishSubNotes(contentEl);
-    } else {
-      this.renderUnpublishSubNotes(contentEl);
-    }
-    const btnRow = contentEl.createDiv({ cls: "opal-modal-btn-row" });
-    const cancelBtn = btnRow.createEl("button", { text: t("modal.btn.cancel") });
-    cancelBtn.addEventListener("click", () => this.close());
-    const confirmBtn = btnRow.createEl("button", {
-      text: this.mode === "publish" ? t("modal.btn.confirmPublish") : t("modal.btn.confirmUnpublish"),
-      cls: "mod-cta"
-    });
-    confirmBtn.addEventListener("click", () => {
-      const result = this.mode === "unpublish" ? this.subNotes.filter(
-        (sn) => sn.shareLink && this.checkStates.get(sn.file.path)
-      ) : this.subNotes;
-      this.close();
-      this.onConfirm(result);
-    });
-  }
-  renderNoteItem(parent, label, badge) {
-    const item = parent.createDiv({ cls: "opal-modal-note-item" });
-    const iconEl = item.createDiv({ cls: "opal-modal-note-icon" });
-    (0, import_obsidian6.setIcon)(iconEl, "file-text");
-    item.createSpan({ text: label, cls: "opal-modal-note-name" });
-    if (badge) {
-      item.createSpan({ text: badge, cls: "opal-modal-badge" });
-    }
-    return item;
-  }
-  renderPublishSubNotes(contentEl) {
-    if (this.subNotes.length === 0) return;
-    const section = contentEl.createDiv({ cls: "opal-modal-section" });
-    section.createEl("p", {
-      cls: "opal-modal-section-label",
-      text: t("modal.subNotes.publish", { count: String(this.subNotes.length) })
-    });
-    for (const sn of this.subNotes) {
-      const badge = sn.shareLink ? t("modal.badge.hasLink") : t("modal.badge.willUpload");
-      const item = this.renderNoteItem(section, sn.file.basename + ".md", badge);
-      if (sn.shareLink) {
-        item.addClass("opal-modal-note-item--skip");
-        this.showViews(item, sn.shareLink);
-      }
-    }
-  }
-  renderUnpublishSubNotes(contentEl) {
-    if (this.subNotes.length === 0) return;
-    const section = contentEl.createDiv({ cls: "opal-modal-section" });
-    section.createEl("p", {
-      cls: "opal-modal-section-label",
-      text: t("modal.subNotes.unpublish")
-    });
-    for (const sn of this.subNotes) {
-      const item = section.createDiv({ cls: "opal-modal-note-item" });
-      if (sn.shareLink) {
-        this.checkStates.set(sn.file.path, true);
-        const checkbox = item.createEl("input");
-        checkbox.type = "checkbox";
-        checkbox.checked = true;
-        checkbox.addClass("opal-modal-checkbox");
-        checkbox.addEventListener("change", () => {
-          this.checkStates.set(sn.file.path, checkbox.checked);
-        });
-      } else {
-        item.createDiv({ cls: "opal-modal-checkbox-placeholder" });
-      }
-      const iconEl = item.createDiv({ cls: "opal-modal-note-icon" });
-      (0, import_obsidian6.setIcon)(iconEl, "file-text");
-      item.createSpan({ text: sn.file.basename + ".md", cls: "opal-modal-note-name" });
-      if (sn.shareLink) {
-        this.showViews(item, sn.shareLink);
-      } else {
-        item.addClass("opal-modal-note-item--skip");
-      }
-    }
-  }
-  /**
-   * 异步在条目右侧展示浏览量。读取配置不全（未启用/缺 apiKey/缺 websiteId）
-   * 或无链接则不渲染；加载中显示占位，失败显示降级文案，绝不阻塞弹窗。
-   * 弹窗在请求返回前关闭时，span 已脱离 DOM，用 isConnected 跳过写入。
-   */
-  showViews(item, shareLink) {
-    if (!shareLink || !canReadAnalytics(this.plugin.settings)) return;
-    const span = item.createSpan({
-      cls: "opal-modal-views",
-      text: t("modal.views.loading")
-    });
-    void fetchPageViews(this.plugin.settings, shareLink).then((stats) => {
-      if (!span.isConnected) return;
-      span.setText(
-        stats ? t("modal.views.value", { count: String(stats.views) }) : t("modal.views.fail")
-      );
-    }).catch(() => {
-      if (span.isConnected) span.setText(t("modal.views.fail"));
-    });
-  }
-  onClose() {
-    this.contentEl.empty();
-  }
-};
-
 // src/oss.ts
-var import_obsidian7 = require("obsidian");
+var import_obsidian5 = require("obsidian");
 var import_ali_oss = __toESM(require_client());
 var zlib = __toESM(require("zlib"));
 var KATEX_VERSION = "0.16.9";
@@ -29136,14 +28838,14 @@ async function ensureKatexAssets(settings) {
   } catch (e) {
   }
   const headers = { "Cache-Control": IMMUTABLE_CACHE };
-  const cssText = (await (0, import_obsidian7.requestUrl)({ url: `${KATEX_CDN}/katex.min.css` })).text;
+  const cssText = (await (0, import_obsidian5.requestUrl)({ url: `${KATEX_CDN}/katex.min.css` })).text;
   const fonts = /* @__PURE__ */ new Set();
   for (const m of cssText.matchAll(/url\(fonts\/([^)]+?\.woff2)\)/g)) fonts.add(m[1]);
   for (const font of fonts) {
-    const data = (await (0, import_obsidian7.requestUrl)({ url: `${KATEX_CDN}/fonts/${font}` })).arrayBuffer;
+    const data = (await (0, import_obsidian5.requestUrl)({ url: `${KATEX_CDN}/fonts/${font}` })).arrayBuffer;
     await client.put(`${dir}/fonts/${font}`, Buffer.from(data), { mime: "font/woff2", headers });
   }
-  const js = (await (0, import_obsidian7.requestUrl)({ url: `${KATEX_CDN}/katex.min.js` })).arrayBuffer;
+  const js = (await (0, import_obsidian5.requestUrl)({ url: `${KATEX_CDN}/katex.min.js` })).arrayBuffer;
   await client.put(`${dir}/katex.min.js`, Buffer.from(js), {
     mime: "application/javascript; charset=utf-8",
     headers
@@ -29279,378 +28981,213 @@ async function deleteFromOss(settings, noteName) {
 
 // src/share-popover.ts
 var import_obsidian8 = require("obsidian");
-var POPOVER_CLASS = "opal-share-popover";
-function formatDateTime(d) {
-  const pad = (n) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+
+// src/analytics-client.ts
+var import_obsidian6 = require("obsidian");
+var STATS_START = "2020-01-01T00:00:00Z";
+var sleep = (ms) => new Promise((r) => window.setTimeout(r, ms));
+var STATS_HEADERS = { accept: "application/json" };
+async function fetchPageViews(settings, shareLink) {
+  if (!canReadAnalytics(settings)) return null;
+  const apiBase = deriveApiBase(settings.goatcounterEndpoint.trim());
+  if (!apiBase) return null;
+  const urlPath = extractPathname(shareLink);
+  if (!urlPath) return null;
+  const end = (/* @__PURE__ */ new Date()).toISOString();
+  const query = `?start=${encodeURIComponent(STATS_START)}&end=${encodeURIComponent(end)}&path_by_name=true&include_paths=${encodeURIComponent(urlPath)}&limit=1`;
+  const url = `${apiBase}/stats/hits${query}`;
+  try {
+    const res = await (0, import_obsidian6.requestUrl)({
+      url,
+      method: "GET",
+      headers: STATS_HEADERS,
+      throw: false
+    });
+    if (res.status < 200 || res.status >= 300) return null;
+    return parseStatsResponse(res.json);
+  } catch (e) {
+    return null;
+  }
 }
-var SharePopover = class {
-  constructor(plugin) {
-    this.plugin = plugin;
-    this.el = null;
-    this.anchor = null;
-  }
-  isOpen() {
-    return !!this.el;
-  }
-  /** Toggle the card relative to the given anchor (the status-bar icon). */
-  async toggle(anchor) {
-    if (this.el) {
-      this.close();
-      return;
-    }
-    await this.open(anchor);
-  }
-  close() {
-    if (this.onDocPointerDown) {
-      activeDocument.removeEventListener("pointerdown", this.onDocPointerDown, true);
-    }
-    if (this.onKeyDown) {
-      activeDocument.removeEventListener("keydown", this.onKeyDown, true);
-    }
-    this.onDocPointerDown = void 0;
-    this.onKeyDown = void 0;
-    const el = this.el;
-    this.el = null;
-    this.anchor = null;
-    if (!el) return;
-    el.classList.remove("is-visible");
-    window.setTimeout(() => el.remove(), 150);
-  }
-  async open(anchor) {
-    const file = this.plugin.app.workspace.getActiveFile();
-    if (!file || file.extension !== "md") return;
-    const card = this.ensureCard(anchor);
-    const shareLink = this.plugin.getShareLink(file);
-    if (shareLink) {
-      const stale = await this.plugin.isStale(file);
-      this.renderPublished(card, file, shareLink, this.readPublishedAt(file), stale);
-    } else {
-      this.renderUnpublished(card, file);
-    }
-    this.position(card, anchor);
-    this.registerDismiss(card, anchor);
-  }
-  // ── Publish lifecycle (success/progress merged into this card, no separate toast) ──
-  /** Open (or re-render) the card in a busy state while a publish/update runs. */
-  showBusy(anchor, text) {
-    const card = this.ensureCard(anchor);
-    card.addClass(`${POPOVER_CLASS}--progress`);
-    const row = card.createDiv({ cls: "opal-share-popover-progress" });
-    row.createDiv({ cls: "opal-share-popover-spinner" });
-    row.createSpan({ text });
-    this.position(card, anchor);
-  }
-  /**
-   * Re-render the busy card to reflect an operation's result, topped with a
-   * success banner. `state` pins the publish state when the operation just
-   * changed it (the metadata cache may lag a tick): a link string => freshly
-   * published at that link; `null` => just unpublished. Omit it to re-derive
-   * the current state from the cache (e.g. a local export changes nothing).
-   */
-  async showResult(anchor, file, successText, state) {
-    const card = this.ensureCard(anchor);
-    const pinned = state !== void 0;
-    const shareLink = pinned ? state : this.plugin.getShareLink(file);
-    if (shareLink) {
-      const stale = pinned ? false : await this.plugin.isStale(file);
-      if (this.el !== card) return;
-      const publishedAt = pinned ? /* @__PURE__ */ new Date() : this.readPublishedAt(file);
-      this.renderPublished(card, file, shareLink, publishedAt, stale, successText);
-    } else {
-      this.renderUnpublished(card, file, successText);
-    }
-    this.position(card, anchor);
-    this.registerDismiss(card, anchor);
-  }
-  /** Re-render the busy card to show a publish failure. */
-  showError(anchor, text) {
-    const card = this.ensureCard(anchor);
-    card.addClass(`${POPOVER_CLASS}--error`);
-    const row = card.createDiv({ cls: "opal-share-popover-progress" });
-    const icon = row.createDiv({ cls: "opal-share-popover-erroricon" });
-    (0, import_obsidian8.setIcon)(icon, "alert-triangle");
-    row.createSpan({ text });
-    this.position(card, anchor);
-    this.registerDismiss(card, anchor);
-  }
-  /** Return the existing card (cleared for re-render) or mount a fresh one. */
-  ensureCard(anchor) {
-    this.anchor = anchor;
-    if (this.el) {
-      this.el.empty();
-      this.el.removeClass(
-        `${POPOVER_CLASS}--fresh`,
-        `${POPOVER_CLASS}--stale`,
-        `${POPOVER_CLASS}--unpublished`,
-        `${POPOVER_CLASS}--progress`,
-        `${POPOVER_CLASS}--error`
-      );
-      return this.el;
-    }
-    const card = createDiv({ cls: POPOVER_CLASS });
-    activeDocument.body.appendChild(card);
-    this.el = card;
-    window.requestAnimationFrame(() => card.classList.add("is-visible"));
-    return card;
-  }
-  /** Wire up dismiss-on-outside-click / Escape. No-op if already registered. */
-  registerDismiss(card, anchor) {
-    if (this.onDocPointerDown) return;
-    this.onDocPointerDown = (e) => {
-      const target = e.target;
-      if (card.contains(target) || anchor.contains(target)) return;
-      this.close();
-    };
-    this.onKeyDown = (e) => {
-      if (e.key === "Escape") this.close();
-    };
-    window.setTimeout(() => {
-      if (!this.el || !this.onDocPointerDown || !this.onKeyDown) return;
-      activeDocument.addEventListener("pointerdown", this.onDocPointerDown, true);
-      activeDocument.addEventListener("keydown", this.onKeyDown, true);
-    }, 0);
-  }
-  readPublishedAt(file) {
-    var _a2, _b2;
-    const shareTime = (_b2 = (_a2 = this.plugin.app.metadataCache.getFileCache(file)) == null ? void 0 : _a2.frontmatter) == null ? void 0 : _b2["share_time"];
-    if (!shareTime) return null;
-    const d = new Date(shareTime);
-    return isNaN(d.getTime()) ? null : d;
-  }
-  /**
-   * Anchor the card next to the status-bar icon, flipping above/below based on
-   * available space and clamping into the viewport. The status bar's position
-   * varies by theme, so we never assume it sits at the bottom.
-   */
-  position(card, anchor) {
-    const rect = anchor.getBoundingClientRect();
-    const gap = 8;
-    const margin = 8;
-    const vw = activeWindow.innerWidth;
-    const vh = activeWindow.innerHeight;
-    const cw = card.offsetWidth;
-    const ch = card.offsetHeight;
-    let left = rect.left;
-    if (left + cw + margin > vw) left = vw - cw - margin;
-    if (left < margin) left = margin;
-    const spaceAbove = rect.top;
-    const spaceBelow = vh - rect.bottom;
-    let top = spaceAbove >= ch + gap || spaceAbove >= spaceBelow ? rect.top - gap - ch : rect.bottom + gap;
-    if (top + ch + margin > vh) top = vh - ch - margin;
-    if (top < margin) top = margin;
-    card.setCssProps({
-      "--opal-popover-left": `${Math.round(left)}px`,
-      "--opal-popover-top": `${Math.round(top)}px`
-    });
-  }
-  renderPublished(card, file, shareLink, publishedAt, stale, successText) {
-    card.addClass(stale ? `${POPOVER_CLASS}--stale` : `${POPOVER_CLASS}--fresh`);
-    if (successText) {
-      const banner = card.createDiv({ cls: "opal-share-popover-success" });
-      const check = banner.createDiv({ cls: "opal-share-popover-successicon" });
-      (0, import_obsidian8.setIcon)(check, "check");
-      banner.createSpan({ text: successText });
-    }
-    const header = card.createDiv({ cls: "opal-share-popover-header" });
-    const icon = header.createDiv({ cls: "opal-share-popover-icon" });
-    (0, import_obsidian8.setIcon)(icon, "globe");
-    const headText = header.createDiv({ cls: "opal-share-popover-headtext" });
-    headText.createDiv({ cls: "opal-share-popover-title", text: t("popover.title") });
-    header.createSpan({
-      cls: "opal-share-popover-badge",
-      text: stale ? t("popover.badge.stale") : t("popover.badge.fresh")
-    });
-    const urlRow = card.createDiv({ cls: "opal-share-popover-urlrow" });
-    const link = urlRow.createEl("a", {
-      cls: "opal-share-popover-url",
-      text: shareLink,
-      href: shareLink
-    });
-    link.setAttr("target", "_blank");
-    link.setAttr("rel", "noopener");
-    const copyBtn = urlRow.createDiv({ cls: "opal-share-popover-copy" });
-    (0, import_obsidian8.setIcon)(copyBtn, "copy");
-    (0, import_obsidian8.setTooltip)(copyBtn, t("popover.copy"));
-    let copiedTimer = 0;
-    copyBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      void navigator.clipboard.writeText(shareLink).then(() => {
-        copyBtn.addClass("is-copied");
-        (0, import_obsidian8.setIcon)(copyBtn, "check");
-        (0, import_obsidian8.setTooltip)(copyBtn, t("popover.copied"));
-        window.clearTimeout(copiedTimer);
-        copiedTimer = window.setTimeout(() => {
-          if (!copyBtn.isConnected) return;
-          copyBtn.removeClass("is-copied");
-          (0, import_obsidian8.setIcon)(copyBtn, "copy");
-          (0, import_obsidian8.setTooltip)(copyBtn, t("popover.copy"));
-        }, 1500);
+var MAX_HITS_PAGES = 100;
+async function fetchAllPathHits(settings) {
+  if (!canReadAnalytics(settings)) return null;
+  const apiBase = deriveApiBase(settings.goatcounterEndpoint.trim());
+  if (!apiBase) return null;
+  const end = (/* @__PURE__ */ new Date()).toISOString();
+  const byPath = /* @__PURE__ */ new Map();
+  const seenIds = [];
+  let gotAnyPage = false;
+  try {
+    for (let page = 0; page < MAX_HITS_PAGES; page++) {
+      const exclude = seenIds.map((id) => `&exclude_paths=${id}`).join("");
+      const url = `${apiBase}/stats/hits?start=${encodeURIComponent(STATS_START)}&end=${encodeURIComponent(end)}&limit=100${exclude}`;
+      const res = await (0, import_obsidian6.requestUrl)({
+        url,
+        method: "GET",
+        headers: STATS_HEADERS,
+        throw: false
       });
-    });
-    if (publishedAt && !isNaN(publishedAt.getTime())) {
-      card.createDiv({
-        cls: "opal-share-popover-published",
-        text: t("popover.published", { time: formatDateTime(publishedAt) })
-      });
+      if (res.status < 200 || res.status >= 300) return gotAnyPage ? byPath : null;
+      let body;
+      try {
+        body = res.json;
+      } catch (e) {
+        return gotAnyPage ? byPath : null;
+      }
+      const list = parseHitsList(body);
+      if (list === null) return gotAnyPage ? byPath : null;
+      gotAnyPage = true;
+      for (const hit of list) {
+        byPath.set(hit.path, hit.count);
+        if (hit.pathId != null) seenIds.push(hit.pathId);
+      }
+      const more = (body == null ? void 0 : body.more) === true;
+      if (!more || list.length === 0) break;
     }
-    this.renderAnalytics(card, shareLink);
-    if (stale) {
-      const hint = card.createDiv({ cls: "opal-share-popover-hint" });
-      hint.createSpan({ text: t("popover.hint.stale") });
-      const updateBtn = hint.createEl("button", {
-        cls: "opal-share-popover-republish mod-cta",
-        text: t("popover.btn.update")
-      });
-      updateBtn.addEventListener("click", () => {
-        this.close();
-        void this.plugin.updateFromUi(file);
-      });
+    return byPath;
+  } catch (e) {
+    return gotAnyPage ? byPath : null;
+  }
+}
+var DETAIL_DIMENSION_LIMIT = 10;
+var DETAIL_TREND_DAYS = 30;
+var DETAIL_DIMENSIONS = [
+  "toprefs",
+  "browsers",
+  "systems",
+  "sizes",
+  "locations",
+  "languages"
+];
+var DIMENSION_TO_KEY = {
+  toprefs: "referrers",
+  browsers: "browsers",
+  systems: "systems",
+  sizes: "sizes",
+  locations: "locations",
+  languages: "languages"
+};
+function parseRetryMs(text) {
+  const m = /try again in ([\d.]+)ms/.exec(text);
+  const ms = m ? Number(m[1]) : NaN;
+  return Number.isFinite(ms) ? Math.ceil(ms) + 50 : 500;
+}
+function createGet(apiBase) {
+  return async (query, parse, fallback) => {
+    var _a2;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      try {
+        const res = await (0, import_obsidian6.requestUrl)({
+          url: `${apiBase}${query}`,
+          method: "GET",
+          headers: STATS_HEADERS,
+          throw: false
+        });
+        if (res.status === 429) {
+          await sleep(parseRetryMs(res.text));
+          continue;
+        }
+        if (res.status < 200 || res.status >= 300) return fallback;
+        return (_a2 = parse(res.json)) != null ? _a2 : fallback;
+      } catch (e) {
+        return fallback;
+      }
     }
-    const actions = card.createDiv({ cls: "opal-share-popover-actions" });
-    this.iconAction(actions, "external-link", t("menu.openLink"), () => {
-      this.close();
-      this.plugin.openShareLink(file);
-    });
-    if (!stale) {
-      this.iconAction(actions, "refresh-cw", t("menu.update"), () => {
-        this.close();
-        void this.plugin.updateFromUi(file);
-      });
-    }
-    this.iconAction(actions, "download", t("menu.exportLocal"), () => {
-      this.close();
-      void this.plugin.exportFromUi(file);
-    });
-    this.iconAction(
-      actions,
-      "eye-off",
-      t("menu.unpublish"),
-      () => {
-        this.close();
-        this.plugin.unpublishFromUi(file);
-      },
-      true
+    return fallback;
+  };
+}
+function pathScope(urlPath) {
+  return `&path_by_name=true&include_paths=${encodeURIComponent(urlPath)}`;
+}
+function dimQueryFor(end, scope) {
+  return (page) => `/stats/${page}?start=${encodeURIComponent(STATS_START)}&end=${encodeURIComponent(end)}&limit=${DETAIL_DIMENSION_LIMIT}${scope}`;
+}
+async function expandLocations(get, dimQuery, countries) {
+  const regionsByCode = {};
+  for (const c of countries) {
+    const code = c.id;
+    if (!code) continue;
+    regionsByCode[code] = await get(
+      dimQuery(`locations/${encodeURIComponent(code)}`),
+      parseDimensionStats,
+      []
     );
   }
-  renderUnpublished(card, file, successText) {
-    card.addClass(`${POPOVER_CLASS}--unpublished`);
-    if (successText) {
-      const banner = card.createDiv({ cls: "opal-share-popover-success" });
-      const check = banner.createDiv({ cls: "opal-share-popover-successicon" });
-      (0, import_obsidian8.setIcon)(check, "check");
-      banner.createSpan({ text: successText });
-    }
-    const header = card.createDiv({ cls: "opal-share-popover-header" });
-    const icon = header.createDiv({ cls: "opal-share-popover-icon" });
-    (0, import_obsidian8.setIcon)(icon, "globe");
-    const headText = header.createDiv({ cls: "opal-share-popover-headtext" });
-    headText.createDiv({ cls: "opal-share-popover-title", text: t("popover.unpublished.title") });
-    headText.createDiv({
-      cls: "opal-share-popover-subline",
-      text: t("popover.unpublished.subline")
-    });
-    const actions = card.createDiv({
-      cls: "opal-share-popover-actions opal-share-popover-actions--text"
-    });
-    const ossReady = this.plugin.isOssReady();
-    const publishBtn = actions.createEl("button", {
-      cls: "opal-share-popover-textbtn mod-cta",
-      text: t("menu.publish")
-    });
-    publishBtn.disabled = !ossReady;
-    publishBtn.addEventListener("click", () => {
-      if (!ossReady) return;
-      this.close();
-      this.plugin.publishFromUi(file);
-    });
-    const exportBtn = actions.createEl("button", {
-      cls: "opal-share-popover-textbtn",
-      text: t("menu.exportLocal")
-    });
-    exportBtn.addEventListener("click", () => {
-      this.close();
-      void this.plugin.exportFromUi(file);
-    });
+  return buildLocationRows(countries, regionsByCode, DETAIL_DIMENSION_LIMIT);
+}
+async function fetchPageDetail(settings, shareLink, onPart) {
+  if (!canReadAnalytics(settings)) return null;
+  const apiBase = deriveApiBase(settings.goatcounterEndpoint.trim());
+  if (!apiBase) return null;
+  const urlPath = extractPathname(shareLink);
+  if (!urlPath) return null;
+  const end = (/* @__PURE__ */ new Date()).toISOString();
+  const trendStart = new Date(Date.now() - DETAIL_TREND_DAYS * 864e5).toISOString();
+  const scope = pathScope(urlPath);
+  const get = createGet(apiBase);
+  const dimQuery = dimQueryFor(end, scope);
+  const dailyQuery = `/stats/hits?start=${encodeURIComponent(trendStart)}&end=${encodeURIComponent(end)}&daily=true&limit=1${scope}`;
+  const daily = await get(dailyQuery, parseDailySeries, []);
+  onPart == null ? void 0 : onPart("daily", daily);
+  const dims = {};
+  for (const page of DETAIL_DIMENSIONS) {
+    let items = await get(dimQuery(page), parseDimensionStats, []);
+    if (page === "locations") items = await expandLocations(get, dimQuery, items);
+    dims[page] = items;
+    onPart == null ? void 0 : onPart(DIMENSION_TO_KEY[page], items);
   }
-  /**
-   * Render the published-state analytics: a view-count block (only when analytics
-   * is configured) followed by a "View details" entry to the global stats page.
-   * The entry is structural navigation — it always renders, independent of the
-   * fetch or whether analytics is configured.
-   */
-  renderAnalytics(card, shareLink) {
-    if (canReadAnalytics(this.plugin.settings)) {
-      const block = card.createDiv({ cls: "opal-share-popover-stats" });
-      const viewsRow = block.createDiv({ cls: "opal-share-popover-statsviews" });
-      viewsRow.createSpan({ cls: "opal-share-popover-statslabel", text: t("popover.stats.views") });
-      const num = viewsRow.createSpan({ cls: "opal-share-popover-statsnum" });
-      const refresh = viewsRow.createDiv({ cls: "opal-share-popover-statsrefresh" });
-      (0, import_obsidian8.setIcon)(refresh, "refresh-cw");
-      (0, import_obsidian8.setTooltip)(refresh, t("popover.stats.refresh"));
-      const recent = block.createDiv({ cls: "opal-share-popover-statsrecent" });
-      const load = () => {
-        num.setText("\u2026");
-        num.removeClass("is-error");
-        recent.empty();
-        void this.loadAnalytics(card, shareLink, num, recent);
-      };
-      refresh.addEventListener("click", (e) => {
-        e.preventDefault();
-        load();
-      });
-      load();
-    }
-    const entry = card.createDiv({ cls: "opal-share-popover-statsentry" });
-    const link = entry.createSpan({
-      cls: "opal-share-popover-detaillink",
-      text: `${t("popover.stats.detail")} \u2192`
-    });
-    link.addEventListener("click", () => {
-      this.close();
-      void this.plugin.activateStatsView();
-    });
+  return {
+    daily,
+    referrers: dims.toprefs,
+    browsers: dims.browsers,
+    systems: dims.systems,
+    sizes: dims.sizes,
+    locations: dims.locations,
+    languages: dims.languages
+  };
+}
+var POPOVER_DIMENSIONS = ["locations", "systems", "browsers", "sizes"];
+async function fetchPopoverDimensions(settings, shareLink, onPart) {
+  if (!canReadAnalytics(settings)) return null;
+  const apiBase = deriveApiBase(settings.goatcounterEndpoint.trim());
+  if (!apiBase) return null;
+  const urlPath = extractPathname(shareLink);
+  if (!urlPath) return null;
+  const end = (/* @__PURE__ */ new Date()).toISOString();
+  const get = createGet(apiBase);
+  const dimQuery = dimQueryFor(end, pathScope(urlPath));
+  const out = {};
+  for (const page of POPOVER_DIMENSIONS) {
+    let items = await get(dimQuery(page), parseDimensionStats, []);
+    if (page === "locations") items = await expandLocations(get, dimQuery, items);
+    out[page] = items;
+    onPart == null ? void 0 : onPart(page, items);
   }
-  /**
-   * Fetch this page's cumulative views + recent active days and fill the block.
-   * Serial (not parallel) to avoid GoatCounter's burst rate-limit. Each write is
-   * guarded against a stale/closed card (same guard `showResult` uses).
-   */
-  async loadAnalytics(card, shareLink, num, recent) {
-    const settings = this.plugin.settings;
-    const stats = await fetchPageViews(settings, shareLink);
-    if (this.el !== card || !card.isConnected) return;
-    if (stats === null) {
-      num.setText("\u2014");
-      num.addClass("is-error");
-    } else {
-      num.setText(stats.views.toLocaleString());
-    }
-    const days = await fetchRecentActiveDays(settings, shareLink, { days: 90, limit: 3 });
-    if (this.el !== card || !card.isConnected) return;
-    recent.empty();
-    if (!days || days.length === 0) return;
-    for (const d of days) {
-      const row = recent.createDiv({ cls: "opal-share-popover-statsday" });
-      row.createSpan({ cls: "opal-share-popover-statsdaydate", text: d.day.slice(5) });
-      row.createSpan({ cls: "opal-share-popover-statsdaycount", text: `\xB7 ${d.count}` });
-    }
+  return out;
+}
+async function fetchDailyTrend(settings, shareLink, days) {
+  if (!canReadAnalytics(settings)) return null;
+  const apiBase = deriveApiBase(settings.goatcounterEndpoint.trim());
+  if (!apiBase) return null;
+  const urlPath = extractPathname(shareLink);
+  if (!urlPath) return null;
+  const end = (/* @__PURE__ */ new Date()).toISOString();
+  const start = new Date(Date.now() - days * 864e5).toISOString();
+  const query = `?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}&daily=true&path_by_name=true&include_paths=${encodeURIComponent(urlPath)}&limit=1`;
+  const url = `${apiBase}/stats/hits${query}`;
+  try {
+    const res = await (0, import_obsidian6.requestUrl)({ url, method: "GET", headers: STATS_HEADERS, throw: false });
+    if (res.status < 200 || res.status >= 300) return null;
+    return parseDailySeries(res.json);
+  } catch (e) {
+    return null;
   }
-  iconAction(parent, icon, tooltip, onClick, danger = false) {
-    const btn = parent.createDiv({ cls: "opal-share-popover-action" });
-    if (danger) btn.addClass("opal-share-popover-action--danger");
-    (0, import_obsidian8.setIcon)(btn, icon);
-    (0, import_obsidian8.setTooltip)(btn, tooltip);
-    btn.addEventListener("click", onClick);
-  }
-};
-
-// src/stats-view.ts
-var import_obsidian10 = require("obsidian");
+}
 
 // src/stats-detail-modal.ts
-var import_obsidian9 = require("obsidian");
-function formatDateTime2(ms) {
+var import_obsidian7 = require("obsidian");
+function formatDateTime(ms) {
   if (ms == null) return t("stats.views.unknown");
   const d = new Date(ms);
   if (isNaN(d.getTime())) return t("stats.views.unknown");
@@ -29671,7 +29208,7 @@ function sizeLabel(id) {
       return t("stats.detail.unknownName");
   }
 }
-var StatsDetailModal = class extends import_obsidian9.Modal {
+var StatsDetailModal = class extends import_obsidian7.Modal {
   constructor(app, settings, row, countsAvailable) {
     super(app);
     this.settings = settings;
@@ -29735,14 +29272,14 @@ var StatsDetailModal = class extends import_obsidian9.Modal {
     header.createDiv({ cls: "opal-detail-title", text: this.row.title });
     const urlEl = header.createDiv({ cls: "opal-detail-url" });
     const linkIcon = urlEl.createSpan({ cls: "opal-detail-url-icon" });
-    (0, import_obsidian9.setIcon)(linkIcon, "external-link");
+    (0, import_obsidian7.setIcon)(linkIcon, "external-link");
     const linkText = urlEl.createSpan({ cls: "opal-detail-url-text", text: this.row.shareLink });
     const open = () => window.open(this.row.shareLink, "_blank");
     urlEl.addEventListener("click", open);
     linkText.addEventListener("click", open);
     header.createDiv({
       cls: "opal-detail-published",
-      text: t("stats.detail.published", { time: formatDateTime2(this.row.publishedAt) })
+      text: t("stats.detail.published", { time: formatDateTime(this.row.publishedAt) })
     });
   }
   /**
@@ -29792,7 +29329,762 @@ var StatsDetailModal = class extends import_obsidian9.Modal {
   }
 };
 
+// src/share-popover.ts
+var POPOVER_CLASS = "opal-share-popover";
+var POPOVER_TREND_DAYS = 14;
+function formatDateTime2(d) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+var SharePopover = class {
+  constructor(plugin) {
+    this.plugin = plugin;
+    this.el = null;
+    this.anchor = null;
+    /** 统计数据的会话内缓存（按 shareLink 区分），让气泡重开时立即展示旧数据。 */
+    this.statsCache = /* @__PURE__ */ new Map();
+    /** 进度态的可复用节点引用，用于多次上报时就地更新（不重建、条形可过渡）。 */
+    this.progressLabel = null;
+    this.progressFill = null;
+    /**
+     * 假进度引擎：点击触发忙碌态的那一刻起，进度条就开始向 ~90% 缓动爬升的
+     * 计时器（`fakeTimer`/`fakePct`），给单页发布也带来即时的“正在进行”反馈；
+     * 真实步骤上报的 `realPct` 只作为下限，能把条形推得比假动画更高，完成时再
+     * 一口气填到 100%。展示值始终取两者较大者。
+     */
+    this.fakeTimer = 0;
+    this.fakePct = 0;
+    this.realPct = 0;
+  }
+  isOpen() {
+    return !!this.el;
+  }
+  /** Toggle the card relative to the given anchor (the status-bar icon). */
+  async toggle(anchor) {
+    if (this.el) {
+      this.close();
+      return;
+    }
+    await this.open(anchor);
+  }
+  close() {
+    if (this.onDocPointerDown) {
+      activeDocument.removeEventListener("pointerdown", this.onDocPointerDown, true);
+    }
+    if (this.onKeyDown) {
+      activeDocument.removeEventListener("keydown", this.onKeyDown, true);
+    }
+    this.onDocPointerDown = void 0;
+    this.onKeyDown = void 0;
+    this.resetProgress();
+    const el = this.el;
+    this.el = null;
+    this.anchor = null;
+    if (!el) return;
+    el.classList.remove("is-visible");
+    window.setTimeout(() => el.remove(), 150);
+  }
+  async open(anchor) {
+    const file = this.plugin.app.workspace.getActiveFile();
+    if (!file || file.extension !== "md") return;
+    const card = this.ensureCard(anchor);
+    await this.renderState(card, file);
+  }
+  /** Render the card's normal published/unpublished state and wire up dismissal. */
+  async renderState(card, file) {
+    var _a2, _b2;
+    const shareLink = this.plugin.getShareLink(file);
+    if (shareLink) {
+      const stale = await this.plugin.isStale(file);
+      if (this.el !== card) return;
+      this.renderPublished(card, file, shareLink, this.readPublishedAt(file), stale);
+    } else {
+      this.renderUnpublished(card, file);
+    }
+    this.position(card, (_a2 = this.anchor) != null ? _a2 : card);
+    this.registerDismiss(card, (_b2 = this.anchor) != null ? _b2 : card);
+  }
+  // ── Publish lifecycle (success/progress merged into this card, no separate toast) ──
+  /** Open (or re-render) the card in a busy state while a publish/update runs. */
+  showBusy(anchor, text) {
+    this.showProgress(anchor, text);
+  }
+  /**
+   * Show busy state in the card, with a progress bar that animates from the moment
+   * the operation begins.
+   *
+   * The progress is drawn as a banner pinned at the top of the card (the same
+   * slot the "更新成功" success banner lands in), while the card's normal
+   * published/unpublished details stay visible below it (action buttons are
+   * disabled via the `--busy` class). The bar always shows: a fake ramp creeps it
+   * toward ~90% on a timer so even a single-page publish gets immediate motion,
+   * and any real `done/total` reported here raises a floor that can push the bar
+   * past the fake ramp (see {@link startFakeRamp}).
+   *
+   * Called repeatedly during a publish: if a progress banner from a previous
+   * step is already mounted it updates in place (no flicker, the bar keeps
+   * animating), instead of tearing down and rebuilding the card on every step.
+   */
+  showProgress(anchor, label, done, total) {
+    var _a2, _b2;
+    if (typeof done === "number" && typeof total === "number" && total > 0) {
+      this.realPct = Math.round(Math.max(0, Math.min(1, done / total)) * 100);
+    }
+    if (((_a2 = this.el) == null ? void 0 : _a2.hasClass(`${POPOVER_CLASS}--busy`)) && ((_b2 = this.progressLabel) == null ? void 0 : _b2.isConnected)) {
+      this.progressLabel.setText(label);
+      this.applyProgress();
+      this.position(this.el, anchor);
+      return;
+    }
+    this.fakePct = 8;
+    this.realPct = typeof done === "number" && typeof total === "number" && total > 0 ? this.realPct : 0;
+    const file = this.plugin.app.workspace.getActiveFile();
+    const card = this.ensureCard(anchor);
+    card.addClass(`${POPOVER_CLASS}--busy`);
+    const banner = { kind: "progress", label, pct: this.displayPct() };
+    const shareLink = file ? this.plugin.getShareLink(file) : "";
+    if (file && shareLink) {
+      this.renderPublished(card, file, shareLink, this.readPublishedAt(file), false, banner);
+    } else if (file) {
+      this.renderUnpublished(card, file, banner);
+    } else {
+      this.renderTopBanner(card, banner);
+    }
+    this.startFakeRamp();
+    this.position(card, anchor);
+  }
+  /** The bar's displayed percentage: the higher of the fake ramp and the real floor. */
+  displayPct() {
+    return Math.round(Math.max(this.fakePct, this.realPct));
+  }
+  /** Push the current displayed percentage into the (live) fill node, if mounted. */
+  applyProgress() {
+    var _a2;
+    if ((_a2 = this.progressFill) == null ? void 0 : _a2.isConnected) {
+      this.progressFill.setCssProps({ "--opal-progress": `${this.displayPct()}%` });
+    }
+  }
+  /**
+   * Start the fake-progress timer: every tick the bar eases a fraction of the way
+   * toward a ~90% cap (decelerating as it approaches), so it climbs fast at first
+   * then lingers just short of full until the operation actually completes. The
+   * CSS width transition smooths each step. No-op if already running.
+   */
+  startFakeRamp() {
+    if (this.fakeTimer) return;
+    const cap = 90;
+    this.fakeTimer = window.setInterval(() => {
+      this.fakePct += (cap - this.fakePct) * 0.06;
+      this.applyProgress();
+    }, 150);
+  }
+  /** Stop the ramp timer and zero the progress state (no visual completion). */
+  resetProgress() {
+    if (this.fakeTimer) {
+      window.clearInterval(this.fakeTimer);
+      this.fakeTimer = 0;
+    }
+    this.fakePct = 0;
+    this.realPct = 0;
+  }
+  /**
+   * Finish the bar before the result is shown: stop the ramp, snap the fill to
+   * 100% and let the CSS transition play out briefly so the user sees it complete,
+   * then reset the state. Awaited by {@link showResult} before it rebuilds the card.
+   */
+  async finishProgress() {
+    var _a2;
+    if (this.fakeTimer) {
+      window.clearInterval(this.fakeTimer);
+      this.fakeTimer = 0;
+    }
+    if ((_a2 = this.progressFill) == null ? void 0 : _a2.isConnected) {
+      this.progressFill.setCssProps({ "--opal-progress": "100%" });
+      await new Promise((resolve) => window.setTimeout(resolve, 220));
+    }
+    this.fakePct = 0;
+    this.realPct = 0;
+  }
+  /**
+   * Re-render the busy card to reflect an operation's result, topped with a
+   * success banner. `state` pins the publish state when the operation just
+   * changed it (the metadata cache may lag a tick): a link string => freshly
+   * published at that link; `null` => just unpublished. Omit it to re-derive
+   * the current state from the cache (e.g. a local export changes nothing).
+   */
+  async showResult(anchor, file, successText, state) {
+    await this.finishProgress();
+    const card = this.ensureCard(anchor);
+    const banner = { kind: "success", text: successText };
+    const pinned = state !== void 0;
+    const shareLink = pinned ? state : this.plugin.getShareLink(file);
+    if (shareLink) {
+      const stale = pinned ? false : await this.plugin.isStale(file);
+      if (this.el !== card) return;
+      const publishedAt = pinned ? /* @__PURE__ */ new Date() : this.readPublishedAt(file);
+      this.renderPublished(card, file, shareLink, publishedAt, stale, banner);
+    } else {
+      this.renderUnpublished(card, file, banner);
+    }
+    this.position(card, anchor);
+    this.registerDismiss(card, anchor);
+  }
+  /** Re-render the busy card to show a publish failure. */
+  showError(anchor, text) {
+    this.resetProgress();
+    const card = this.ensureCard(anchor);
+    card.addClass(`${POPOVER_CLASS}--error`);
+    const row = card.createDiv({ cls: "opal-share-popover-progress" });
+    const icon = row.createDiv({ cls: "opal-share-popover-erroricon" });
+    (0, import_obsidian8.setIcon)(icon, "alert-triangle");
+    row.createSpan({ text });
+    this.position(card, anchor);
+    this.registerDismiss(card, anchor);
+  }
+  /** Return the existing card (cleared for re-render) or mount a fresh one. */
+  ensureCard(anchor) {
+    this.anchor = anchor;
+    if (this.el) {
+      this.el.empty();
+      this.el.removeClass(
+        `${POPOVER_CLASS}--fresh`,
+        `${POPOVER_CLASS}--stale`,
+        `${POPOVER_CLASS}--unpublished`,
+        `${POPOVER_CLASS}--busy`,
+        `${POPOVER_CLASS}--confirm`,
+        `${POPOVER_CLASS}--error`
+      );
+      return this.el;
+    }
+    const card = createDiv({ cls: POPOVER_CLASS });
+    activeDocument.body.appendChild(card);
+    this.el = card;
+    window.requestAnimationFrame(() => card.classList.add("is-visible"));
+    return card;
+  }
+  /** Wire up dismiss-on-outside-click / Escape. No-op if already registered. */
+  registerDismiss(card, anchor) {
+    if (this.onDocPointerDown) return;
+    this.onDocPointerDown = (e) => {
+      const target = e.target;
+      if (card.contains(target) || anchor.contains(target)) return;
+      this.close();
+    };
+    this.onKeyDown = (e) => {
+      if (e.key === "Escape") this.close();
+    };
+    window.setTimeout(() => {
+      if (!this.el || !this.onDocPointerDown || !this.onKeyDown) return;
+      activeDocument.addEventListener("pointerdown", this.onDocPointerDown, true);
+      activeDocument.addEventListener("keydown", this.onKeyDown, true);
+    }, 0);
+  }
+  readPublishedAt(file) {
+    var _a2, _b2;
+    const shareTime = (_b2 = (_a2 = this.plugin.app.metadataCache.getFileCache(file)) == null ? void 0 : _a2.frontmatter) == null ? void 0 : _b2["share_time"];
+    if (!shareTime) return null;
+    const d = new Date(shareTime);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  /**
+   * Anchor the card next to the status-bar icon, flipping above/below based on
+   * available space and clamping into the viewport. The status bar's position
+   * varies by theme, so we never assume it sits at the bottom.
+   */
+  position(card, anchor) {
+    const rect = anchor.getBoundingClientRect();
+    const gap = 8;
+    const margin = 8;
+    const vw = activeWindow.innerWidth;
+    const vh = activeWindow.innerHeight;
+    const cw = card.offsetWidth;
+    const ch = card.offsetHeight;
+    let left = rect.left;
+    if (left + cw + margin > vw) left = vw - cw - margin;
+    if (left < margin) left = margin;
+    const spaceAbove = rect.top;
+    const spaceBelow = vh - rect.bottom;
+    let top = spaceAbove >= ch + gap || spaceAbove >= spaceBelow ? rect.top - gap - ch : rect.bottom + gap;
+    if (top + ch + margin > vh) top = vh - ch - margin;
+    if (top < margin) top = margin;
+    card.setCssProps({
+      "--opal-popover-left": `${Math.round(left)}px`,
+      "--opal-popover-top": `${Math.round(top)}px`
+    });
+  }
+  /**
+   * Render the banner pinned at the top of the card. A success banner is the
+   * green "更新成功" line; a progress banner is a spinner + stage label (plus a
+   * determinate bar when `pct` is set), whose label/bar nodes are stashed so
+   * later `showProgress` steps can update them in place without a rebuild.
+   */
+  renderTopBanner(card, banner) {
+    var _a2;
+    if (banner.kind === "success") {
+      this.progressLabel = null;
+      this.progressFill = null;
+      const el2 = card.createDiv({ cls: "opal-share-popover-success" });
+      const check = el2.createDiv({ cls: "opal-share-popover-successicon" });
+      (0, import_obsidian8.setIcon)(check, "check");
+      el2.createSpan({ text: banner.text });
+      return;
+    }
+    const el = card.createDiv({ cls: "opal-share-popover-busybanner" });
+    const row = el.createDiv({ cls: "opal-share-popover-busyrow" });
+    row.createDiv({ cls: "opal-share-popover-spinner" });
+    this.progressLabel = row.createSpan({ cls: "opal-share-popover-busylabel", text: banner.label });
+    const bar = el.createDiv({ cls: "opal-share-popover-progressbar" });
+    this.progressFill = bar.createDiv({ cls: "opal-share-popover-progressfill" });
+    this.progressFill.setCssProps({ "--opal-progress": `${(_a2 = banner.pct) != null ? _a2 : 0}%` });
+  }
+  renderPublished(card, file, shareLink, publishedAt, stale, banner) {
+    card.addClass(stale ? `${POPOVER_CLASS}--stale` : `${POPOVER_CLASS}--fresh`);
+    if (banner) this.renderTopBanner(card, banner);
+    const header = card.createDiv({ cls: "opal-share-popover-header" });
+    const icon = header.createDiv({ cls: "opal-share-popover-icon" });
+    (0, import_obsidian8.setIcon)(icon, "globe");
+    const headText = header.createDiv({ cls: "opal-share-popover-headtext" });
+    headText.createDiv({ cls: "opal-share-popover-title", text: t("popover.title") });
+    header.createSpan({
+      cls: "opal-share-popover-badge",
+      text: stale ? t("popover.badge.stale") : t("popover.badge.fresh")
+    });
+    const urlRow = card.createDiv({ cls: "opal-share-popover-urlrow" });
+    const link = urlRow.createEl("a", {
+      cls: "opal-share-popover-url",
+      text: shareLink,
+      href: shareLink
+    });
+    link.setAttr("target", "_blank");
+    link.setAttr("rel", "noopener");
+    const copyBtn = urlRow.createDiv({ cls: "opal-share-popover-copy" });
+    (0, import_obsidian8.setIcon)(copyBtn, "copy");
+    (0, import_obsidian8.setTooltip)(copyBtn, t("popover.copy"));
+    let copiedTimer = 0;
+    copyBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      void navigator.clipboard.writeText(shareLink).then(() => {
+        copyBtn.addClass("is-copied");
+        (0, import_obsidian8.setIcon)(copyBtn, "check");
+        (0, import_obsidian8.setTooltip)(copyBtn, t("popover.copied"));
+        window.clearTimeout(copiedTimer);
+        copiedTimer = window.setTimeout(() => {
+          if (!copyBtn.isConnected) return;
+          copyBtn.removeClass("is-copied");
+          (0, import_obsidian8.setIcon)(copyBtn, "copy");
+          (0, import_obsidian8.setTooltip)(copyBtn, t("popover.copy"));
+        }, 1500);
+      });
+    });
+    if (publishedAt && !isNaN(publishedAt.getTime())) {
+      card.createDiv({
+        cls: "opal-share-popover-published",
+        text: t("popover.published", { time: formatDateTime2(publishedAt) })
+      });
+    }
+    this.renderAnalytics(card, shareLink);
+    if (stale) {
+      const hint = card.createDiv({ cls: "opal-share-popover-hint" });
+      hint.createSpan({ text: t("popover.hint.stale") });
+      const updateBtn = hint.createEl("button", {
+        cls: "opal-share-popover-republish mod-cta",
+        text: t("popover.btn.update")
+      });
+      updateBtn.addEventListener("click", () => {
+        this.close();
+        void this.plugin.updateFromUi(file);
+      });
+    }
+    const actions = card.createDiv({ cls: "opal-share-popover-actions" });
+    const left = actions.createDiv({ cls: "opal-share-popover-actions-left" });
+    this.iconAction(left, "external-link", t("menu.openLink"), () => {
+      this.close();
+      this.plugin.openShareLink(file);
+    });
+    if (!stale) {
+      this.iconAction(left, "refresh-cw", t("menu.update"), () => {
+        this.close();
+        void this.plugin.updateFromUi(file);
+      });
+    }
+    this.iconAction(left, "download", t("menu.exportLocal"), () => {
+      this.close();
+      void this.plugin.exportFromUi(file);
+    });
+    this.iconAction(
+      left,
+      "trash-2",
+      t("menu.unpublish"),
+      () => this.showConfirm(file, "unpublish"),
+      true
+    );
+    const right = actions.createDiv({ cls: "opal-share-popover-actions-right" });
+    this.iconAction(right, "bar-chart-3", t("stats.title"), () => {
+      this.close();
+      void this.plugin.activateStatsView();
+    });
+  }
+  renderUnpublished(card, file, banner) {
+    card.addClass(`${POPOVER_CLASS}--unpublished`);
+    if (banner) this.renderTopBanner(card, banner);
+    const header = card.createDiv({ cls: "opal-share-popover-header" });
+    const icon = header.createDiv({ cls: "opal-share-popover-icon" });
+    (0, import_obsidian8.setIcon)(icon, "globe");
+    const headText = header.createDiv({ cls: "opal-share-popover-headtext" });
+    headText.createDiv({ cls: "opal-share-popover-title", text: t("popover.unpublished.title") });
+    headText.createDiv({
+      cls: "opal-share-popover-subline",
+      text: t("popover.unpublished.subline")
+    });
+    const actions = card.createDiv({
+      cls: "opal-share-popover-actions opal-share-popover-actions--text"
+    });
+    const ossReady = this.plugin.isOssReady();
+    const publishBtn = actions.createEl("button", {
+      cls: "opal-share-popover-textbtn mod-cta",
+      text: t("menu.publish")
+    });
+    publishBtn.disabled = !ossReady;
+    publishBtn.addEventListener("click", () => {
+      if (!ossReady) return;
+      this.showConfirm(file, "publish");
+    });
+    const exportBtn = actions.createEl("button", {
+      cls: "opal-share-popover-textbtn",
+      text: t("menu.exportLocal")
+    });
+    exportBtn.addEventListener("click", () => {
+      this.close();
+      void this.plugin.exportFromUi(file);
+    });
+  }
+  // ── Inline publish/unpublish confirmation (replaces the old ShareModal) ──
+  /** Swap the card to the inline confirm panel for a publish/unpublish action. */
+  showConfirm(file, mode) {
+    const anchor = this.anchor;
+    if (!anchor) return;
+    const card = this.ensureCard(anchor);
+    this.renderConfirm(card, file, mode);
+    this.position(card, anchor);
+    this.registerDismiss(card, anchor);
+  }
+  /**
+   * Render the inline confirm panel, mirroring the normal card's layout: an
+   * icon-avatar header, the body (main note + linked sub-notes), then the same
+   * full-width Cancel / Confirm button row used elsewhere. Publish lists sub-notes
+   * read-only (each tagged "will upload" / "already linked", with view counts);
+   * unpublish gives each already-published sub-note a checkbox (default on) and
+   * shows no view counts. Cancel restores the normal card; Confirm hands the
+   * selection to the plugin, whose progress + result render back into this card.
+   */
+  renderConfirm(card, file, mode) {
+    card.addClass(`${POPOVER_CLASS}--confirm`);
+    const isPublish = mode === "publish";
+    const subNotes = this.plugin.settings.includeLinkedNotes ? collectLinkedNotesWithStatus(this.plugin.app, file) : [];
+    const checkStates = /* @__PURE__ */ new Map();
+    const header = card.createDiv({ cls: "opal-share-popover-header" });
+    const icon = header.createDiv({ cls: "opal-share-popover-icon" });
+    if (!isPublish) icon.addClass("opal-share-popover-icon--danger");
+    (0, import_obsidian8.setIcon)(icon, isPublish ? "globe" : "trash-2");
+    const headText = header.createDiv({ cls: "opal-share-popover-headtext" });
+    headText.createDiv({
+      cls: "opal-share-popover-title",
+      text: isPublish ? t("modal.publish.title") : t("modal.unpublish.title")
+    });
+    const body = card.createDiv({ cls: "opal-share-popover-confirm-body" });
+    body.createDiv({
+      cls: "opal-share-popover-confirm-label",
+      text: isPublish ? t("modal.mainNote") : t("modal.mainNote.stopping")
+    });
+    const mainRow = body.createDiv({ cls: "opal-share-popover-confirm-item" });
+    (0, import_obsidian8.setIcon)(mainRow.createDiv({ cls: "opal-share-popover-confirm-icon" }), "file-text");
+    mainRow.createSpan({ cls: "opal-share-popover-confirm-name", text: file.basename + ".md" });
+    if (isPublish) this.showConfirmViews(mainRow, this.plugin.getShareLink(file));
+    if (subNotes.length > 0) {
+      body.createDiv({
+        cls: "opal-share-popover-confirm-label",
+        text: isPublish ? t("modal.subNotes.publish", { count: String(subNotes.length) }) : t("modal.subNotes.unpublish")
+      });
+      for (const sn of subNotes) {
+        const row = body.createDiv({ cls: "opal-share-popover-confirm-item" });
+        if (!isPublish) {
+          if (sn.shareLink) {
+            checkStates.set(sn.file.path, true);
+            const cb = row.createEl("input", { cls: "opal-share-popover-confirm-check" });
+            cb.type = "checkbox";
+            cb.checked = true;
+            cb.addEventListener("change", () => checkStates.set(sn.file.path, cb.checked));
+          } else {
+            row.createDiv({ cls: "opal-share-popover-confirm-check-placeholder" });
+          }
+        }
+        (0, import_obsidian8.setIcon)(row.createDiv({ cls: "opal-share-popover-confirm-icon" }), "file-text");
+        row.createSpan({ cls: "opal-share-popover-confirm-name", text: sn.file.basename + ".md" });
+        if (isPublish) {
+          row.createSpan({
+            cls: "opal-share-popover-confirm-badge",
+            text: sn.shareLink ? t("modal.badge.hasLink") : t("modal.badge.willUpload")
+          });
+        }
+        if (isPublish && sn.shareLink) this.showConfirmViews(row, sn.shareLink);
+        if (!sn.shareLink) row.addClass("is-skip");
+      }
+    }
+    const actions = card.createDiv({
+      cls: "opal-share-popover-actions opal-share-popover-actions--text"
+    });
+    const cancel = actions.createEl("button", {
+      cls: "opal-share-popover-textbtn",
+      text: t("modal.btn.cancel")
+    });
+    cancel.addEventListener("click", () => {
+      const c = this.ensureCard(this.anchor);
+      void this.renderState(c, file);
+    });
+    const confirm = actions.createEl("button", {
+      cls: "opal-share-popover-textbtn mod-cta",
+      text: isPublish ? t("modal.btn.confirmPublish") : t("modal.btn.confirmUnpublish")
+    });
+    confirm.addEventListener("click", () => {
+      if (isPublish) {
+        this.plugin.publishFromUi(file, subNotes);
+      } else {
+        const selected = subNotes.filter((sn) => sn.shareLink && checkStates.get(sn.file.path));
+        this.plugin.unpublishFromUi(file, selected);
+      }
+    });
+  }
+  /** Async-load a sub-note/main-note's view count into the confirm row (best-effort). */
+  showConfirmViews(item, shareLink) {
+    if (!shareLink || !canReadAnalytics(this.plugin.settings)) return;
+    const span = item.createSpan({
+      cls: "opal-share-popover-confirm-views",
+      text: t("modal.views.loading")
+    });
+    void fetchPageViews(this.plugin.settings, shareLink).then((stats) => {
+      if (!span.isConnected) return;
+      span.setText(
+        stats ? t("modal.views.value", { count: String(stats.views) }) : t("modal.views.fail")
+      );
+    }).catch(() => {
+      if (span.isConnected) span.setText(t("modal.views.fail"));
+    });
+  }
+  /**
+   * Render the published-state analytics block (only when analytics is configured):
+   * a view-count row, a 14-day trend sparkline, and an expandable per-dimension
+   * breakdown (countries / OS / browsers / screen sizes), loaded lazily on expand.
+   */
+  renderAnalytics(card, shareLink) {
+    var _a2;
+    if (!canReadAnalytics(this.plugin.settings)) return;
+    const block = card.createDiv({ cls: "opal-share-popover-stats" });
+    const viewsRow = block.createDiv({ cls: "opal-share-popover-statsviews" });
+    viewsRow.createSpan({ cls: "opal-share-popover-statslabel", text: t("popover.stats.views") });
+    const num = viewsRow.createSpan({ cls: "opal-share-popover-statsnum" });
+    const refresh = viewsRow.createDiv({ cls: "opal-share-popover-statsrefresh" });
+    (0, import_obsidian8.setIcon)(refresh, "refresh-cw");
+    (0, import_obsidian8.setTooltip)(refresh, t("popover.stats.refresh"));
+    const trend = block.createDiv({ cls: "opal-share-popover-statstrend" });
+    const cached = this.statsCache.get(shareLink);
+    const hasCache = (cached == null ? void 0 : cached.views) !== void 0 || (cached == null ? void 0 : cached.trend) !== void 0;
+    if (hasCache) {
+      if ((cached == null ? void 0 : cached.views) !== void 0) num.setText(cached.views.toLocaleString());
+      else num.setText("\u2014");
+      this.renderTrend(trend, (_a2 = cached == null ? void 0 : cached.trend) != null ? _a2 : null);
+    } else {
+      num.setText("\u2026");
+      trend.createDiv({ cls: "opal-detail-spinner" });
+    }
+    const load = () => {
+      if (refresh.hasClass("is-loading")) return;
+      const keepOnError = hasCacheNow();
+      if (!keepOnError) {
+        num.setText("\u2026");
+        num.removeClass("is-error");
+        trend.empty();
+        trend.createDiv({ cls: "opal-detail-spinner" });
+      }
+      refresh.addClass("is-loading");
+      void this.loadAnalytics(card, shareLink, num, trend, keepOnError).finally(() => {
+        refresh.removeClass("is-loading");
+      });
+    };
+    const hasCacheNow = () => {
+      const c = this.statsCache.get(shareLink);
+      return (c == null ? void 0 : c.views) !== void 0 || (c == null ? void 0 : c.trend) !== void 0;
+    };
+    refresh.addEventListener("click", (e) => {
+      e.preventDefault();
+      load();
+    });
+    load();
+    this.renderExpand(block, card, shareLink);
+  }
+  /**
+   * Fetch this page's cumulative views + 14-day trend and fill the block. Serial
+   * (not parallel) to avoid GoatCounter's burst rate-limit. Each write is guarded
+   * against a stale/closed card (same guard `showResult` uses) and the result is
+   * cached for instant re-display. When `keepOnError` is set (a background refresh
+   * over already-shown data), a failed fetch keeps the old data instead of clobbering
+   * it with an error placeholder.
+   */
+  async loadAnalytics(card, shareLink, num, trend, keepOnError) {
+    const settings = this.plugin.settings;
+    const entry = this.cacheEntry(shareLink);
+    const stats = await fetchPageViews(settings, shareLink);
+    if (this.el !== card || !card.isConnected) return;
+    if (stats === null) {
+      if (!keepOnError) {
+        num.setText("\u2014");
+        num.addClass("is-error");
+      }
+    } else {
+      num.setText(stats.views.toLocaleString());
+      num.removeClass("is-error");
+      entry.views = stats.views;
+    }
+    const series = await fetchDailyTrend(settings, shareLink, POPOVER_TREND_DAYS);
+    if (this.el !== card || !card.isConnected) return;
+    if (series !== null) {
+      trend.empty();
+      this.renderTrend(trend, series);
+      entry.trend = series;
+    } else if (!keepOnError) {
+      trend.empty();
+      this.renderTrend(trend, null);
+    }
+    this.position(card, this.anchor);
+  }
+  /** Get (or create) the session cache entry for a share link. */
+  cacheEntry(shareLink) {
+    let entry = this.statsCache.get(shareLink);
+    if (!entry) {
+      entry = {};
+      this.statsCache.set(shareLink, entry);
+    }
+    return entry;
+  }
+  /** A horizontal bar chart of the daily series (height ∝ count, normalized to the max). */
+  renderTrend(parent, series) {
+    if (!series || series.length === 0) {
+      parent.createDiv({ cls: "opal-detail-empty", text: t("popover.stats.noTrend") });
+      return;
+    }
+    const max = Math.max(1, ...series.map((d) => d.count));
+    const chart = parent.createDiv({ cls: "opal-detail-spark" });
+    for (const point of series) {
+      const bar = chart.createDiv({ cls: "opal-detail-spark-bar" });
+      bar.setCssProps({ "--opal-bar-h": `${Math.round(point.count / max * 100)}%` });
+      bar.setAttribute("aria-label", `${point.day}: ${point.count}`);
+      bar.setAttribute("data-tooltip-position", "top");
+      if (point.count > 0) bar.addClass("is-active");
+    }
+  }
+  /**
+   * Render the "expand" toggle plus its collapsed panel. The per-dimension
+   * breakdown (countries / OS / browsers / sizes) is fetched lazily the first
+   * time the panel is opened; re-toggling just shows/hides the cached panel.
+   */
+  renderExpand(block, card, shareLink) {
+    const toggle = block.createDiv({ cls: "opal-share-popover-expand-toggle" });
+    const chevron = toggle.createSpan({ cls: "opal-share-popover-expand-chevron" });
+    (0, import_obsidian8.setIcon)(chevron, "chevron-down");
+    const label = toggle.createSpan({ text: t("popover.stats.expand") });
+    const panel = block.createDiv({ cls: "opal-share-popover-expand-panel is-collapsed" });
+    panel.addEventListener("transitionend", (e) => {
+      if (e.propertyName !== "max-height") return;
+      this.position(card, this.anchor);
+    });
+    let expanded = false;
+    let loaded = false;
+    toggle.addEventListener("click", () => {
+      expanded = !expanded;
+      toggle.toggleClass("is-expanded", expanded);
+      panel.toggleClass("is-collapsed", !expanded);
+      label.setText(t(expanded ? "popover.stats.collapse" : "popover.stats.expand"));
+      if (expanded && !loaded) {
+        loaded = true;
+        void this.loadExpand(card, shareLink, panel);
+      }
+      this.position(card, this.anchor);
+    });
+  }
+  /**
+   * Fetch the four breakdown dimensions and fill the expand panel. Each section
+   * shows its own spinner and fills the moment its slice arrives (parts are fetched
+   * separately). Writes are guarded against a stale/closed card.
+   */
+  async loadExpand(card, shareLink, panel) {
+    var _a2;
+    const titles = {
+      locations: t("stats.detail.locations"),
+      systems: t("stats.detail.systems"),
+      browsers: t("stats.detail.browsers"),
+      sizes: t("stats.detail.sizes")
+    };
+    const order = ["locations", "systems", "browsers", "sizes"];
+    const cached = (_a2 = this.statsCache.get(shareLink)) == null ? void 0 : _a2.dimensions;
+    const slots = {};
+    for (const key of order) {
+      const section = panel.createDiv({ cls: "opal-detail-section" });
+      section.createDiv({ cls: "opal-detail-section-title", text: titles[key] });
+      const body = section.createDiv({ cls: "opal-detail-section-body" });
+      if (cached == null ? void 0 : cached[key]) this.fillDimension(body, key, cached[key]);
+      else body.createDiv({ cls: "opal-detail-section-spinner opal-detail-spinner" });
+      slots[key] = body;
+    }
+    const result = await fetchPopoverDimensions(this.plugin.settings, shareLink, (key, items) => {
+      var _a3;
+      if (this.el !== card || !card.isConnected) return;
+      const body = slots[key];
+      if (!body) return;
+      this.fillDimension(body, key, items);
+      const entry = this.cacheEntry(shareLink);
+      ((_a3 = entry.dimensions) != null ? _a3 : entry.dimensions = {})[key] = items;
+      this.position(card, this.anchor);
+    });
+    if (this.el !== card || !card.isConnected) return;
+    if (result === null && !cached) {
+      panel.empty();
+      panel.createDiv({ cls: "opal-stats-notice", text: t("stats.notConfigured") });
+      this.position(card, this.anchor);
+    }
+  }
+  /** Render one dimension slot, deriving readable size labels (name is always empty for sizes). */
+  fillDimension(body, key, items) {
+    body.empty();
+    const mapped = key === "sizes" ? items.map((s) => ({ ...s, name: sizeLabel(s.id) })) : items;
+    this.renderDimension(body, mapped);
+  }
+  /** A ranked list of one dimension; mini bar per row, normalized to the dimension max. */
+  renderDimension(parent, items) {
+    if (items.length === 0) {
+      parent.createDiv({ cls: "opal-detail-empty", text: t("stats.detail.noData") });
+      return;
+    }
+    const max = Math.max(1, ...items.map((i2) => i2.count));
+    const list = parent.createDiv({ cls: "opal-detail-list" });
+    for (const item of items) {
+      const rowEl = list.createDiv({ cls: "opal-detail-row" });
+      const fill = rowEl.createDiv({ cls: "opal-detail-row-fill" });
+      fill.setCssProps({ "--opal-bar-w": `${Math.round(item.count / max * 100)}%` });
+      const label = rowEl.createDiv({ cls: "opal-detail-row-label" });
+      label.setText(item.name || t("stats.detail.unknownName"));
+      rowEl.createDiv({ cls: "opal-detail-row-count", text: item.count.toLocaleString() });
+    }
+  }
+  iconAction(parent, icon, tooltip, onClick, danger = false) {
+    const btn = parent.createDiv({ cls: "opal-share-popover-action" });
+    if (danger) btn.addClass("opal-share-popover-action--danger");
+    (0, import_obsidian8.setIcon)(btn, icon);
+    (0, import_obsidian8.setTooltip)(btn, tooltip);
+    btn.addEventListener("click", onClick);
+  }
+};
+
 // src/stats-view.ts
+var import_obsidian9 = require("obsidian");
 var VIEW_TYPE_SHARE_STATS = "share-stats-view";
 function formatDate(ms) {
   if (ms == null) return t("stats.views.unknown");
@@ -29822,7 +30114,7 @@ function collectPublishedPages(app) {
   }
   return pages;
 }
-var ShareStatsView = class extends import_obsidian10.ItemView {
+var ShareStatsView = class extends import_obsidian9.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
     this.plugin = plugin;
@@ -29854,12 +30146,12 @@ var ShareStatsView = class extends import_obsidian10.ItemView {
     const headLeft = header.createDiv({ cls: "opal-stats-headleft" });
     const titleRow = headLeft.createDiv({ cls: "opal-stats-titlerow" });
     const titleIcon = titleRow.createDiv({ cls: "opal-stats-titleicon" });
-    (0, import_obsidian10.setIcon)(titleIcon, "bar-chart-3");
+    (0, import_obsidian9.setIcon)(titleIcon, "bar-chart-3");
     titleRow.createSpan({ cls: "opal-stats-title", text: t("stats.title") });
     const cardsEl = headLeft.createDiv({ cls: "opal-stats-cards" });
     const refreshBtn = header.createDiv({ cls: "opal-stats-refresh" });
-    (0, import_obsidian10.setIcon)(refreshBtn, "refresh-cw");
-    (0, import_obsidian10.setTooltip)(refreshBtn, t("stats.refresh"));
+    (0, import_obsidian9.setIcon)(refreshBtn, "refresh-cw");
+    (0, import_obsidian9.setTooltip)(refreshBtn, t("stats.refresh"));
     refreshBtn.addEventListener("click", () => void this.render());
     const body = root.createDiv({ cls: "opal-stats-body" });
     body.createDiv({ cls: "opal-stats-loading", text: t("stats.loading") });
@@ -29914,7 +30206,7 @@ var ShareStatsView = class extends import_obsidian10.ItemView {
     const tbody = table.createEl("tbody");
     for (const row of rows) {
       const tr = tbody.createEl("tr", { cls: "opal-stats-row" });
-      (0, import_obsidian10.setTooltip)(tr, t("stats.openDetail"));
+      (0, import_obsidian9.setTooltip)(tr, t("stats.openDetail"));
       tr.addEventListener(
         "click",
         () => new StatsDetailModal(this.app, this.plugin.settings, row, countsAvailable).open()
@@ -29922,21 +30214,21 @@ var ShareStatsView = class extends import_obsidian10.ItemView {
       const titleTd = tr.createEl("td", { cls: "opal-stats-titlecol" });
       const titleWrap = titleTd.createDiv({ cls: "opal-stats-titlecell" });
       const nameEl = titleWrap.createSpan({ cls: "opal-stats-notename", text: row.title });
-      (0, import_obsidian10.setTooltip)(nameEl, t("stats.openNote"));
+      (0, import_obsidian9.setTooltip)(nameEl, t("stats.openNote"));
       nameEl.addEventListener("click", (e) => {
         e.stopPropagation();
         void this.openNote(row.filePath);
       });
       const linkEl = titleWrap.createSpan({ cls: "opal-stats-openlink" });
-      (0, import_obsidian10.setIcon)(linkEl, "external-link");
-      (0, import_obsidian10.setTooltip)(linkEl, t("stats.openLink"));
+      (0, import_obsidian9.setIcon)(linkEl, "external-link");
+      (0, import_obsidian9.setTooltip)(linkEl, t("stats.openLink"));
       linkEl.addEventListener("click", (e) => {
         e.stopPropagation();
         window.open(row.shareLink, "_blank");
       });
       const urlTd = tr.createEl("td", { cls: "opal-stats-url" });
       const urlEl = urlTd.createSpan({ cls: "opal-stats-urltext", text: row.path });
-      (0, import_obsidian10.setTooltip)(urlEl, row.shareLink);
+      (0, import_obsidian9.setTooltip)(urlEl, row.shareLink);
       urlEl.addEventListener("click", (e) => {
         e.stopPropagation();
         window.open(row.shareLink, "_blank");
@@ -29950,14 +30242,14 @@ var ShareStatsView = class extends import_obsidian10.ItemView {
   }
   async openNote(filePath) {
     const file = this.app.vault.getAbstractFileByPath(filePath);
-    if (file instanceof import_obsidian10.TFile) {
+    if (file instanceof import_obsidian9.TFile) {
       await this.app.workspace.getLeaf(false).openFile(file);
     }
   }
 };
 
 // main.ts
-var ShareOnlinePlugin = class extends import_obsidian11.Plugin {
+var ShareOnlinePlugin = class extends import_obsidian10.Plugin {
   async onload() {
     await this.loadSettings();
     this.addSettingTab(new ShareOnlineSettingTab(this.app, this));
@@ -29981,8 +30273,8 @@ var ShareOnlinePlugin = class extends import_obsidian11.Plugin {
     });
     this.statusBarEl = this.addStatusBarItem();
     this.statusBarEl.addClass("opal-status-bar-btn");
-    (0, import_obsidian11.setTooltip)(this.statusBarEl, t("statusbar.shareNote"));
-    (0, import_obsidian11.setIcon)(this.statusBarEl, "share-2");
+    (0, import_obsidian10.setTooltip)(this.statusBarEl, t("statusbar.shareNote"));
+    (0, import_obsidian10.setIcon)(this.statusBarEl, "share-2");
     void this.updateStatusBar();
     this.statusBarEl.addEventListener("click", () => void this.sharePopover.toggle(this.statusBarEl));
     this.registerEvent(
@@ -30002,7 +30294,7 @@ var ShareOnlinePlugin = class extends import_obsidian11.Plugin {
     this.registerEvent(
       this.app.workspace.on("layout-change", () => this.sharePopover.close())
     );
-    const debouncedStatusRefresh = (0, import_obsidian11.debounce)(() => void this.updateStatusBar(), 500, true);
+    const debouncedStatusRefresh = (0, import_obsidian10.debounce)(() => void this.updateStatusBar(), 500, true);
     this.registerEvent(
       this.app.workspace.on("editor-change", () => debouncedStatusRefresh())
     );
@@ -30067,7 +30359,7 @@ var ShareOnlinePlugin = class extends import_obsidian11.Plugin {
     if (((_a2 = this.app.workspace.getActiveFile()) == null ? void 0 : _a2.path) !== file.path) return;
     this.statusBarEl.toggleClass("opal-status-published", published && !stale);
     this.statusBarEl.toggleClass("opal-status-stale", published && stale);
-    (0, import_obsidian11.setTooltip)(
+    (0, import_obsidian10.setTooltip)(
       this.statusBarEl,
       !published ? t("statusbar.shareNote") : stale ? t("statusbar.stale") : t("statusbar.published")
     );
@@ -30081,7 +30373,7 @@ var ShareOnlinePlugin = class extends import_obsidian11.Plugin {
     var _a2, _b2, _c, _d;
     const shareHash = (_c = (_b2 = (_a2 = this.app.metadataCache.getFileCache(file)) == null ? void 0 : _a2.frontmatter) == null ? void 0 : _b2["share_hash"]) != null ? _c : "";
     if (!shareHash) return true;
-    const view = this.app.workspace.getActiveViewOfType(import_obsidian11.MarkdownView);
+    const view = this.app.workspace.getActiveViewOfType(import_obsidian10.MarkdownView);
     const raw = ((_d = view == null ? void 0 : view.file) == null ? void 0 : _d.path) === file.path && view.editor ? view.editor.getValue() : await this.app.vault.cachedRead(file);
     return hashBody(stripFrontmatter(raw)) !== shareHash;
   }
@@ -30090,23 +30382,28 @@ var ShareOnlinePlugin = class extends import_obsidian11.Plugin {
     const url = this.getShareLink(file);
     if (url) activeWindow.open(url, "_blank");
   }
-  publishFromUi(file) {
+  /**
+   * Publish the note plus the given linked sub-notes. Sub-note selection now
+   * happens inline in the share popover (no separate modal), so this just runs
+   * the publish — progress/result are shown back in the popover by `doPublish`.
+   */
+  publishFromUi(file, subNotes) {
     if (!this.isOssReady()) return;
-    new ShareModal(this.app, this, file, "publish", (subNotes) => {
-      void this.doPublish(file, subNotes);
-    }).open();
+    void this.doPublish(file, subNotes);
   }
-  unpublishFromUi(file) {
-    new ShareModal(this.app, this, file, "unpublish", (subNotes) => {
-      void this.doUnpublish(file, subNotes);
-    }).open();
+  /** Unpublish the note plus the sub-notes the user ticked in the popover's confirm panel. */
+  unpublishFromUi(file, subNotesToDelete) {
+    void this.doUnpublish(file, subNotesToDelete);
   }
   async exportFromUi(file) {
     await this.exportFile(file);
   }
   // ── Actions ──────────────────────────────────────────────────────────
   async doPublish(file, subNotes, existingName, successText = t("toast.publishSuccess"), copyToClipboard = true) {
-    this.sharePopover.showBusy(this.statusBarEl, t("toast.uploading"));
+    const total = subNotes.filter((sn) => !sn.shareLink).length + 1;
+    let done = 0;
+    const progress = (label) => this.sharePopover.showProgress(this.statusBarEl, label, done, total);
+    progress(t("toast.progress.rendering"));
     try {
       const usedNames = await listPublishedNames(this.settings);
       const mainName = existingName != null ? existingName : generateUniqueName(usedNames, this.settings.pageLinkLength);
@@ -30133,6 +30430,7 @@ var ShareOnlinePlugin = class extends import_obsidian11.Plugin {
           subFolderMap.set(sn.file.basename, subResult.noteName);
           subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), subResult.noteName);
           if (subResult.hasMath) await ensureKatex();
+          progress(t("toast.progress.subPage", { done: String(done + 1), total: String(total) }));
           const subUrl = await uploadSubNoteToOss(
             this.settings,
             this.app.vault,
@@ -30141,10 +30439,13 @@ var ShareOnlinePlugin = class extends import_obsidian11.Plugin {
             subResult.images
           );
           await this.setShareMeta(sn.file, subUrl);
+          done++;
+          progress(t("toast.progress.subPage", { done: String(done), total: String(total) }));
         }
       }
       mainHtml = rewriteInternalLinks(mainHtml, subFolderMap, false);
       if (result.hasMath) await ensureKatex();
+      progress(t("toast.progress.mainPage"));
       const url = await uploadToOss(
         this.settings,
         this.app.vault,
@@ -30164,11 +30465,15 @@ var ShareOnlinePlugin = class extends import_obsidian11.Plugin {
     }
   }
   async doUnpublish(file, subNotesToDelete) {
-    this.sharePopover.showBusy(this.statusBarEl, t("toast.stopping"));
+    const total = subNotesToDelete.length + (this.getShareLink(file) ? 1 : 0);
+    let done = 0;
+    const progress = (label) => this.sharePopover.showProgress(this.statusBarEl, label, done, total);
+    progress(t("toast.stopping"));
     try {
       const failedSubs = [];
       for (const sn of subNotesToDelete) {
         const snName = this.extractNoteName(sn.shareLink);
+        progress(t("toast.progress.deleteSub", { done: String(done + 1), total: String(total) }));
         try {
           await deleteFromOss(this.settings, snName);
           await this.removeShareMeta(sn.file);
@@ -30176,9 +30481,12 @@ var ShareOnlinePlugin = class extends import_obsidian11.Plugin {
           console.error(`\u5220\u9664\u4E8C\u7EA7\u7B14\u8BB0\u5931\u8D25 (${sn.file.basename}):`, err2);
           failedSubs.push(sn.file.basename);
         }
+        done++;
+        progress(t("toast.progress.deleteSub", { done: String(done), total: String(total) }));
       }
       const existingUrl = this.getShareLink(file);
       if (existingUrl) {
+        progress(t("toast.progress.deleteMain"));
         const existingName = this.extractNoteName(existingUrl);
         await deleteFromOss(this.settings, existingName);
       }
@@ -30209,7 +30517,7 @@ var ShareOnlinePlugin = class extends import_obsidian11.Plugin {
   async exportCurrentNote(toOss = false) {
     const file = this.app.workspace.getActiveFile();
     if (!this.isMarkdown(file)) {
-      new import_obsidian11.Notice(t("notice.onlyMarkdown.publish"));
+      new import_obsidian10.Notice(t("notice.onlyMarkdown.publish"));
       return;
     }
     if (toOss) {

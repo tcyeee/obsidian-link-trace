@@ -77,6 +77,11 @@ const zh: Translations = {
 	"statusbar.stale": "内容有更新 — 点击管理",
 
 	"toast.uploading": "上传中...",
+	"toast.progress.rendering": "正在渲染页面...",
+	"toast.progress.subPage": "上传关联页 {done}/{total}...",
+	"toast.progress.mainPage": "上传主页面...",
+	"toast.progress.deleteSub": "删除关联页 {done}/{total}...",
+	"toast.progress.deleteMain": "删除主页面...",
 	"toast.uploadSuccess": "上传成功",
 	"toast.exporting": "导出中...",
 	"toast.exportSuccess": "已下载 ZIP",
@@ -122,7 +127,9 @@ const zh: Translations = {
 	"popover.unpublished.subline": "发布后可获得分享链接",
 	"popover.stats.views": "阅读量",
 	"popover.stats.refresh": "刷新阅读量",
-	"popover.stats.detail": "查看详情",
+	"popover.stats.noTrend": "近 14 天暂无访问",
+	"popover.stats.expand": "展开",
+	"popover.stats.collapse": "收起",
 };
 
 const en: Translations = {
@@ -200,6 +207,11 @@ const en: Translations = {
 	"statusbar.stale": "Content changed — click to manage",
 
 	"toast.uploading": "Uploading...",
+	"toast.progress.rendering": "Rendering page...",
+	"toast.progress.subPage": "Uploading linked page {done}/{total}...",
+	"toast.progress.mainPage": "Uploading main page...",
+	"toast.progress.deleteSub": "Deleting linked page {done}/{total}...",
+	"toast.progress.deleteMain": "Deleting main page...",
 	"toast.uploadSuccess": "Upload successful",
 	"toast.exporting": "Exporting...",
 	"toast.exportSuccess": "ZIP downloaded",
@@ -245,7 +257,9 @@ const en: Translations = {
 	"popover.unpublished.subline": "Publish to get a shareable link",
 	"popover.stats.views": "Views",
 	"popover.stats.refresh": "Refresh views",
-	"popover.stats.detail": "View details",
+	"popover.stats.noTrend": "No visits in the last 14 days",
+	"popover.stats.expand": "Expand",
+	"popover.stats.collapse": "Collapse",
 };
 
 const translations: Record<Language, Translations> = { zh, en };

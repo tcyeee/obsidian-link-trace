@@ -1,7 +1,6 @@
 import { MarkdownView, Notice, Plugin, TFile, debounce, setIcon, setTooltip } from "obsidian";
 import { ShareOnlineSettings, DEFAULT_SETTINGS, ShareOnlineSettingTab } from "./src/settings";
 import { exportToZip, prepareExport, generateUniqueName, collectLinkedNotesWithStatus, rewriteInternalLinks } from "./src/exporter";
-import { ShareModal } from "./src/share-modal";
 import { uploadToOss, uploadSubNoteToOss, deleteFromOss, listPublishedNames, ensureKatexAssets, katexBaseUrl } from "./src/oss";
 import { t, setLanguage } from "./src/i18n";
 import { getAnalyticsInjectConfig } from "./src/analytics";
@@ -183,17 +182,19 @@ export default class ShareOnlinePlugin extends Plugin {
 		if (url) activeWindow.open(url, "_blank");
 	}
 
-	publishFromUi(file: TFile): void {
+	/**
+	 * Publish the note plus the given linked sub-notes. Sub-note selection now
+	 * happens inline in the share popover (no separate modal), so this just runs
+	 * the publish — progress/result are shown back in the popover by `doPublish`.
+	 */
+	publishFromUi(file: TFile, subNotes: { file: TFile; shareLink: string }[]): void {
 		if (!this.isOssReady()) return;
-		new ShareModal(this.app, this, file, "publish", (subNotes) => {
-			void this.doPublish(file, subNotes);
-		}).open();
+		void this.doPublish(file, subNotes);
 	}
 
-	unpublishFromUi(file: TFile): void {
-		new ShareModal(this.app, this, file, "unpublish", (subNotes) => {
-			void this.doUnpublish(file, subNotes);
-		}).open();
+	/** Unpublish the note plus the sub-notes the user ticked in the popover's confirm panel. */
+	unpublishFromUi(file: TFile, subNotesToDelete: { file: TFile; shareLink: string }[]): void {
+		void this.doUnpublish(file, subNotesToDelete);
 	}
 
 	async exportFromUi(file: TFile): Promise<void> {
@@ -210,8 +211,16 @@ export default class ShareOnlinePlugin extends Plugin {
 		copyToClipboard = true
 	): Promise<void> {
 		// Progress + success are shown inside the share popover (anchored to the
-		// status-bar icon) rather than as a separate toast.
-		this.sharePopover.showBusy(this.statusBarEl, t("toast.uploading"));
+		// status-bar icon) rather than as a separate toast. The popover's bar starts
+		// climbing on a fake ramp the moment publishing begins; the real step count
+		// reported here (one step per uploaded page: each freshly-published sub-note
+		// plus the main page — already-published sub-notes are reused and do no upload
+		// work) only raises a floor that can push the bar ahead of the ramp.
+		const total = subNotes.filter((sn) => !sn.shareLink).length + 1;
+		let done = 0;
+		const progress = (label: string) =>
+			this.sharePopover.showProgress(this.statusBarEl, label, done, total);
+		progress(t("toast.progress.rendering"));
 		try {
 			// Seed with every name already published to OSS so new names never
 			// overwrite an unrelated note; reused names go in too so freshly
@@ -244,6 +253,7 @@ export default class ShareOnlinePlugin extends Plugin {
 					subFolderMap.set(sn.file.basename, subResult.noteName);
 					subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), subResult.noteName);
 					if (subResult.hasMath) await ensureKatex();
+					progress(t("toast.progress.subPage", { done: String(done + 1), total: String(total) }));
 					const subUrl = await uploadSubNoteToOss(
 						this.settings,
 						this.app.vault,
@@ -252,11 +262,14 @@ export default class ShareOnlinePlugin extends Plugin {
 						subResult.images
 					);
 					await this.setShareMeta(sn.file, subUrl);
+					done++;
+					progress(t("toast.progress.subPage", { done: String(done), total: String(total) }));
 				}
 			}
 
 			mainHtml = rewriteInternalLinks(mainHtml, subFolderMap, false);
 			if (result.hasMath) await ensureKatex();
+			progress(t("toast.progress.mainPage"));
 			const url = await uploadToOss(
 				this.settings,
 				this.app.vault,
@@ -280,13 +293,22 @@ export default class ShareOnlinePlugin extends Plugin {
 		file: TFile,
 		subNotesToDelete: { file: TFile; shareLink: string }[]
 	): Promise<void> {
-		this.sharePopover.showBusy(this.statusBarEl, t("toast.stopping"));
+		// The bar starts on a fake ramp the moment unpublishing begins; the real step
+		// count here (one step per deleted page: each selected sub-note plus the main
+		// page — a failed sub-note delete is non-fatal but still advances the step,
+		// it's over either way) only raises a floor, matching the publish flow.
+		const total = subNotesToDelete.length + (this.getShareLink(file) ? 1 : 0);
+		let done = 0;
+		const progress = (label: string) =>
+			this.sharePopover.showProgress(this.statusBarEl, label, done, total);
+		progress(t("toast.stopping"));
 		try {
 			// Delete selected sub-notes first (errors are non-fatal — collected and
 			// surfaced in the result banner rather than as a separate notice)
 			const failedSubs: string[] = [];
 			for (const sn of subNotesToDelete) {
 				const snName = this.extractNoteName(sn.shareLink);
+				progress(t("toast.progress.deleteSub", { done: String(done + 1), total: String(total) }));
 				try {
 					await deleteFromOss(this.settings, snName);
 					await this.removeShareMeta(sn.file);
@@ -294,11 +316,14 @@ export default class ShareOnlinePlugin extends Plugin {
 					console.error(`删除二级笔记失败 (${sn.file.basename}):`, err);
 					failedSubs.push(sn.file.basename);
 				}
+				done++;
+				progress(t("toast.progress.deleteSub", { done: String(done), total: String(total) }));
 			}
 
 			// Delete main note (fatal on failure)
 			const existingUrl = this.getShareLink(file);
 			if (existingUrl) {
+				progress(t("toast.progress.deleteMain"));
 				const existingName = this.extractNoteName(existingUrl);
 				await deleteFromOss(this.settings, existingName);
 			}

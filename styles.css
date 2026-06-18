@@ -24,66 +24,6 @@
   visibility: hidden;
 }
 
-/* ── Share Modal ── */
-.opal-share-modal .opal-modal-title {
-  margin-bottom: 16px;
-}
-.opal-share-modal .opal-modal-section {
-  margin-bottom: 14px;
-}
-.opal-share-modal .opal-modal-section-label {
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-muted);
-  margin: 0 0 6px 0;
-}
-.opal-share-modal .opal-modal-note-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 0;
-}
-.opal-share-modal .opal-modal-note-icon {
-  display: flex;
-  align-items: center;
-  color: var(--text-muted);
-  flex-shrink: 0;
-}
-.opal-share-modal .opal-modal-note-name {
-  flex: 1;
-  font-size: 13.5px;
-}
-.opal-share-modal .opal-modal-badge {
-  font-size: 11px;
-  padding: 1px 7px;
-  border-radius: 10px;
-  background: var(--background-modifier-success);
-  color: var(--text-on-accent);
-  flex-shrink: 0;
-}
-.opal-share-modal .opal-modal-note-item--skip .opal-modal-badge {
-  background: var(--background-modifier-border);
-  color: var(--text-muted);
-}
-.opal-share-modal .opal-modal-note-item--skip .opal-modal-note-name {
-  color: var(--text-muted);
-}
-.opal-share-modal .opal-modal-views {
-  font-size: 11px;
-  color: var(--text-muted);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.opal-share-modal .opal-modal-checkbox {
-  flex-shrink: 0;
-}
-.opal-share-modal .opal-modal-checkbox-placeholder {
-  width: 13px;
-  height: 13px;
-  flex-shrink: 0;
-}
 /* ── URL Preview ── */
 .opal-url-preview {
   margin: -4px 0 20px 0;
@@ -154,13 +94,6 @@ details[open] > .opal-collapsible-heading::before {
 }
 .opal-oss-callout li {
   margin: 2px 0;
-}
-
-.opal-share-modal .opal-modal-btn-row {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 20px;
 }
 
 /* ── Share popover (anchored above the status-bar icon) ── */
@@ -326,36 +259,60 @@ details[open] > .opal-collapsible-heading::before {
   background: var(--background-modifier-hover);
   color: var(--text-normal);
 }
-.opal-share-popover-statsrecent {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-top: 6px;
-}
-.opal-share-popover-statsday {
-  display: flex;
-  gap: 6px;
-  font-size: 12px;
+/* While refreshing: only the icon spins; the views/trend area keeps old data. */
+.opal-share-popover-statsrefresh.is-loading {
+  pointer-events: none;
   color: var(--text-muted);
-  font-variant-numeric: tabular-nums;
 }
-.opal-share-popover-statsdaydate {
-  color: var(--text-normal);
+.opal-share-popover-statsrefresh.is-loading svg {
+  animation: opal-spin 0.65s linear infinite;
+}
+/* 14-day trend sparkline below the views row */
+.opal-share-popover-statstrend {
+  margin-top: 8px;
 }
 
-/* "View details" entry to the global stats page (always shown when published) */
-.opal-share-popover-statsentry {
+/* Expand toggle → reveals the per-dimension breakdown panel */
+.opal-share-popover-expand-toggle {
   display: flex;
-  justify-content: flex-end;
-  margin-top: 9px;
-}
-.opal-share-popover-detaillink {
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
   font-size: 12px;
   color: var(--text-accent);
   cursor: pointer;
 }
-.opal-share-popover-detaillink:hover {
+.opal-share-popover-expand-toggle:hover {
   text-decoration: underline;
+}
+.opal-share-popover-expand-chevron {
+  display: flex;
+  align-items: center;
+  transition: transform 0.15s ease;
+}
+.opal-share-popover-expand-chevron svg {
+  width: 14px;
+  height: 14px;
+}
+.opal-share-popover-expand-toggle.is-expanded .opal-share-popover-expand-chevron {
+  transform: rotate(180deg);
+}
+.opal-share-popover-expand-panel {
+  margin-top: 10px;
+  overflow: hidden;
+  max-height: 600px;
+  opacity: 1;
+  transition: max-height 0.25s ease, opacity 0.2s ease, margin-top 0.25s ease;
+}
+.opal-share-popover-expand-panel.is-collapsed {
+  max-height: 0;
+  margin-top: 0;
+  opacity: 0;
+}
+/* The expand panel reuses the detail modal's section/list styles; drop the last
+   section's bottom margin so the panel doesn't add stray space inside the card. */
+.opal-share-popover-expand-panel .opal-detail-section:last-child {
+  margin-bottom: 0;
 }
 
 .opal-share-popover-hint {
@@ -374,10 +331,17 @@ details[open] > .opal-collapsible-heading::before {
 .opal-share-popover-actions {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 6px;
   margin-top: 12px;
   padding-top: 11px;
   border-top: 1px solid var(--background-modifier-border);
+}
+.opal-share-popover-actions-left,
+.opal-share-popover-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 .opal-share-popover-action {
   display: flex;
@@ -425,6 +389,21 @@ details[open] > .opal-collapsible-heading::before {
   animation: opal-spin 0.65s linear infinite;
   flex-shrink: 0;
 }
+/* Determinate progress bar for multi-page publishes (width ∝ done/total) */
+.opal-share-popover-progressbar {
+  margin-top: 10px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--background-modifier-border);
+  overflow: hidden;
+}
+.opal-share-popover-progressfill {
+  width: var(--opal-progress, 0%);
+  height: 100%;
+  border-radius: inherit;
+  background: var(--interactive-accent);
+  transition: width 0.3s ease;
+}
 .opal-share-popover-erroricon {
   display: flex;
   flex-shrink: 0;
@@ -433,6 +412,105 @@ details[open] > .opal-collapsible-heading::before {
 .opal-share-popover-erroricon svg {
   width: 16px;
   height: 16px;
+}
+
+/* Progress banner pinned above the details while an operation runs (same slot
+   as the success banner). A determinate bar sits below the spinner + label row. */
+.opal-share-popover-busybanner {
+  margin-bottom: 11px;
+  padding: 7px 10px;
+  border-radius: 7px;
+  background: var(--background-modifier-hover);
+}
+.opal-share-popover-busyrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+/* While busy, the details below stay visible but non-interactive. */
+.opal-share-popover--busy .opal-share-popover-actions,
+.opal-share-popover--busy .opal-share-popover-hint {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* Inline publish/unpublish confirmation panel (replaces the old modal). It reuses
+   the normal card's header (icon avatar + title) and bottom button row; these rules
+   only cover the bits unique to the panel — the avatar tint and the note list. */
+.opal-share-popover--confirm .opal-share-popover-icon {
+  color: var(--text-muted);
+  background: var(--background-modifier-hover);
+}
+.opal-share-popover--confirm .opal-share-popover-icon.opal-share-popover-icon--danger {
+  color: var(--color-red);
+  background: rgba(var(--color-red-rgb), 0.15);
+}
+.opal-share-popover-confirm-body {
+  display: flex;
+  flex-direction: column;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.opal-share-popover-confirm-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin: 8px 0 4px;
+}
+.opal-share-popover-confirm-label:first-child {
+  margin-top: 0;
+}
+.opal-share-popover-confirm-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+.opal-share-popover-confirm-icon {
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.opal-share-popover-confirm-name {
+  flex: 1;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.opal-share-popover-confirm-badge {
+  font-size: 11px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  background: var(--background-modifier-success);
+  color: var(--text-on-accent);
+  flex-shrink: 0;
+}
+.opal-share-popover-confirm-check {
+  flex-shrink: 0;
+}
+.opal-share-popover-confirm-check-placeholder {
+  width: 13px;
+  flex-shrink: 0;
+}
+.opal-share-popover-confirm-views {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.opal-share-popover-confirm-item.is-skip .opal-share-popover-confirm-name,
+.opal-share-popover-confirm-item.is-skip .opal-share-popover-confirm-badge {
+  color: var(--text-muted);
+}
+.opal-share-popover-confirm-item.is-skip .opal-share-popover-confirm-badge {
+  background: var(--background-modifier-border);
 }
 
 /* Success banner above the published details after a publish/update */
