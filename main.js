@@ -8070,9 +8070,9 @@ var require_optimize = __commonJS({
 var require_crypto = __commonJS({
   "node_modules/.pnpm/utility@1.18.0/node_modules/utility/crypto.js"(exports2) {
     "use strict";
-    var crypto = require("crypto");
+    var crypto3 = require("crypto");
     exports2.hash = function hash(method, s, format) {
-      var sum = crypto.createHash(method);
+      var sum = crypto3.createHash(method);
       var isBuffer = Buffer.isBuffer(s);
       if (!isBuffer && typeof s === "object") {
         s = JSON.stringify(sortObject(s));
@@ -8091,7 +8091,7 @@ var require_crypto = __commonJS({
     };
     exports2.hmac = function hmac(algorithm, key, data, encoding) {
       encoding = encoding || "base64";
-      var hmac2 = crypto.createHmac(algorithm, key);
+      var hmac2 = crypto3.createHmac(algorithm, key);
       hmac2.update(data, Buffer.isBuffer(data) ? "binary" : "utf8");
       return hmac2.digest(encoding);
     };
@@ -12054,12 +12054,12 @@ var require_default_user_agent = __commonJS({
 // node_modules/.pnpm/digest-header@1.1.0/node_modules/digest-header/index.js
 var require_digest_header = __commonJS({
   "node_modules/.pnpm/digest-header@1.1.0/node_modules/digest-header/index.js"(exports2, module2) {
-    var crypto = require("crypto");
+    var crypto3 = require("crypto");
     var AUTH_KEY_VALUE_RE = /(\w+)=["']?([^'"]{1,10000})["']?/;
     var NC = 0;
     var NC_PAD = "00000000";
     function md5(text) {
-      return crypto.createHash("md5").update(text).digest("hex");
+      return crypto3.createHash("md5").update(text).digest("hex");
     }
     function digestAuthHeader(method, uri, wwwAuthenticate, userpass) {
       const parts = wwwAuthenticate.split(",");
@@ -12077,7 +12077,7 @@ var require_digest_header = __commonJS({
       userpass = userpass.split(":");
       let nc = String(++NC);
       nc = NC_PAD.substring(nc.length) + nc;
-      const cnonce = crypto.randomBytes(8).toString("hex");
+      const cnonce = crypto3.randomBytes(8).toString("hex");
       const ha1 = md5(userpass[0] + ":" + opts.realm + ":" + userpass[1]);
       const ha2 = md5(method.toUpperCase() + ":" + uri);
       let s = ha1 + ":" + opts.nonce;
@@ -12935,7 +12935,7 @@ var require_formstream = __commonJS({
     "use strict";
     var debug = require("util").debuglog("formstream");
     var Stream = require("stream");
-    var crypto = require("crypto");
+    var crypto3 = require("crypto");
     var parseStream = require_pause_stream();
     var util = require("util");
     var mime = require_mime();
@@ -12965,7 +12965,7 @@ var require_formstream = __commonJS({
     util.inherits(FormStream, Stream);
     module2.exports = FormStream;
     FormStream.prototype._generateBoundary = function() {
-      return "--------------------------" + crypto.randomBytes(12).toString("hex");
+      return "--------------------------" + crypto3.randomBytes(12).toString("hex");
     };
     FormStream.prototype.setTotalStreamSize = function(size) {
       if (this._isAllStreamSizeKnown) {
@@ -19331,7 +19331,7 @@ var require_encodeString = __commonJS({
 // node_modules/.pnpm/ali-oss@6.23.0/node_modules/ali-oss/lib/common/signUtils.js
 var require_signUtils = __commonJS({
   "node_modules/.pnpm/ali-oss@6.23.0/node_modules/ali-oss/lib/common/signUtils.js"(exports2) {
-    var crypto = require("crypto");
+    var crypto3 = require("crypto");
     var is = require_is_type_of();
     var qs = require_lib2();
     var { lowercaseKeyHeader } = require_lowercaseKeyHeader();
@@ -19390,7 +19390,7 @@ var require_signUtils = __commonJS({
       return signContent.join("\n");
     };
     exports2.computeSignature = function computeSignature(accessKeySecret, canonicalString, headerEncoding = "utf-8") {
-      const signature = crypto.createHmac("sha1", accessKeySecret);
+      const signature = crypto3.createHmac("sha1", accessKeySecret);
       return signature.update(Buffer.from(canonicalString, headerEncoding)).digest("base64");
     };
     exports2.authorization = function authorization(accessKeyId, accessKeySecret, canonicalString, headerEncoding) {
@@ -19463,17 +19463,17 @@ var require_signUtils = __commonJS({
         // TimeStamp
         this.getCredential(date.split("T")[0], region, void 0, product),
         // Scope
-        crypto.createHash("sha256").update(canonicalRequest).digest("hex")
+        crypto3.createHash("sha256").update(canonicalRequest).digest("hex")
         // Hashed Canonical Request
       ];
       return stringToSign.join("\n");
     };
     exports2.getSignatureV4 = function getSignatureV4(accessKeySecret, date, region, stringToSign, product = "oss") {
-      const signingDate = crypto.createHmac("sha256", `aliyun_v4${accessKeySecret}`).update(date).digest();
-      const signingRegion = crypto.createHmac("sha256", signingDate).update(region).digest();
-      const signingOss = crypto.createHmac("sha256", signingRegion).update(product).digest();
-      const signingKey = crypto.createHmac("sha256", signingOss).update("aliyun_v4_request").digest();
-      const signatureValue = crypto.createHmac("sha256", signingKey).update(stringToSign).digest("hex");
+      const signingDate = crypto3.createHmac("sha256", `aliyun_v4${accessKeySecret}`).update(date).digest();
+      const signingRegion = crypto3.createHmac("sha256", signingDate).update(region).digest();
+      const signingOss = crypto3.createHmac("sha256", signingRegion).update(product).digest();
+      const signingKey = crypto3.createHmac("sha256", signingOss).update("aliyun_v4_request").digest();
+      const signatureValue = crypto3.createHmac("sha256", signingKey).update(stringToSign).digest("hex");
       return signatureValue;
     };
     exports2.authorizationV4 = function authorizationV4(accessKeyId, accessKeySecret, region, method, request, bucketName, objectName, additionalHeaders, headerEncoding = "utf-8", cloudBoxId) {
@@ -20039,7 +20039,7 @@ var require_createRequest = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.createRequest = void 0;
-    var crypto = require("crypto");
+    var crypto3 = require("crypto");
     var debug = require_src()("ali-oss");
     var _isString = require_isString();
     var _isArray = require_isArray();
@@ -20099,7 +20099,7 @@ var require_createRequest = __commonJS({
       if (params.content) {
         if (!params.disabledMD5) {
           if (!params.headers || !params.headers["Content-MD5"]) {
-            headers["Content-MD5"] = crypto.createHash("md5").update(Buffer.from(params.content, "utf8")).digest("base64");
+            headers["Content-MD5"] = crypto3.createHash("md5").update(Buffer.from(params.content, "utf8")).digest("base64");
           } else {
             headers["Content-MD5"] = params.headers["Content-MD5"];
           }
@@ -25239,7 +25239,7 @@ var require_cluster = __commonJS({
 var require_sts = __commonJS({
   "node_modules/.pnpm/ali-oss@6.23.0/node_modules/ali-oss/lib/sts.js"(exports2, module2) {
     var debug = require_src()("ali-oss:sts");
-    var crypto = require("crypto");
+    var crypto3 = require("crypto");
     var querystring = require("querystring");
     var copy = require_copy_to();
     var AgentKeepalive = require_agentkeepalive();
@@ -25344,7 +25344,7 @@ var require_sts = __commonJS({
       const canoQuery = Object.keys(params).sort().map((k) => `${that._escape(k)}=${that._escape(params[k])}`).join("&");
       const stringToSign = `${method.toUpperCase()}&${this._escape("/")}&${this._escape(canoQuery)}`;
       debug("string to sign: %s", stringToSign);
-      let signature = crypto.createHmac("sha1", `${key}&`);
+      let signature = crypto3.createHmac("sha1", `${key}&`);
       signature = signature.update(stringToSign).digest("base64");
       debug("signature: %s", signature);
       return signature;
@@ -25638,7 +25638,7 @@ __export(main_exports, {
   default: () => ShareOnlinePlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian10 = require("obsidian");
+var import_obsidian11 = require("obsidian");
 
 // src/ui/settings.ts
 var import_obsidian = require("obsidian");
@@ -25666,6 +25666,21 @@ var zh = {
   "settings.ossDomain.name": "\u81EA\u5B9A\u4E49\u57DF\u540D",
   "settings.ossDomain.desc": "\u66FF\u6362\u9ED8\u8BA4\u7684 OSS \u57DF\u540D\uFF0C\u7559\u7A7A\u5219\u4F7F\u7528\u9ED8\u8BA4\u3002\u4F8B\u5982 https://cdn.example.com",
   "settings.urlPreview.label": "\u9884\u89C8\uFF1A",
+  "settings.provider.name": "\u5B58\u50A8\u670D\u52A1",
+  "settings.provider.desc": "\u9009\u62E9\u53D1\u5E03\u5230\u54EA\u4E2A\u4E91\u5B58\u50A8",
+  "settings.cos.heading": "\u901A\u8FC7\u817E\u8BAF\u4E91COS\u53D1\u5E03",
+  "settings.cos.callout.item1": "\u8BF7\u786E\u4FDD COS \u5B58\u50A8\u6876\u8BBF\u95EE\u6743\u9650\u4E3A\u300C\u516C\u6709\u8BFB\u79C1\u6709\u5199\u300D",
+  "settings.cos.callout.item2": "COS \u5FC5\u987B\u914D\u7F6E\u81EA\u5B9A\u4E49\u57DF\u540D\uFF0C\u5426\u5219\u94FE\u63A5\u6253\u5F00\u53EA\u4F1A\u89E6\u53D1\u4E0B\u8F7D",
+  "settings.cosRegion.name": "Region",
+  "settings.cosRegion.desc": "\u4F8B\u5982 ap-guangzhou",
+  "settings.cosBucket.name": "Bucket",
+  "settings.cosBucket.desc": "\u542B APPID\uFF0C\u4F8B\u5982 my-bucket-1250000000",
+  "settings.cosSecretId.name": "SecretId",
+  "settings.cosSecretKey.name": "SecretKey",
+  "settings.cosPrefix.name": "\u4E0A\u4F20\u524D\u7F00\u8DEF\u5F84",
+  "settings.cosPrefix.desc": "COS \u4E2D\u7684\u76EE\u5F55\u524D\u7F00\uFF0C\u4F8B\u5982 notes \u2192 notes/<\u7B14\u8BB0\u540D>",
+  "settings.cosDomain.name": "\u81EA\u5B9A\u4E49\u57DF\u540D",
+  "settings.cosDomain.desc": "\u66FF\u6362\u9ED8\u8BA4\u7684 COS \u57DF\u540D\uFF0C\u7559\u7A7A\u5219\u4F7F\u7528\u9ED8\u8BA4\u3002\u4F8B\u5982 https://cdn.example.com",
   "modal.views.loading": "\u6D4F\u89C8 \u2026",
   "modal.views.value": "\u{1F441} {count}",
   "modal.views.fail": "\u{1F441} \u2014",
@@ -25782,6 +25797,21 @@ var en = {
   "settings.ossDomain.name": "Custom Domain",
   "settings.ossDomain.desc": "Replace the default OSS domain. Leave empty for default. e.g. https://cdn.example.com",
   "settings.urlPreview.label": "Preview: ",
+  "settings.provider.name": "Storage provider",
+  "settings.provider.desc": "Choose which cloud to publish to",
+  "settings.cos.heading": "Publish via Tencent COS",
+  "settings.cos.callout.item1": 'Ensure your COS bucket permission is "Public Read / Private Write"',
+  "settings.cos.callout.item2": "COS must have a custom domain configured; otherwise links will trigger a download instead of opening",
+  "settings.cosRegion.name": "Region",
+  "settings.cosRegion.desc": "e.g. ap-guangzhou",
+  "settings.cosBucket.name": "Bucket",
+  "settings.cosBucket.desc": "Includes APPID, e.g. my-bucket-1250000000",
+  "settings.cosSecretId.name": "SecretId",
+  "settings.cosSecretKey.name": "SecretKey",
+  "settings.cosPrefix.name": "Upload Prefix",
+  "settings.cosPrefix.desc": "Directory prefix in COS, e.g. notes \u2192 notes/<note-name>",
+  "settings.cosDomain.name": "Custom Domain",
+  "settings.cosDomain.desc": "Replace the default COS domain. Leave empty for default. e.g. https://cdn.example.com",
   "modal.views.loading": "Views \u2026",
   "modal.views.value": "\u{1F441} {count}",
   "modal.views.fail": "\u{1F441} \u2014",
@@ -25919,12 +25949,19 @@ function formatPageCount(count) {
 // src/ui/settings.ts
 var DEFAULT_SETTINGS = {
   includeLinkedNotes: false,
+  storageProvider: "aliyun",
   ossRegion: "",
   ossBucket: "",
   ossAccessKeyId: "",
   ossAccessKeySecret: "",
   ossPrefix: "notes",
   ossDomain: "",
+  cosRegion: "",
+  cosBucket: "",
+  cosSecretId: "",
+  cosSecretKey: "",
+  cosPrefix: "notes",
+  cosDomain: "",
   pageLinkLength: 3,
   goatcounterEndpoint: "https://stats.viii.me/count",
   language: "zh"
@@ -25935,10 +25972,17 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
     this.plugin = plugin;
   }
   buildPreviewUrl() {
-    const { ossDomain, ossRegion, ossBucket, ossPrefix, pageLinkLength } = this.plugin.settings;
-    const base = ossDomain ? ossDomain : ossRegion && ossBucket ? `https://${ossBucket}.${ossRegion}.aliyuncs.com` : `https://<bucket>.<region>.aliyuncs.com`;
-    const prefix = (ossPrefix || DEFAULT_SETTINGS.ossPrefix).replace(/\/$/, "");
-    const sample = "ab3c5d7e9f2x".slice(0, Math.max(1, pageLinkLength));
+    const s = this.plugin.settings;
+    let base;
+    let prefix;
+    if (s.storageProvider === "tencent") {
+      base = s.cosDomain ? s.cosDomain : s.cosRegion && s.cosBucket ? `https://${s.cosBucket}.cos.${s.cosRegion}.myqcloud.com` : `https://<bucket>.cos.<region>.myqcloud.com`;
+      prefix = (s.cosPrefix || DEFAULT_SETTINGS.cosPrefix).replace(/\/$/, "");
+    } else {
+      base = s.ossDomain ? s.ossDomain : s.ossRegion && s.ossBucket ? `https://${s.ossBucket}.${s.ossRegion}.aliyuncs.com` : `https://<bucket>.<region>.aliyuncs.com`;
+      prefix = (s.ossPrefix || DEFAULT_SETTINGS.ossPrefix).replace(/\/$/, "");
+    }
+    const sample = "ab3c5d7e9f2x".slice(0, Math.max(1, s.pageLinkLength));
     return `${base}/${prefix}/${sample}`;
   }
   display() {
@@ -25962,6 +26006,16 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
         this.buildUI();
       })
     );
+    new import_obsidian.Setting(generalDetails).setName(t("settings.provider.name")).setDesc(t("settings.provider.desc")).addDropdown(
+      (dropdown) => dropdown.addOption("aliyun", "\u963F\u91CC\u4E91 OSS").addOption("tencent", "\u817E\u8BAF\u4E91 COS").setValue(this.plugin.settings.storageProvider).onChange(async (value) => {
+        this.plugin.settings.storageProvider = value;
+        await this.plugin.saveSettings();
+        this.buildUI();
+      })
+    );
+    const previewWrap = generalDetails.createDiv({ cls: "opal-url-preview" });
+    previewWrap.createSpan({ cls: "opal-url-preview-label", text: t("settings.urlPreview.label") });
+    previewEl = previewWrap.createSpan({ cls: "opal-url-preview-url", text: this.buildPreviewUrl() });
     const exportDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
     exportDetails.setAttribute("open", "");
     exportDetails.createEl("summary", {
@@ -26000,9 +26054,6 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
     const ossCalloutList = ossCallout.createEl("ul");
     ossCalloutList.createEl("li", { text: t("settings.oss.callout.item1") });
     ossCalloutList.createEl("li", { text: t("settings.oss.callout.item2") });
-    const previewWrap = ossCallout.createDiv({ cls: "opal-url-preview" });
-    previewWrap.createSpan({ cls: "opal-url-preview-label", text: t("settings.urlPreview.label") });
-    previewEl = previewWrap.createSpan({ cls: "opal-url-preview-url", text: this.buildPreviewUrl() });
     new import_obsidian.Setting(ossDetails).setName(t("settings.ossRegion.name")).setDesc(t("settings.ossRegion.desc")).addText(
       (text) => text.setPlaceholder("oss-cn-hangzhou").setValue(this.plugin.settings.ossRegion).onChange(async (value) => {
         this.plugin.settings.ossRegion = value.trim();
@@ -26041,6 +26092,57 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
     new import_obsidian.Setting(ossDetails).setName(t("settings.ossDomain.name")).setDesc(t("settings.ossDomain.desc")).addText(
       (text) => text.setPlaceholder("https://cdn.example.com").setValue(this.plugin.settings.ossDomain).onChange(async (value) => {
         this.plugin.settings.ossDomain = value.trim().replace(/\/$/, "");
+        await this.plugin.saveSettings();
+        previewEl == null ? void 0 : previewEl.setText(this.buildPreviewUrl());
+      })
+    );
+    const cosDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
+    cosDetails.createEl("summary", {
+      cls: "opal-collapsible-heading",
+      text: t("settings.cos.heading")
+    });
+    const cosCallout = cosDetails.createDiv({ cls: "opal-oss-callout" });
+    const cosCalloutList = cosCallout.createEl("ul");
+    cosCalloutList.createEl("li", { text: t("settings.cos.callout.item1") });
+    cosCalloutList.createEl("li", { text: t("settings.cos.callout.item2") });
+    new import_obsidian.Setting(cosDetails).setName(t("settings.cosRegion.name")).setDesc(t("settings.cosRegion.desc")).addText(
+      (text) => text.setPlaceholder("ap-guangzhou").setValue(this.plugin.settings.cosRegion).onChange(async (value) => {
+        this.plugin.settings.cosRegion = value.trim();
+        await this.plugin.saveSettings();
+        previewEl == null ? void 0 : previewEl.setText(this.buildPreviewUrl());
+      })
+    );
+    new import_obsidian.Setting(cosDetails).setName(t("settings.cosBucket.name")).setDesc(t("settings.cosBucket.desc")).addText(
+      (text) => text.setPlaceholder("my-bucket-1250000000").setValue(this.plugin.settings.cosBucket).onChange(async (value) => {
+        this.plugin.settings.cosBucket = value.trim();
+        await this.plugin.saveSettings();
+        previewEl == null ? void 0 : previewEl.setText(this.buildPreviewUrl());
+      })
+    );
+    new import_obsidian.Setting(cosDetails).setName(t("settings.cosSecretId.name")).addText((text) => {
+      text.setPlaceholder("SecretId").setValue(this.plugin.settings.cosSecretId).onChange(async (value) => {
+        this.plugin.settings.cosSecretId = value.trim();
+        await this.plugin.saveSettings();
+      });
+      text.inputEl.type = "password";
+    });
+    new import_obsidian.Setting(cosDetails).setName(t("settings.cosSecretKey.name")).addText((text) => {
+      text.setPlaceholder("SecretKey").setValue(this.plugin.settings.cosSecretKey).onChange(async (value) => {
+        this.plugin.settings.cosSecretKey = value.trim();
+        await this.plugin.saveSettings();
+      });
+      text.inputEl.type = "password";
+    });
+    new import_obsidian.Setting(cosDetails).setName(t("settings.cosPrefix.name")).setDesc(t("settings.cosPrefix.desc")).addText(
+      (text) => text.setPlaceholder("notes").setValue(this.plugin.settings.cosPrefix).onChange(async (value) => {
+        this.plugin.settings.cosPrefix = value.trim() || DEFAULT_SETTINGS.cosPrefix;
+        await this.plugin.saveSettings();
+        previewEl == null ? void 0 : previewEl.setText(this.buildPreviewUrl());
+      })
+    );
+    new import_obsidian.Setting(cosDetails).setName(t("settings.cosDomain.name")).setDesc(t("settings.cosDomain.desc")).addText(
+      (text) => text.setPlaceholder("https://cdn.example.com").setValue(this.plugin.settings.cosDomain).onChange(async (value) => {
+        this.plugin.settings.cosDomain = value.trim().replace(/\/$/, "");
         await this.plugin.saveSettings();
         previewEl == null ? void 0 : previewEl.setText(this.buildPreviewUrl());
       })
@@ -28873,50 +28975,253 @@ async function exportToZip(app, vault, file, includeLinkedNotes = false, pageLin
   return { result, zip };
 }
 
-// src/publish/oss.ts
-var import_obsidian5 = require("obsidian");
+// src/publish/storage.ts
+var import_obsidian6 = require("obsidian");
+
+// src/publish/stores/aliyun-store.ts
 var import_ali_oss = __toESM(require_client());
+var AliyunStore = class {
+  constructor(settings) {
+    const { ossRegion, ossBucket, ossAccessKeyId, ossAccessKeySecret, ossPrefix, ossDomain } = settings;
+    this.prefix = (ossPrefix || "notes").replace(/\/$/, "");
+    this.isConfigured = !!(ossRegion && ossBucket && ossAccessKeyId && ossAccessKeySecret);
+    this.origin = (ossDomain || `https://${ossBucket}.${ossRegion}.aliyuncs.com`).replace(/\/$/, "");
+    this.client = this.isConfigured ? new import_ali_oss.default({
+      region: ossRegion,
+      accessKeyId: ossAccessKeyId,
+      accessKeySecret: ossAccessKeySecret,
+      bucket: ossBucket,
+      authorizationV4: true
+    }) : null;
+  }
+  c() {
+    if (!this.client) throw new Error("OSS \u672A\u914D\u7F6E");
+    return this.client;
+  }
+  async put(key, body, opts) {
+    const headers = { "Cache-Control": opts.cacheControl };
+    if (opts.contentEncoding) headers["Content-Encoding"] = opts.contentEncoding;
+    await this.c().put(key, body, { mime: opts.mime, headers });
+  }
+  async head(key) {
+    try {
+      await this.c().head(key);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+  async listObjects(prefix, delimiter) {
+    var _a2, _b2;
+    const keys = [];
+    const commonPrefixes = [];
+    let marker;
+    do {
+      const res = await this.c().list({ prefix, delimiter, "max-keys": 1e3, marker }, {});
+      for (const o of (_a2 = res.objects) != null ? _a2 : []) keys.push(o.name);
+      for (const p of (_b2 = res.prefixes) != null ? _b2 : []) commonPrefixes.push(p);
+      marker = res.nextMarker;
+      if (!res.isTruncated) break;
+    } while (marker);
+    return { keys, commonPrefixes };
+  }
+  async delete(key) {
+    await this.c().delete(key);
+  }
+  async deleteMany(keys) {
+    if (keys.length) await this.c().deleteMulti(keys, { quiet: true });
+  }
+  publicUrl(key) {
+    return `${this.origin}/${key}`;
+  }
+};
+
+// src/publish/stores/tencent-store.ts
+var import_obsidian5 = require("obsidian");
+var crypto2 = __toESM(require("crypto"));
+
+// src/publish/stores/tencent-sign.ts
+var crypto = __toESM(require("crypto"));
+function camSafeUrlEncode(str) {
+  return encodeURIComponent(str).replace(/!/g, "%21").replace(/'/g, "%27").replace(/\(/g, "%28").replace(/\)/g, "%29").replace(/\*/g, "%2A");
+}
+function buildCosAuthorization(input) {
+  const { method, pathname, query = {}, headers = {}, secretId, secretKey, startTime, endTime } = input;
+  const hmacSha1 = (key, data) => crypto.createHmac("sha1", key).update(data).digest("hex");
+  const sha1 = (data) => crypto.createHash("sha1").update(data).digest("hex");
+  const obj2parts = (obj) => {
+    const lower = {};
+    for (const k of Object.keys(obj)) lower[k.toLowerCase()] = obj[k];
+    const keys = Object.keys(lower).sort();
+    const list = keys.join(";");
+    const str = keys.map((k) => `${camSafeUrlEncode(k)}=${camSafeUrlEncode(lower[k])}`).join("&");
+    return { list, str };
+  };
+  const keyTime = `${startTime};${endTime}`;
+  const signKey = hmacSha1(secretKey, keyTime);
+  const headerParts = obj2parts(headers);
+  const paramParts = obj2parts(query);
+  const httpString = `${method.toLowerCase()}
+${pathname}
+${paramParts.str}
+${headerParts.str}
+`;
+  const stringToSign = `sha1
+${keyTime}
+${sha1(httpString)}
+`;
+  const signature = hmacSha1(signKey, stringToSign);
+  return [
+    "q-sign-algorithm=sha1",
+    `q-ak=${secretId}`,
+    `q-sign-time=${keyTime}`,
+    `q-key-time=${keyTime}`,
+    `q-header-list=${headerParts.list}`,
+    `q-url-param-list=${paramParts.list}`,
+    `q-signature=${signature}`
+  ].join("&");
+}
+
+// src/publish/stores/tencent-store.ts
+function toArrayBuffer(buf) {
+  return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
+}
+function decodeXml(s) {
+  return s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&");
+}
+function escapeXml(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+var TencentStore = class {
+  constructor(settings) {
+    const { cosSecretId, cosSecretKey, cosBucket, cosRegion, cosPrefix, cosDomain } = settings;
+    this.secretId = cosSecretId;
+    this.secretKey = cosSecretKey;
+    this.prefix = (cosPrefix || "notes").replace(/\/$/, "");
+    this.isConfigured = !!(cosSecretId && cosSecretKey && cosBucket && cosRegion);
+    this.host = `${cosBucket}.cos.${cosRegion}.myqcloud.com`;
+    this.apiBase = `https://${this.host}`;
+    this.publicOrigin = (cosDomain || this.apiBase).replace(/\/$/, "");
+  }
+  /** Authorization header for a request. `query` must match the params actually sent. */
+  auth(method, pathname, query) {
+    const now = Math.floor(Date.now() / 1e3);
+    return buildCosAuthorization({
+      method,
+      pathname,
+      query,
+      headers: { host: this.host },
+      secretId: this.secretId,
+      secretKey: this.secretKey,
+      startTime: now - 60,
+      endTime: now + 900
+    });
+  }
+  /** Encode an object key for the request URL, preserving path separators. */
+  encodeKey(key) {
+    return key.split("/").map(camSafeUrlEncode).join("/");
+  }
+  queryString(query) {
+    return Object.keys(query).sort().map((k) => `${camSafeUrlEncode(k)}=${camSafeUrlEncode(query[k])}`).join("&");
+  }
+  async put(key, body, opts) {
+    const pathname = `/${key}`;
+    const headers = {
+      Authorization: this.auth("put", pathname, {}),
+      Host: this.host,
+      "Content-Type": opts.mime,
+      "Cache-Control": opts.cacheControl
+    };
+    if (opts.contentEncoding) headers["Content-Encoding"] = opts.contentEncoding;
+    const res = await (0, import_obsidian5.requestUrl)({
+      url: `${this.apiBase}/${this.encodeKey(key)}`,
+      method: "PUT",
+      headers,
+      body: toArrayBuffer(body),
+      throw: false
+    });
+    if (res.status >= 300) throw new Error(`COS \u4E0A\u4F20\u5931\u8D25 (${res.status}): ${res.text}`);
+  }
+  async head(key) {
+    const pathname = `/${key}`;
+    const res = await (0, import_obsidian5.requestUrl)({
+      url: `${this.apiBase}/${this.encodeKey(key)}`,
+      method: "HEAD",
+      headers: { Authorization: this.auth("head", pathname, {}), Host: this.host },
+      throw: false
+    });
+    return res.status >= 200 && res.status < 300;
+  }
+  async listObjects(prefix, delimiter) {
+    const keys = [];
+    const commonPrefixes = [];
+    let marker;
+    do {
+      const query = { prefix, "max-keys": "1000" };
+      if (delimiter) query.delimiter = delimiter;
+      if (marker) query.marker = marker;
+      const res = await (0, import_obsidian5.requestUrl)({
+        url: `${this.apiBase}/?${this.queryString(query)}`,
+        method: "GET",
+        headers: { Authorization: this.auth("get", "/", query), Host: this.host },
+        throw: false
+      });
+      if (res.status >= 300) throw new Error(`COS \u5217\u4E3E\u5931\u8D25 (${res.status})`);
+      const xml = res.text;
+      for (const m of xml.matchAll(/<Contents>[\s\S]*?<Key>([^<]*)<\/Key>/g)) keys.push(decodeXml(m[1]));
+      for (const m of xml.matchAll(/<CommonPrefixes>\s*<Prefix>([^<]*)<\/Prefix>/g))
+        commonPrefixes.push(decodeXml(m[1]));
+      const truncated = /<IsTruncated>true<\/IsTruncated>/.test(xml);
+      const nm = xml.match(/<NextMarker>([^<]*)<\/NextMarker>/);
+      marker = truncated ? nm ? decodeXml(nm[1]) : keys[keys.length - 1] : void 0;
+      if (!truncated) break;
+    } while (marker);
+    return { keys, commonPrefixes };
+  }
+  async delete(key) {
+    const pathname = `/${key}`;
+    const res = await (0, import_obsidian5.requestUrl)({
+      url: `${this.apiBase}/${this.encodeKey(key)}`,
+      method: "DELETE",
+      headers: { Authorization: this.auth("delete", pathname, {}), Host: this.host },
+      throw: false
+    });
+    if (res.status >= 300 && res.status !== 404) throw new Error(`COS \u5220\u9664\u5931\u8D25 (${res.status})`);
+  }
+  async deleteMany(keys) {
+    if (!keys.length) return;
+    const body = `<?xml version="1.0" encoding="UTF-8"?><Delete><Quiet>true</Quiet>` + keys.map((k) => `<Object><Key>${escapeXml(k)}</Key></Object>`).join("") + `</Delete>`;
+    const bodyBuf = Buffer.from(body, "utf-8");
+    const md5 = crypto2.createHash("md5").update(bodyBuf).digest("base64");
+    const query = { delete: "" };
+    const res = await (0, import_obsidian5.requestUrl)({
+      url: `${this.apiBase}/?delete`,
+      method: "POST",
+      headers: {
+        Authorization: this.auth("post", "/", query),
+        Host: this.host,
+        "Content-Type": "application/xml",
+        "Content-MD5": md5
+      },
+      body: toArrayBuffer(bodyBuf),
+      throw: false
+    });
+    if (res.status >= 300) throw new Error(`COS \u6279\u91CF\u5220\u9664\u5931\u8D25 (${res.status})`);
+  }
+  publicUrl(key) {
+    return `${this.publicOrigin}/${key}`;
+  }
+};
+
+// src/publish/storage.ts
 var zlib = __toESM(require("zlib"));
 var KATEX_VERSION = "0.16.9";
 var KATEX_CDN = `https://cdn.jsdelivr.net/npm/katex@${KATEX_VERSION}/dist`;
 var HTML_CACHE = "public, max-age=300";
 var IMAGE_CACHE = "public, max-age=86400";
 var IMMUTABLE_CACHE = "public, max-age=31536000, immutable";
-function publishBaseUrl(settings) {
-  const prefix = settings.ossPrefix.replace(/\/$/, "");
-  const origin = settings.ossDomain || `https://${settings.ossBucket}.${settings.ossRegion}.aliyuncs.com`;
-  return `${origin}/${prefix}`;
-}
-function katexBaseUrl(settings) {
-  return `${publishBaseUrl(settings)}/_assets/katex/${KATEX_VERSION}`;
-}
-async function ensureKatexAssets(settings) {
-  const client = makeClient(settings);
-  const prefix = settings.ossPrefix.replace(/\/$/, "");
-  const dir = `${prefix}/_assets/katex/${KATEX_VERSION}`;
-  const cssKey = `${dir}/katex.min.css`;
-  try {
-    await client.head(cssKey);
-    return;
-  } catch (e) {
-  }
-  const headers = { "Cache-Control": IMMUTABLE_CACHE };
-  const cssText = (await (0, import_obsidian5.requestUrl)({ url: `${KATEX_CDN}/katex.min.css` })).text;
-  const fonts = /* @__PURE__ */ new Set();
-  for (const m of cssText.matchAll(/url\(fonts\/([^)]+?\.woff2)\)/g)) fonts.add(m[1]);
-  for (const font of fonts) {
-    const data = (await (0, import_obsidian5.requestUrl)({ url: `${KATEX_CDN}/fonts/${font}` })).arrayBuffer;
-    await client.put(`${dir}/fonts/${font}`, Buffer.from(data), { mime: "font/woff2", headers });
-  }
-  const js = (await (0, import_obsidian5.requestUrl)({ url: `${KATEX_CDN}/katex.min.js` })).arrayBuffer;
-  await client.put(`${dir}/katex.min.js`, Buffer.from(js), {
-    mime: "application/javascript; charset=utf-8",
-    headers
-  });
-  await client.put(cssKey, Buffer.from(cssText, "utf-8"), {
-    mime: "text/css; charset=utf-8",
-    headers
-  });
+function getStore(settings) {
+  return settings.storageProvider === "tencent" ? new TencentStore(settings) : new AliyunStore(settings);
 }
 function getMimeType(ext) {
   var _a2;
@@ -28932,121 +29237,96 @@ function getMimeType(ext) {
   };
   return (_a2 = map[ext.toLowerCase()]) != null ? _a2 : "application/octet-stream";
 }
-function makeClient(settings) {
-  const { ossRegion, ossBucket, ossAccessKeyId, ossAccessKeySecret } = settings;
-  return new import_ali_oss.default({
-    region: ossRegion,
-    accessKeyId: ossAccessKeyId,
-    accessKeySecret: ossAccessKeySecret,
-    bucket: ossBucket,
-    authorizationV4: true
+function katexBaseUrl(settings) {
+  const store = getStore(settings);
+  return store.publicUrl(`${store.prefix}/_assets/katex/${KATEX_VERSION}`);
+}
+async function ensureKatexAssets(settings) {
+  const store = getStore(settings);
+  const dir = `${store.prefix}/_assets/katex/${KATEX_VERSION}`;
+  const cssKey = `${dir}/katex.min.css`;
+  if (await store.head(cssKey)) return;
+  const cssText = (await (0, import_obsidian6.requestUrl)({ url: `${KATEX_CDN}/katex.min.css` })).text;
+  const fonts = /* @__PURE__ */ new Set();
+  for (const m of cssText.matchAll(/url\(fonts\/([^)]+?\.woff2)\)/g)) fonts.add(m[1]);
+  for (const font of fonts) {
+    const data = (await (0, import_obsidian6.requestUrl)({ url: `${KATEX_CDN}/fonts/${font}` })).arrayBuffer;
+    await store.put(`${dir}/fonts/${font}`, Buffer.from(data), {
+      mime: "font/woff2",
+      cacheControl: IMMUTABLE_CACHE
+    });
+  }
+  const js = (await (0, import_obsidian6.requestUrl)({ url: `${KATEX_CDN}/katex.min.js` })).arrayBuffer;
+  await store.put(`${dir}/katex.min.js`, Buffer.from(js), {
+    mime: "application/javascript; charset=utf-8",
+    cacheControl: IMMUTABLE_CACHE
+  });
+  await store.put(cssKey, Buffer.from(cssText, "utf-8"), {
+    mime: "text/css; charset=utf-8",
+    cacheControl: IMMUTABLE_CACHE
   });
 }
 async function listPublishedNames(settings) {
-  var _a2, _b2;
-  const { ossRegion, ossBucket, ossAccessKeyId, ossAccessKeySecret, ossPrefix } = settings;
+  const store = getStore(settings);
   const names = /* @__PURE__ */ new Set();
-  if (!ossRegion || !ossBucket || !ossAccessKeyId || !ossAccessKeySecret) return names;
-  const client = makeClient(settings);
-  const prefix = ossPrefix.replace(/\/$/, "") + "/";
+  if (!store.isConfigured) return names;
+  const prefix = store.prefix.replace(/\/$/, "") + "/";
   try {
-    let marker;
-    do {
-      const res = await client.list(
-        { prefix, delimiter: "/", "max-keys": 1e3, marker },
-        {}
-      );
-      for (const o of (_a2 = res.objects) != null ? _a2 : []) {
-        const n = o.name.slice(prefix.length).replace(/\/.*$/, "");
-        if (n) names.add(n);
-      }
-      for (const p of (_b2 = res.prefixes) != null ? _b2 : []) {
-        const n = p.slice(prefix.length).replace(/\/$/, "");
-        if (n) names.add(n);
-      }
-      marker = res.nextMarker;
-      if (!res.isTruncated) break;
-    } while (marker);
+    const { keys, commonPrefixes } = await store.listObjects(prefix, "/");
+    for (const k of keys) {
+      const n = k.slice(prefix.length).replace(/\/.*$/, "");
+      if (n) names.add(n);
+    }
+    for (const p of commonPrefixes) {
+      const n = p.slice(prefix.length).replace(/\/$/, "");
+      if (n) names.add(n);
+    }
   } catch (err2) {
-    console.warn("[publish-as-link] \u8BFB\u53D6 OSS \u5DF2\u6709\u9875\u9762\u5217\u8868\u5931\u8D25\uFF0C\u672C\u6B21\u4EC5\u5728\u53D1\u5E03\u8303\u56F4\u5185\u53BB\u91CD", err2);
+    console.warn("[publish-as-link] \u8BFB\u53D6\u5DF2\u53D1\u5E03\u9875\u9762\u5217\u8868\u5931\u8D25\uFF0C\u672C\u6B21\u4EC5\u5728\u53D1\u5E03\u8303\u56F4\u5185\u53BB\u91CD", err2);
   }
   return names;
 }
-async function uploadToOss(settings, vault, noteName, html, images) {
-  const { ossRegion, ossBucket, ossAccessKeyId, ossAccessKeySecret, ossPrefix } = settings;
-  if (!ossRegion || !ossBucket || !ossAccessKeyId || !ossAccessKeySecret) {
-    throw new Error("\u8BF7\u5148\u5728\u8BBE\u7F6E\u4E2D\u586B\u5199 OSS \u914D\u7F6E\u4FE1\u606F");
-  }
-  const client = makeClient(settings);
-  const prefix = ossPrefix.replace(/\/$/, "");
-  await client.put(
-    `${prefix}/${noteName}`,
-    zlib.gzipSync(Buffer.from(html, "utf-8")),
-    { mime: "text/html; charset=utf-8", headers: { "Content-Encoding": "gzip", "Cache-Control": HTML_CACHE } }
-  );
-  for (const [exportName, imgFile] of images) {
-    const data = await vault.readBinary(imgFile);
-    await client.put(
-      `${prefix}/${noteName}/images/${exportName}`,
-      Buffer.from(data),
-      { mime: getMimeType(imgFile.extension), headers: { "Cache-Control": IMAGE_CACHE } }
-    );
-  }
-  const base = settings.ossDomain || `https://${ossBucket}.${ossRegion}.aliyuncs.com`;
-  return `${base}/${prefix}/${noteName}`;
-}
-async function uploadSubNoteToOss(settings, vault, subFolderName, html, images) {
-  const { ossRegion, ossBucket, ossAccessKeyId, ossAccessKeySecret } = settings;
-  if (!ossRegion || !ossBucket || !ossAccessKeyId || !ossAccessKeySecret) {
-    throw new Error("\u8BF7\u5148\u5728\u8BBE\u7F6E\u4E2D\u586B\u5199 OSS \u914D\u7F6E\u4FE1\u606F");
-  }
-  const client = makeClient(settings);
-  const prefix = settings.ossPrefix.replace(/\/$/, "");
-  await client.put(`${prefix}/${subFolderName}`, zlib.gzipSync(Buffer.from(html, "utf-8")), {
+async function uploadPage(settings, vault, noteName, html, images) {
+  const store = getStore(settings);
+  if (!store.isConfigured) throw new Error("\u8BF7\u5148\u5728\u8BBE\u7F6E\u4E2D\u586B\u5199\u5B58\u50A8\u914D\u7F6E\u4FE1\u606F");
+  const prefix = store.prefix;
+  await store.put(`${prefix}/${noteName}`, zlib.gzipSync(Buffer.from(html, "utf-8")), {
     mime: "text/html; charset=utf-8",
-    headers: { "Content-Encoding": "gzip", "Cache-Control": HTML_CACHE }
+    cacheControl: HTML_CACHE,
+    contentEncoding: "gzip"
   });
   for (const [exportName, imgFile] of images) {
     const data = await vault.readBinary(imgFile);
-    await client.put(
-      `${prefix}/${subFolderName}/images/${exportName}`,
-      Buffer.from(data),
-      { mime: getMimeType(imgFile.extension), headers: { "Cache-Control": IMAGE_CACHE } }
-    );
+    await store.put(`${prefix}/${noteName}/images/${exportName}`, Buffer.from(data), {
+      mime: getMimeType(imgFile.extension),
+      cacheControl: IMAGE_CACHE
+    });
   }
-  const base = settings.ossDomain || `https://${settings.ossBucket}.${settings.ossRegion}.aliyuncs.com`;
-  return `${base}/${prefix}/${subFolderName}`;
+  return store.publicUrl(`${prefix}/${noteName}`);
 }
-async function deleteFromOss(settings, noteName) {
-  var _a2;
-  const { ossRegion, ossBucket, ossAccessKeyId, ossAccessKeySecret, ossPrefix } = settings;
-  if (!ossRegion || !ossBucket || !ossAccessKeyId || !ossAccessKeySecret) {
-    throw new Error("\u8BF7\u5148\u5728\u8BBE\u7F6E\u4E2D\u586B\u5199 OSS \u914D\u7F6E\u4FE1\u606F");
-  }
-  const client = makeClient(settings);
-  const prefix = ossPrefix.replace(/\/$/, "");
+async function deletePage(settings, noteName) {
+  const store = getStore(settings);
+  if (!store.isConfigured) throw new Error("\u8BF7\u5148\u5728\u8BBE\u7F6E\u4E2D\u586B\u5199\u5B58\u50A8\u914D\u7F6E\u4FE1\u606F");
+  const prefix = store.prefix;
   const folderPrefix = `${prefix}/${noteName}/`;
-  await client.delete(`${prefix}/${noteName}`).catch(() => {
+  await store.delete(`${prefix}/${noteName}`).catch(() => {
   });
   try {
-    const listResult = await client.list({ prefix: folderPrefix, "max-keys": 1e3 });
-    const keys = ((_a2 = listResult.objects) != null ? _a2 : []).map((o) => o.name);
-    if (keys.length > 0) {
-      await client.deleteMulti(keys, { quiet: true });
-    }
+    const { keys } = await store.listObjects(folderPrefix);
+    if (keys.length > 0) await store.deleteMany(keys);
   } catch (e) {
-    await client.delete(`${folderPrefix}index.html`).catch(() => {
+    await store.delete(`${folderPrefix}index.html`).catch(() => {
     });
-    await client.delete(`${folderPrefix}style.css`).catch(() => {
+    await store.delete(`${folderPrefix}style.css`).catch(() => {
     });
   }
 }
 
 // src/ui/share-popover.ts
-var import_obsidian8 = require("obsidian");
+var import_obsidian9 = require("obsidian");
 
 // src/analytics/analytics-client.ts
-var import_obsidian6 = require("obsidian");
+var import_obsidian7 = require("obsidian");
 var STATS_START = "2020-01-01T00:00:00Z";
 var sleep = (ms) => new Promise((r) => window.setTimeout(r, ms));
 var STATS_HEADERS = { accept: "application/json" };
@@ -29060,7 +29340,7 @@ async function fetchPageViews(settings, shareLink) {
   const query = `?start=${encodeURIComponent(STATS_START)}&end=${encodeURIComponent(end)}&path_by_name=true&include_paths=${encodeURIComponent(urlPath)}&limit=1`;
   const url = `${apiBase}/stats/hits${query}`;
   try {
-    const res = await (0, import_obsidian6.requestUrl)({
+    const res = await (0, import_obsidian7.requestUrl)({
       url,
       method: "GET",
       headers: STATS_HEADERS,
@@ -29085,7 +29365,7 @@ async function fetchAllPathHits(settings) {
     for (let page = 0; page < MAX_HITS_PAGES; page++) {
       const exclude = seenIds.map((id) => `&exclude_paths=${id}`).join("");
       const url = `${apiBase}/stats/hits?start=${encodeURIComponent(STATS_START)}&end=${encodeURIComponent(end)}&limit=100${exclude}`;
-      const res = await (0, import_obsidian6.requestUrl)({
+      const res = await (0, import_obsidian7.requestUrl)({
         url,
         method: "GET",
         headers: STATS_HEADERS,
@@ -29141,7 +29421,7 @@ function createGet(apiBase) {
     var _a2;
     for (let attempt = 0; attempt < 4; attempt++) {
       try {
-        const res = await (0, import_obsidian6.requestUrl)({
+        const res = await (0, import_obsidian7.requestUrl)({
           url: `${apiBase}${query}`,
           method: "GET",
           headers: STATS_HEADERS,
@@ -29240,7 +29520,7 @@ async function fetchDailyTrend(settings, shareLink, days) {
   const query = `?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}&daily=true&path_by_name=true&include_paths=${encodeURIComponent(urlPath)}&limit=1`;
   const url = `${apiBase}/stats/hits${query}`;
   try {
-    const res = await (0, import_obsidian6.requestUrl)({ url, method: "GET", headers: STATS_HEADERS, throw: false });
+    const res = await (0, import_obsidian7.requestUrl)({ url, method: "GET", headers: STATS_HEADERS, throw: false });
     if (res.status < 200 || res.status >= 300) return null;
     return parseDailySeries(res.json);
   } catch (e) {
@@ -29249,7 +29529,7 @@ async function fetchDailyTrend(settings, shareLink, days) {
 }
 
 // src/analytics/stats-detail-modal.ts
-var import_obsidian7 = require("obsidian");
+var import_obsidian8 = require("obsidian");
 function formatDateTime(ms) {
   if (ms == null) return t("stats.views.unknown");
   const d = new Date(ms);
@@ -29271,7 +29551,7 @@ function sizeLabel(id) {
       return t("stats.detail.unknownName");
   }
 }
-var StatsDetailModal = class extends import_obsidian7.Modal {
+var StatsDetailModal = class extends import_obsidian8.Modal {
   constructor(app, settings, row, countsAvailable) {
     super(app);
     this.settings = settings;
@@ -29335,7 +29615,7 @@ var StatsDetailModal = class extends import_obsidian7.Modal {
     header.createDiv({ cls: "opal-detail-title", text: this.row.title });
     const urlEl = header.createDiv({ cls: "opal-detail-url" });
     const linkIcon = urlEl.createSpan({ cls: "opal-detail-url-icon" });
-    (0, import_obsidian7.setIcon)(linkIcon, "external-link");
+    (0, import_obsidian8.setIcon)(linkIcon, "external-link");
     const linkText = urlEl.createSpan({ cls: "opal-detail-url-text", text: this.row.shareLink });
     const open = () => window.open(this.row.shareLink, "_blank");
     urlEl.addEventListener("click", open);
@@ -29599,7 +29879,7 @@ var SharePopover = class {
     card.addClass(`${POPOVER_CLASS}--error`);
     const row = card.createDiv({ cls: "opal-share-popover-progress" });
     const icon = row.createDiv({ cls: "opal-share-popover-erroricon" });
-    (0, import_obsidian8.setIcon)(icon, "alert-triangle");
+    (0, import_obsidian9.setIcon)(icon, "alert-triangle");
     row.createSpan({ text });
     this.position(card, anchor);
     this.registerDismiss(card, anchor);
@@ -29688,7 +29968,7 @@ var SharePopover = class {
       this.progressFill = null;
       const el2 = card.createDiv({ cls: "opal-share-popover-success" });
       const check = el2.createDiv({ cls: "opal-share-popover-successicon" });
-      (0, import_obsidian8.setIcon)(check, "check");
+      (0, import_obsidian9.setIcon)(check, "check");
       el2.createSpan({ text: banner.text });
       return;
     }
@@ -29705,7 +29985,7 @@ var SharePopover = class {
     if (banner) this.renderTopBanner(card, banner);
     const header = card.createDiv({ cls: "opal-share-popover-header" });
     const icon = header.createDiv({ cls: "opal-share-popover-icon" });
-    (0, import_obsidian8.setIcon)(icon, "globe");
+    (0, import_obsidian9.setIcon)(icon, "globe");
     const headText = header.createDiv({ cls: "opal-share-popover-headtext" });
     headText.createDiv({ cls: "opal-share-popover-title", text: t("popover.title") });
     header.createSpan({
@@ -29721,21 +30001,21 @@ var SharePopover = class {
     link.setAttr("target", "_blank");
     link.setAttr("rel", "noopener");
     const copyBtn = urlRow.createDiv({ cls: "opal-share-popover-copy" });
-    (0, import_obsidian8.setIcon)(copyBtn, "copy");
-    (0, import_obsidian8.setTooltip)(copyBtn, t("popover.copy"));
+    (0, import_obsidian9.setIcon)(copyBtn, "copy");
+    (0, import_obsidian9.setTooltip)(copyBtn, t("popover.copy"));
     let copiedTimer = 0;
     copyBtn.addEventListener("click", (e) => {
       e.preventDefault();
       void navigator.clipboard.writeText(shareLink).then(() => {
         copyBtn.addClass("is-copied");
-        (0, import_obsidian8.setIcon)(copyBtn, "check");
-        (0, import_obsidian8.setTooltip)(copyBtn, t("popover.copied"));
+        (0, import_obsidian9.setIcon)(copyBtn, "check");
+        (0, import_obsidian9.setTooltip)(copyBtn, t("popover.copied"));
         window.clearTimeout(copiedTimer);
         copiedTimer = window.setTimeout(() => {
           if (!copyBtn.isConnected) return;
           copyBtn.removeClass("is-copied");
-          (0, import_obsidian8.setIcon)(copyBtn, "copy");
-          (0, import_obsidian8.setTooltip)(copyBtn, t("popover.copy"));
+          (0, import_obsidian9.setIcon)(copyBtn, "copy");
+          (0, import_obsidian9.setTooltip)(copyBtn, t("popover.copy"));
         }, 1500);
       });
     });
@@ -29792,7 +30072,7 @@ var SharePopover = class {
     if (banner) this.renderTopBanner(card, banner);
     const header = card.createDiv({ cls: "opal-share-popover-header" });
     const icon = header.createDiv({ cls: "opal-share-popover-icon" });
-    (0, import_obsidian8.setIcon)(icon, "globe");
+    (0, import_obsidian9.setIcon)(icon, "globe");
     const headText = header.createDiv({ cls: "opal-share-popover-headtext" });
     headText.createDiv({ cls: "opal-share-popover-title", text: t("popover.unpublished.title") });
     headText.createDiv({
@@ -29848,7 +30128,7 @@ var SharePopover = class {
     const header = card.createDiv({ cls: "opal-share-popover-header" });
     const icon = header.createDiv({ cls: "opal-share-popover-icon" });
     if (!isPublish) icon.addClass("opal-share-popover-icon--danger");
-    (0, import_obsidian8.setIcon)(icon, isPublish ? "globe" : "trash-2");
+    (0, import_obsidian9.setIcon)(icon, isPublish ? "globe" : "trash-2");
     const headText = header.createDiv({ cls: "opal-share-popover-headtext" });
     headText.createDiv({
       cls: "opal-share-popover-title",
@@ -29860,7 +30140,7 @@ var SharePopover = class {
       text: isPublish ? t("modal.mainNote") : t("modal.mainNote.stopping")
     });
     const mainRow = body.createDiv({ cls: "opal-share-popover-confirm-item" });
-    (0, import_obsidian8.setIcon)(mainRow.createDiv({ cls: "opal-share-popover-confirm-icon" }), "file-text");
+    (0, import_obsidian9.setIcon)(mainRow.createDiv({ cls: "opal-share-popover-confirm-icon" }), "file-text");
     mainRow.createSpan({ cls: "opal-share-popover-confirm-name", text: file.basename + ".md" });
     if (isPublish) this.showConfirmViews(mainRow, this.plugin.getShareLink(file));
     if (subNotes.length > 0) {
@@ -29881,7 +30161,7 @@ var SharePopover = class {
             row.createDiv({ cls: "opal-share-popover-confirm-check-placeholder" });
           }
         }
-        (0, import_obsidian8.setIcon)(row.createDiv({ cls: "opal-share-popover-confirm-icon" }), "file-text");
+        (0, import_obsidian9.setIcon)(row.createDiv({ cls: "opal-share-popover-confirm-icon" }), "file-text");
         row.createSpan({ cls: "opal-share-popover-confirm-name", text: sn.file.basename + ".md" });
         if (isPublish) {
           row.createSpan({
@@ -29946,8 +30226,8 @@ var SharePopover = class {
     viewsRow.createSpan({ cls: "opal-share-popover-statslabel", text: t("popover.stats.views") });
     const num = viewsRow.createSpan({ cls: "opal-share-popover-statsnum" });
     const refresh = viewsRow.createDiv({ cls: "opal-share-popover-statsrefresh" });
-    (0, import_obsidian8.setIcon)(refresh, "refresh-cw");
-    (0, import_obsidian8.setTooltip)(refresh, t("popover.stats.refresh"));
+    (0, import_obsidian9.setIcon)(refresh, "refresh-cw");
+    (0, import_obsidian9.setTooltip)(refresh, t("popover.stats.refresh"));
     const trend = block.createDiv({ cls: "opal-share-popover-statstrend" });
     const cached = this.statsCache.get(shareLink);
     const hasCache = (cached == null ? void 0 : cached.views) !== void 0 || (cached == null ? void 0 : cached.trend) !== void 0;
@@ -30052,7 +30332,7 @@ var SharePopover = class {
   renderExpand(block, card, shareLink) {
     const toggle = block.createDiv({ cls: "opal-share-popover-expand-toggle" });
     const chevron = toggle.createSpan({ cls: "opal-share-popover-expand-chevron" });
-    (0, import_obsidian8.setIcon)(chevron, "chevron-down");
+    (0, import_obsidian9.setIcon)(chevron, "chevron-down");
     const label = toggle.createSpan({ text: t("popover.stats.expand") });
     const panel = block.createDiv({ cls: "opal-share-popover-expand-panel is-collapsed" });
     panel.addEventListener("transitionend", (e) => {
@@ -30140,14 +30420,14 @@ var SharePopover = class {
   iconAction(parent, icon, tooltip, onClick, danger = false) {
     const btn = parent.createDiv({ cls: "opal-share-popover-action" });
     if (danger) btn.addClass("opal-share-popover-action--danger");
-    (0, import_obsidian8.setIcon)(btn, icon);
-    (0, import_obsidian8.setTooltip)(btn, tooltip);
+    (0, import_obsidian9.setIcon)(btn, icon);
+    (0, import_obsidian9.setTooltip)(btn, tooltip);
     btn.addEventListener("click", onClick);
   }
 };
 
 // src/analytics/stats-view.ts
-var import_obsidian9 = require("obsidian");
+var import_obsidian10 = require("obsidian");
 var VIEW_TYPE_SHARE_STATS = "share-stats-view";
 function formatDate(ms) {
   if (ms == null) return t("stats.views.unknown");
@@ -30177,7 +30457,7 @@ function collectPublishedPages(app) {
   }
   return pages;
 }
-var ShareStatsView = class extends import_obsidian9.ItemView {
+var ShareStatsView = class extends import_obsidian10.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
     this.plugin = plugin;
@@ -30209,12 +30489,12 @@ var ShareStatsView = class extends import_obsidian9.ItemView {
     const headLeft = header.createDiv({ cls: "opal-stats-headleft" });
     const titleRow = headLeft.createDiv({ cls: "opal-stats-titlerow" });
     const titleIcon = titleRow.createDiv({ cls: "opal-stats-titleicon" });
-    (0, import_obsidian9.setIcon)(titleIcon, "bar-chart-3");
+    (0, import_obsidian10.setIcon)(titleIcon, "bar-chart-3");
     titleRow.createSpan({ cls: "opal-stats-title", text: t("stats.title") });
     const cardsEl = headLeft.createDiv({ cls: "opal-stats-cards" });
     const refreshBtn = header.createDiv({ cls: "opal-stats-refresh" });
-    (0, import_obsidian9.setIcon)(refreshBtn, "refresh-cw");
-    (0, import_obsidian9.setTooltip)(refreshBtn, t("stats.refresh"));
+    (0, import_obsidian10.setIcon)(refreshBtn, "refresh-cw");
+    (0, import_obsidian10.setTooltip)(refreshBtn, t("stats.refresh"));
     refreshBtn.addEventListener("click", () => void this.render());
     const body = root.createDiv({ cls: "opal-stats-body" });
     body.createDiv({ cls: "opal-stats-loading", text: t("stats.loading") });
@@ -30269,7 +30549,7 @@ var ShareStatsView = class extends import_obsidian9.ItemView {
     const tbody = table.createEl("tbody");
     for (const row of rows) {
       const tr = tbody.createEl("tr", { cls: "opal-stats-row" });
-      (0, import_obsidian9.setTooltip)(tr, t("stats.openDetail"));
+      (0, import_obsidian10.setTooltip)(tr, t("stats.openDetail"));
       tr.addEventListener(
         "click",
         () => new StatsDetailModal(this.app, this.plugin.settings, row, countsAvailable).open()
@@ -30277,21 +30557,21 @@ var ShareStatsView = class extends import_obsidian9.ItemView {
       const titleTd = tr.createEl("td", { cls: "opal-stats-titlecol" });
       const titleWrap = titleTd.createDiv({ cls: "opal-stats-titlecell" });
       const nameEl = titleWrap.createSpan({ cls: "opal-stats-notename", text: row.title });
-      (0, import_obsidian9.setTooltip)(nameEl, t("stats.openNote"));
+      (0, import_obsidian10.setTooltip)(nameEl, t("stats.openNote"));
       nameEl.addEventListener("click", (e) => {
         e.stopPropagation();
         void this.openNote(row.filePath);
       });
       const linkEl = titleWrap.createSpan({ cls: "opal-stats-openlink" });
-      (0, import_obsidian9.setIcon)(linkEl, "external-link");
-      (0, import_obsidian9.setTooltip)(linkEl, t("stats.openLink"));
+      (0, import_obsidian10.setIcon)(linkEl, "external-link");
+      (0, import_obsidian10.setTooltip)(linkEl, t("stats.openLink"));
       linkEl.addEventListener("click", (e) => {
         e.stopPropagation();
         window.open(row.shareLink, "_blank");
       });
       const urlTd = tr.createEl("td", { cls: "opal-stats-url" });
       const urlEl = urlTd.createSpan({ cls: "opal-stats-urltext", text: row.path });
-      (0, import_obsidian9.setTooltip)(urlEl, row.shareLink);
+      (0, import_obsidian10.setTooltip)(urlEl, row.shareLink);
       urlEl.addEventListener("click", (e) => {
         e.stopPropagation();
         window.open(row.shareLink, "_blank");
@@ -30305,14 +30585,14 @@ var ShareStatsView = class extends import_obsidian9.ItemView {
   }
   async openNote(filePath) {
     const file = this.app.vault.getAbstractFileByPath(filePath);
-    if (file instanceof import_obsidian9.TFile) {
+    if (file instanceof import_obsidian10.TFile) {
       await this.app.workspace.getLeaf(false).openFile(file);
     }
   }
 };
 
 // main.ts
-var ShareOnlinePlugin = class extends import_obsidian10.Plugin {
+var ShareOnlinePlugin = class extends import_obsidian11.Plugin {
   async onload() {
     await this.loadSettings();
     this.addSettingTab(new ShareOnlineSettingTab(this.app, this));
@@ -30336,8 +30616,8 @@ var ShareOnlinePlugin = class extends import_obsidian10.Plugin {
     });
     this.statusBarEl = this.addStatusBarItem();
     this.statusBarEl.addClass("opal-status-bar-btn");
-    (0, import_obsidian10.setTooltip)(this.statusBarEl, t("statusbar.shareNote"));
-    (0, import_obsidian10.setIcon)(this.statusBarEl, "share-2");
+    (0, import_obsidian11.setTooltip)(this.statusBarEl, t("statusbar.shareNote"));
+    (0, import_obsidian11.setIcon)(this.statusBarEl, "share-2");
     void this.updateStatusBar();
     this.statusBarEl.addEventListener("click", () => void this.sharePopover.toggle(this.statusBarEl));
     this.registerEvent(
@@ -30357,7 +30637,7 @@ var ShareOnlinePlugin = class extends import_obsidian10.Plugin {
     this.registerEvent(
       this.app.workspace.on("layout-change", () => this.sharePopover.close())
     );
-    const debouncedStatusRefresh = (0, import_obsidian10.debounce)(() => void this.updateStatusBar(), 500, true);
+    const debouncedStatusRefresh = (0, import_obsidian11.debounce)(() => void this.updateStatusBar(), 500, true);
     this.registerEvent(
       this.app.workspace.on("editor-change", () => debouncedStatusRefresh())
     );
@@ -30422,7 +30702,7 @@ var ShareOnlinePlugin = class extends import_obsidian10.Plugin {
     if (((_a2 = this.app.workspace.getActiveFile()) == null ? void 0 : _a2.path) !== file.path) return;
     this.statusBarEl.toggleClass("opal-status-published", published && !stale);
     this.statusBarEl.toggleClass("opal-status-stale", published && stale);
-    (0, import_obsidian10.setTooltip)(
+    (0, import_obsidian11.setTooltip)(
       this.statusBarEl,
       !published ? t("statusbar.shareNote") : stale ? t("statusbar.stale") : t("statusbar.published")
     );
@@ -30436,7 +30716,7 @@ var ShareOnlinePlugin = class extends import_obsidian10.Plugin {
     var _a2, _b2, _c, _d;
     const shareHash = (_c = (_b2 = (_a2 = this.app.metadataCache.getFileCache(file)) == null ? void 0 : _a2.frontmatter) == null ? void 0 : _b2["share_hash"]) != null ? _c : "";
     if (!shareHash) return true;
-    const view = this.app.workspace.getActiveViewOfType(import_obsidian10.MarkdownView);
+    const view = this.app.workspace.getActiveViewOfType(import_obsidian11.MarkdownView);
     const raw = ((_d = view == null ? void 0 : view.file) == null ? void 0 : _d.path) === file.path && view.editor ? view.editor.getValue() : await this.app.vault.cachedRead(file);
     return hashBody(stripFrontmatter(raw)) !== shareHash;
   }
@@ -30494,7 +30774,7 @@ var ShareOnlinePlugin = class extends import_obsidian10.Plugin {
           subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), subResult.noteName);
           if (subResult.hasMath) await ensureKatex();
           progress(t("toast.progress.subPage", { done: String(done + 1), total: String(total) }));
-          const subUrl = await uploadSubNoteToOss(
+          const subUrl = await uploadPage(
             this.settings,
             this.app.vault,
             subResult.noteName,
@@ -30509,7 +30789,7 @@ var ShareOnlinePlugin = class extends import_obsidian10.Plugin {
       mainHtml = rewriteInternalLinks(mainHtml, subFolderMap, false);
       if (result.hasMath) await ensureKatex();
       progress(t("toast.progress.mainPage"));
-      const url = await uploadToOss(
+      const url = await uploadPage(
         this.settings,
         this.app.vault,
         result.noteName,
@@ -30538,7 +30818,7 @@ var ShareOnlinePlugin = class extends import_obsidian10.Plugin {
         const snName = this.extractNoteName(sn.shareLink);
         progress(t("toast.progress.deleteSub", { done: String(done + 1), total: String(total) }));
         try {
-          await deleteFromOss(this.settings, snName);
+          await deletePage(this.settings, snName);
           await this.removeShareMeta(sn.file);
         } catch (err2) {
           console.error(`\u5220\u9664\u4E8C\u7EA7\u7B14\u8BB0\u5931\u8D25 (${sn.file.basename}):`, err2);
@@ -30551,7 +30831,7 @@ var ShareOnlinePlugin = class extends import_obsidian10.Plugin {
       if (existingUrl) {
         progress(t("toast.progress.deleteMain"));
         const existingName = this.extractNoteName(existingUrl);
-        await deleteFromOss(this.settings, existingName);
+        await deletePage(this.settings, existingName);
       }
       await this.removeShareMeta(file);
       void this.updateStatusBar();
@@ -30580,7 +30860,7 @@ var ShareOnlinePlugin = class extends import_obsidian10.Plugin {
   async exportCurrentNote(toOss = false) {
     const file = this.app.workspace.getActiveFile();
     if (!this.isMarkdown(file)) {
-      new import_obsidian10.Notice(t("notice.onlyMarkdown.publish"));
+      new import_obsidian11.Notice(t("notice.onlyMarkdown.publish"));
       return;
     }
     if (toOss) {
