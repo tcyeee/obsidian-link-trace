@@ -27312,203 +27312,6 @@ function resolveBaseEmbeds(content) {
   );
 }
 
-// src/analytics.ts
-function escapeAttr(value) {
-  return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
-}
-function getGoatCounterScriptTag(cfg) {
-  const endpoint = escapeAttr(cfg.endpoint);
-  const scriptSrc = escapeAttr(cfg.endpoint + ".js");
-  return `<script data-goatcounter="${endpoint}" async src="${scriptSrc}"></script>`;
-}
-function extractPathname(shareLink) {
-  try {
-    return new URL(shareLink).pathname;
-  } catch (e) {
-    return null;
-  }
-}
-function deriveApiBase(endpoint) {
-  try {
-    return new URL(endpoint).origin + "/api/v0";
-  } catch (e) {
-    return null;
-  }
-}
-function parseStatsResponse(json) {
-  if (!json || typeof json !== "object") return null;
-  const obj = json;
-  const hits = obj.hits;
-  if (Array.isArray(hits)) {
-    let sum = 0;
-    let found = false;
-    for (const h of hits) {
-      const count = h == null ? void 0 : h.count;
-      if (typeof count === "number") {
-        sum += count;
-        found = true;
-      }
-    }
-    if (found || hits.length === 0) return { views: sum };
-  }
-  if (typeof obj.total === "number") return { views: obj.total };
-  return null;
-}
-function parseHitsList(json) {
-  if (!json || typeof json !== "object") return null;
-  const hits = json.hits;
-  if (!Array.isArray(hits)) return null;
-  const out = [];
-  for (const h of hits) {
-    const obj = h;
-    if (obj && typeof obj.path === "string" && typeof obj.count === "number") {
-      const id = obj.path_id;
-      out.push({ path: obj.path, count: obj.count, pathId: typeof id === "number" ? id : null });
-    }
-  }
-  return out;
-}
-function parseDimensionStats(json) {
-  if (!json || typeof json !== "object") return null;
-  const stats = json.stats;
-  if (!Array.isArray(stats)) return null;
-  const out = [];
-  for (const s of stats) {
-    const obj = s;
-    if (obj && typeof obj.name === "string" && typeof obj.count === "number") {
-      const item = { name: obj.name, count: obj.count };
-      if (typeof obj.id === "string") item.id = obj.id;
-      out.push(item);
-    }
-  }
-  return out;
-}
-var CN_PROVINCE_ZH = {
-  Beijing: "\u5317\u4EAC",
-  Tianjin: "\u5929\u6D25",
-  Hebei: "\u6CB3\u5317",
-  Shanxi: "\u5C71\u897F",
-  "Inner Mongolia": "\u5185\u8499\u53E4",
-  "Nei Mongol": "\u5185\u8499\u53E4",
-  Liaoning: "\u8FBD\u5B81",
-  Jilin: "\u5409\u6797",
-  Heilongjiang: "\u9ED1\u9F99\u6C5F",
-  Shanghai: "\u4E0A\u6D77",
-  Jiangsu: "\u6C5F\u82CF",
-  Zhejiang: "\u6D59\u6C5F",
-  Anhui: "\u5B89\u5FBD",
-  Fujian: "\u798F\u5EFA",
-  Jiangxi: "\u6C5F\u897F",
-  Shandong: "\u5C71\u4E1C",
-  Henan: "\u6CB3\u5357",
-  Hubei: "\u6E56\u5317",
-  Hunan: "\u6E56\u5357",
-  Guangdong: "\u5E7F\u4E1C",
-  Guangxi: "\u5E7F\u897F",
-  "Guangxi Zhuangzu": "\u5E7F\u897F",
-  Hainan: "\u6D77\u5357",
-  Chongqing: "\u91CD\u5E86",
-  Sichuan: "\u56DB\u5DDD",
-  Guizhou: "\u8D35\u5DDE",
-  Yunnan: "\u4E91\u5357",
-  Tibet: "\u897F\u85CF",
-  Xizang: "\u897F\u85CF",
-  Shaanxi: "\u9655\u897F",
-  Gansu: "\u7518\u8083",
-  Qinghai: "\u9752\u6D77",
-  Ningxia: "\u5B81\u590F",
-  "Ningxia Huizu": "\u5B81\u590F",
-  Xinjiang: "\u65B0\u7586",
-  "Xinjiang Uygur": "\u65B0\u7586",
-  Taiwan: "\u53F0\u6E7E",
-  "Hong Kong": "\u9999\u6E2F",
-  Macao: "\u6FB3\u95E8",
-  Macau: "\u6FB3\u95E8"
-};
-var COUNTRY_ZH = {
-  CN: "\u4E2D\u56FD",
-  HK: "\u4E2D\u56FD\u9999\u6E2F",
-  MO: "\u4E2D\u56FD\u6FB3\u95E8",
-  TW: "\u4E2D\u56FD\u53F0\u6E7E",
-  US: "\u7F8E\u56FD",
-  JP: "\u65E5\u672C",
-  KR: "\u97E9\u56FD",
-  SG: "\u65B0\u52A0\u5761",
-  GB: "\u82F1\u56FD",
-  DE: "\u5FB7\u56FD",
-  FR: "\u6CD5\u56FD",
-  CA: "\u52A0\u62FF\u5927",
-  AU: "\u6FB3\u5927\u5229\u4E9A",
-  RU: "\u4FC4\u7F57\u65AF",
-  IN: "\u5370\u5EA6",
-  MY: "\u9A6C\u6765\u897F\u4E9A",
-  TH: "\u6CF0\u56FD",
-  VN: "\u8D8A\u5357"
-};
-function provinceLabel(name) {
-  var _a2;
-  return (_a2 = CN_PROVINCE_ZH[name]) != null ? _a2 : name;
-}
-function countryLabel(code, fallbackName) {
-  var _a2;
-  return (_a2 = COUNTRY_ZH[code]) != null ? _a2 : fallbackName || code;
-}
-function buildLocationRows(countries, regionsByCode, limit) {
-  var _a2, _b2;
-  const rows = [];
-  for (const c of countries) {
-    const code = (_a2 = c.id) != null ? _a2 : "";
-    const countryZh = countryLabel(code, c.name);
-    const regions = code ? regionsByCode[code] : void 0;
-    const named = (_b2 = regions == null ? void 0 : regions.filter((r) => r.name.trim() !== "")) != null ? _b2 : [];
-    if (named.length > 0) {
-      for (const r of named) {
-        rows.push({ name: `${countryZh}-${provinceLabel(r.name)}`, count: r.count });
-      }
-      const unknown = regions.filter((r) => r.name.trim() === "").reduce((sum, r) => sum + r.count, 0);
-      if (unknown > 0) rows.push({ name: countryZh, count: unknown });
-    } else {
-      rows.push({ name: countryZh, count: c.count });
-    }
-  }
-  rows.sort((a, b) => b.count - a.count);
-  return rows.slice(0, limit);
-}
-function parseDailySeries(json) {
-  var _a2;
-  if (!json || typeof json !== "object") return null;
-  const hits = json.hits;
-  if (!Array.isArray(hits)) return null;
-  if (hits.length === 0) return [];
-  const stats = (_a2 = hits[0]) == null ? void 0 : _a2.stats;
-  if (!Array.isArray(stats)) return [];
-  const out = [];
-  for (const p of stats) {
-    const obj = p;
-    if (obj && typeof obj.day === "string" && typeof obj.daily === "number") {
-      out.push({ day: obj.day, count: obj.daily });
-    }
-  }
-  return out;
-}
-function buildStatsRows(pages, hitsByPath) {
-  return pages.map((p) => {
-    var _a2;
-    return { ...p, views: (_a2 = hitsByPath.get(p.path)) != null ? _a2 : 0 };
-  }).sort((a, b) => {
-    var _a2, _b2;
-    return b.views - a.views || ((_a2 = b.publishedAt) != null ? _a2 : 0) - ((_b2 = a.publishedAt) != null ? _b2 : 0);
-  });
-}
-function getAnalyticsInjectConfig(s) {
-  const endpoint = s.goatcounterEndpoint.trim();
-  if (!endpoint) return void 0;
-  return { endpoint };
-}
-function canReadAnalytics(s) {
-  return !!s.goatcounterEndpoint.trim();
-}
-
 // src/note-hash.ts
 function stripFrontmatter(raw) {
   return raw.replace(/^---[\s\S]*?---\n?/, "");
@@ -27521,570 +27324,8 @@ function hashBody(body) {
   return (h >>> 0).toString(36);
 }
 
-// src/renderer.ts
+// src/page-css.ts
 var THEME = "#65A692";
-function extractMath(content) {
-  const entries = [];
-  const codes = [];
-  let processed = content.replace(/```[\s\S]*?```|`[^`\n]+`/g, (m) => {
-    codes.push(m);
-    return `\uE000C${codes.length - 1}\uE001`;
-  });
-  processed = processed.replace(/\$\$([\s\S]+?)\$\$/g, (_, latex) => {
-    const i2 = entries.length;
-    entries.push({ type: "display", latex: latex.trim() });
-    return `
-<div class="math-d" data-mi="${i2}"></div>
-`;
-  });
-  processed = processed.replace(/\$([^\n$]+?)\$/g, (_, latex) => {
-    const i2 = entries.length;
-    entries.push({ type: "inline", latex });
-    return `<span class="math-i" data-mi="${i2}"></span>`;
-  });
-  processed = processed.replace(/C(\d+)/g, (_, i2) => codes[+i2]);
-  return { processed, entries };
-}
-function collectImages(app, sourceFile, el, images = /* @__PURE__ */ new Map()) {
-  const vaultBasePath = app.vault.adapter instanceof import_obsidian4.FileSystemAdapter ? app.vault.adapter.getBasePath() : "";
-  el.querySelectorAll(".internal-embed").forEach((embed) => {
-    var _a2;
-    const imgEl = embed.querySelector("img");
-    if (!imgEl) return;
-    const src = (_a2 = embed.getAttribute("src")) != null ? _a2 : "";
-    const imgFile = app.metadataCache.getFirstLinkpathDest(src, sourceFile.path);
-    if (!imgFile) return;
-    const name = registerImage(imgFile, images);
-    imgEl.setAttribute("src", `images/${name}`);
-    imgEl.removeAttribute("srcset");
-  });
-  el.querySelectorAll("img").forEach((img) => {
-    var _a2;
-    const src = (_a2 = img.getAttribute("src")) != null ? _a2 : "";
-    if (!src.startsWith("app://local") || !vaultBasePath) return;
-    try {
-      const absPath = decodeURIComponent(src.replace(/^app:\/\/local/, ""));
-      if (!absPath.startsWith(vaultBasePath)) return;
-      const relPath = absPath.slice(vaultBasePath.length).replace(/^[/\\]/, "");
-      const imgFile = app.vault.getAbstractFileByPath(relPath);
-      if (!(imgFile instanceof import_obsidian4.TFile)) return;
-      const name = registerImage(imgFile, images);
-      img.setAttribute("src", `images/${name}`);
-      img.removeAttribute("srcset");
-    } catch (e) {
-    }
-  });
-  return images;
-}
-var PLUGIN_CODE_LANGS = /* @__PURE__ */ new Set([
-  "dataview",
-  // Dataview DQL → shown as plain code block
-  "dataviewjs",
-  // Dataview JS → shown as plain code block
-  "imgs",
-  // image-cluster
-  "tasks",
-  // Tasks
-  "chart",
-  // Obsidian Charts
-  "ad",
-  "ad-note",
-  "ad-tip",
-  "ad-warning",
-  "ad-danger"
-  // Admonition (legacy)
-]);
-var PLUGIN_LANG_PREFIX = "export-raw-";
-function protectPluginCodeBlocks(content) {
-  return content.replace(
-    /^(`{3,})([\w][\w-]*)[ \t]*$/gm,
-    (match, fence, lang) => {
-      if (!PLUGIN_CODE_LANGS.has(lang.toLowerCase())) return match;
-      return `${fence}${PLUGIN_LANG_PREFIX}${lang}`;
-    }
-  );
-}
-function restorePluginCodeLangs(el) {
-  el.querySelectorAll("code[class]").forEach((code) => {
-    code.className = code.className.replace(
-      new RegExp(`language-${PLUGIN_LANG_PREFIX}(\\S+)`, "g"),
-      "language-$1"
-    );
-  });
-}
-async function renderNote(app, file, rawContent) {
-  var _a2, _b2, _c, _d;
-  let content = stripFrontmatter(rawContent);
-  content = resolveBaseEmbeds(content);
-  content = protectPluginCodeBlocks(content);
-  const { processed, entries } = extractMath(content);
-  const el = createDiv({ cls: "markdown-preview-view markdown-rendered opal-render-scratch" });
-  activeDocument.body.appendChild(el);
-  const component = new import_obsidian4.Component();
-  component.load();
-  await import_obsidian4.MarkdownRenderer.render(app, processed, el, file.path, component);
-  await new Promise((resolve) => {
-    const start = Date.now();
-    const check = () => {
-      const elapsed = Date.now() - start;
-      const pendingMermaid = el.querySelectorAll("pre code.language-mermaid").length;
-      if (pendingMermaid === 0 && elapsed >= 300 || elapsed >= 1500) {
-        resolve();
-      } else {
-        window.setTimeout(check, 100);
-      }
-    };
-    window.setTimeout(check, 300);
-  });
-  component.unload();
-  el.querySelectorAll("[data-mi]").forEach((placeholder) => {
-    var _a3;
-    const idx = parseInt((_a3 = placeholder.getAttribute("data-mi")) != null ? _a3 : "0");
-    const entry = entries[idx];
-    if (entry) placeholder.textContent = entry.latex;
-  });
-  el.querySelectorAll(".copy-code-button").forEach((b) => b.remove());
-  restorePluginCodeLangs(el);
-  const images = /* @__PURE__ */ new Map();
-  const basePlaceholders = Array.from(el.querySelectorAll("[data-base-embed]"));
-  for (const placeholder of basePlaceholders) {
-    const name = (_a2 = placeholder.getAttribute("data-base-embed")) != null ? _a2 : "";
-    const viewName = (_b2 = placeholder.getAttribute("data-base-view")) != null ? _b2 : void 0;
-    const baseFile = app.vault.getFiles().find(
-      (f) => f.path === name || f.name === name || f.name === name.split("/").pop()
-    );
-    if (baseFile) {
-      const parsed = new DOMParser().parseFromString(
-        await renderBaseAsTable(app, baseFile, images, viewName),
-        "text/html"
-      );
-      placeholder.replaceWith(...Array.from(parsed.body.childNodes));
-    } else {
-      const errorP = createEl("p", { cls: "base-error", text: `Base \u672A\u627E\u5230: ${name}` });
-      placeholder.replaceWith(errorP);
-    }
-  }
-  const internalEmbeds = Array.from(el.querySelectorAll(".internal-embed"));
-  for (const embed of internalEmbeds) {
-    const rawSrc = (_c = embed.getAttribute("src")) != null ? _c : "";
-    const [src, viewName] = rawSrc.split("#");
-    if (!src.endsWith(".base")) continue;
-    const baseName = (_d = src.split("/").pop()) != null ? _d : src;
-    const baseFile = app.vault.getFiles().find(
-      (f) => f.path === src || f.name === baseName
-    );
-    if (baseFile) {
-      const parsed = new DOMParser().parseFromString(
-        await renderBaseAsTable(app, baseFile, images, viewName || void 0),
-        "text/html"
-      );
-      embed.replaceWith(...Array.from(parsed.body.childNodes));
-    } else {
-      const errorP = createEl("p", { cls: "base-error", text: `Base \u672A\u627E\u5230: ${src}` });
-      embed.replaceWith(errorP);
-    }
-  }
-  el.querySelectorAll("table").forEach((table) => {
-    var _a3;
-    if (table.closest(".table-wrapper")) return;
-    const wrapper = createDiv({ cls: "table-wrapper" });
-    (_a3 = table.parentNode) == null ? void 0 : _a3.insertBefore(wrapper, table);
-    wrapper.appendChild(table);
-  });
-  processImgsBlocks(app, file, el, images);
-  collectImages(app, file, el, images);
-  el.querySelectorAll("img").forEach((img) => {
-    img.setAttribute("loading", "lazy");
-    img.setAttribute("decoding", "async");
-  });
-  const html = el.innerHTML;
-  activeDocument.body.removeChild(el);
-  return { html, css: buildCss(), images };
-}
-var KATEX_CDN_BASE = "https://cdn.jsdelivr.net/npm/katex@0.16.9/dist";
-function containsMath(htmlBody) {
-  return /class="math-[di]"/.test(htmlBody);
-}
-function buildHtml(title, htmlBody, css, katexBase, analytics) {
-  const svgCopy = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
-  const svgCheck = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${THEME}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
-  const calloutIcons = {
-    note: `<path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/>`,
-    info: `<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>`,
-    tip: `<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>`,
-    warning: `<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>`,
-    danger: `<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>`,
-    success: `<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>`,
-    question: `<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>`,
-    bug: `<path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6z"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/>`,
-    example: `<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>`,
-    quote: `<path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"/>`,
-    abstract: `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>`,
-    todo: `<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>`
-  };
-  const calloutAliases = {
-    caution: "warning",
-    attention: "warning",
-    error: "danger",
-    failure: "danger",
-    fail: "danger",
-    missing: "danger",
-    check: "success",
-    done: "success",
-    help: "question",
-    faq: "question",
-    hint: "tip",
-    important: "tip",
-    summary: "abstract",
-    tldr: "abstract",
-    cite: "quote"
-  };
-  const iconsJson = JSON.stringify(calloutIcons);
-  const aliasJson = JSON.stringify(calloutAliases);
-  const base = katexBase != null ? katexBase : KATEX_CDN_BASE;
-  const hasMath = containsMath(htmlBody);
-  const katexCssTag = hasMath ? `
-  <link rel="stylesheet" href="${base}/katex.min.css">` : "";
-  const katexJsTag = hasMath ? `
-  <script src="${base}/katex.min.js"></script>` : "";
-  const analyticsTag = analytics ? `
-  ${getGoatCounterScriptTag(analytics)}` : "";
-  return `<!DOCTYPE html>
-<html lang="zh">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title}</title>${katexCssTag}${analyticsTag}
-  <style>${css}</style>
-</head>
-<body>
-  <button class="toc-toggle" id="toc-toggle" title="OUTLINE">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-  </button>
-  <div class="toc-backdrop" id="toc-backdrop"></div>
-  <div class="lightbox" id="lightbox"><img id="lightbox-img" src="" alt=""></div>
-  <nav class="toc-sidebar" id="toc-sidebar">
-    <div class="toc-header">
-      <span class="toc-title">OUTLINE</span>
-      <button class="toc-close" id="toc-close" title="\u5173\u95ED">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>
-    <div id="toc-inner"></div>
-  </nav>
-  <div class="markdown-preview-view">
-${htmlBody}
-  </div>
-
-${katexJsTag}
-  <script>
-    (function() {
-      var COPY_ICON  = '${svgCopy}';
-      var CHECK_ICON = '${svgCheck}';
-      var ICONS   = ${iconsJson};
-      var ALIASES = ${aliasJson};
-
-      /* \u2500\u2500 KaTeX math \u2500\u2500 */
-      document.querySelectorAll('.math-d').forEach(function(el) {
-        try { katex.render(el.textContent.trim(), el, { displayMode: true,  throwOnError: false }); } catch(e) {}
-      });
-      document.querySelectorAll('.math-i').forEach(function(el) {
-        try { katex.render(el.textContent.trim(), el, { displayMode: false, throwOnError: false }); } catch(e) {}
-      });
-
-      /* \u2500\u2500 Callout icons \u2500\u2500 */
-      document.querySelectorAll('.callout').forEach(function(callout) {
-        var iconEl = callout.querySelector('.callout-icon');
-        if (!iconEl) return;
-        var hasSvg = iconEl.querySelector('svg') && iconEl.querySelector('svg').childElementCount > 0;
-        if (hasSvg) return;
-        var type = (callout.getAttribute('data-callout') || 'note').toLowerCase();
-        type = ALIASES[type] || type;
-        var paths = ICONS[type] || ICONS['note'];
-        iconEl.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + paths + '</svg>';
-      });
-
-      /* \u2500\u2500 Callout fold/unfold \u2500\u2500 */
-      document.querySelectorAll('.callout').forEach(function(callout) {
-        var hasFold = callout.hasAttribute('data-callout-fold') ||
-                      callout.classList.contains('is-collapsed');
-        if (!hasFold) return;
-        var title   = callout.querySelector('.callout-title');
-        var content = callout.querySelector('.callout-content');
-        if (!title) return;
-
-        // Clear any inline display:none Obsidian may have set \u2014 CSS handles visibility
-        if (content) content.style.display = '';
-
-        title.style.cursor = 'pointer';
-        title.addEventListener('click', function() {
-          callout.classList.toggle('is-collapsed');
-        });
-      });
-
-      /* \u2500\u2500 Code block: language label (via wrapper) + copy button \u2500\u2500 */
-      document.querySelectorAll('pre').forEach(function(pre) {
-        var code = pre.querySelector('code');
-
-        // Wrap pre so label can escape pre's overflow:auto clipping
-        var wrapper = document.createElement('div');
-        wrapper.className = 'pre-wrapper';
-        pre.parentNode.insertBefore(wrapper, pre);
-        wrapper.appendChild(pre);
-
-        // Language label \u2014 attached to wrapper, not pre
-        if (code) {
-          var m = code.className.match(/language-(\\S+)/);
-          if (m && m[1] && m[1] !== 'undefined' && m[1] !== 'text') {
-            var label = document.createElement('span');
-            label.className = 'code-lang';
-            label.textContent = m[1];
-            wrapper.appendChild(label);
-          }
-        }
-
-        // Copy button \u2014 stays inside pre (positioned relative to pre)
-        var btn = document.createElement('button');
-        btn.className = 'copy-btn';
-        btn.title = '\u590D\u5236\u4EE3\u7801';
-        btn.innerHTML = COPY_ICON;
-        pre.appendChild(btn);
-        btn.addEventListener('click', function() {
-          navigator.clipboard.writeText(code ? code.innerText : pre.innerText).then(function() {
-            btn.innerHTML = CHECK_ICON;
-            setTimeout(function() { btn.innerHTML = COPY_ICON; }, 2000);
-          });
-        });
-      });
-    })();
-
-    /* \u2500\u2500 TOC generation \u2500\u2500 */
-    (function() {
-      var sidebar  = document.getElementById('toc-sidebar');
-      var tocInner = document.getElementById('toc-inner');
-      if (!sidebar || !tocInner) return;
-
-      var headings = Array.prototype.slice.call(
-        document.querySelectorAll('.markdown-preview-view h1, .markdown-preview-view h2, .markdown-preview-view h3, .markdown-preview-view h4')
-      );
-      if (headings.length < 2) {
-        sidebar.style.display = 'none';
-        var tog = document.getElementById('toc-toggle');
-        if (tog) tog.style.display = 'none';
-        return;
-      }
-
-      // Ensure each heading has an id
-      headings.forEach(function(h, i) {
-        if (!h.id) h.id = 'toc-h-' + i;
-      });
-
-      // Build list
-      var ul = document.createElement('ul');
-      ul.className = 'toc-list';
-      headings.forEach(function(h) {
-        var li = document.createElement('li');
-        li.className = 'toc-item toc-' + h.tagName.toLowerCase();
-        var a = document.createElement('a');
-        a.href = '#' + h.id;
-        a.className = 'toc-link';
-        a.textContent = h.textContent.replace(/\xB6$/, '').trim(); // strip Obsidian \xB6
-        a.addEventListener('click', function(e) {
-          e.preventDefault();
-          document.getElementById(h.id).scrollIntoView({ behavior: 'smooth' });
-        });
-        li.appendChild(a);
-        ul.appendChild(li);
-      });
-      tocInner.appendChild(ul);
-
-      // Active link tracking
-      var links = tocInner.querySelectorAll('.toc-link');
-      var observer = new IntersectionObserver(function(entries) {
-        entries.forEach(function(entry) {
-          if (entry.isIntersecting) {
-            links.forEach(function(l) { l.classList.remove('is-active'); });
-            var active = tocInner.querySelector('[href="#' + entry.target.id + '"]');
-            if (active) active.classList.add('is-active');
-          }
-        });
-      }, { rootMargin: '-8% 0px -80% 0px', threshold: 0 });
-      headings.forEach(function(h) { observer.observe(h); });
-
-      // Close drawer on link click (mobile)
-      tocInner.querySelectorAll('.toc-link').forEach(function(a) {
-        a.addEventListener('click', function() {
-          sidebar.classList.remove('is-open');
-          document.getElementById('toc-backdrop').classList.remove('is-visible');
-          document.body.style.overflow = '';
-        });
-      });
-    })();
-
-    /* \u2500\u2500 Imgs lightbox \u2500\u2500 */
-    (function() {
-      var lightbox = document.getElementById('lightbox');
-      var lbImg    = document.getElementById('lightbox-img');
-      if (!lightbox || !lbImg) return;
-      document.querySelectorAll('.imgs-gallery img').forEach(function(img) {
-        img.addEventListener('click', function(e) {
-          e.stopPropagation();
-          lbImg.setAttribute('src', img.getAttribute('src'));
-          lbImg.setAttribute('alt', img.getAttribute('alt') || '');
-          lightbox.classList.add('is-open');
-          document.body.style.overflow = 'hidden';
-        });
-      });
-      lightbox.addEventListener('click', function(e) {
-        if (e.target === lbImg) return; // click on image itself does nothing
-        lightbox.classList.remove('is-open');
-        document.body.style.overflow = '';
-        lbImg.setAttribute('src', '');
-      });
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-          lightbox.classList.remove('is-open');
-          document.body.style.overflow = '';
-          lbImg.setAttribute('src', '');
-        }
-      });
-    })();
-
-    /* \u2500\u2500 Mermaid zoom toggle \u2500\u2500 */
-    (function() {
-      document.querySelectorAll('.mermaid').forEach(function(block) {
-        var svg = block.querySelector('svg');
-        if (!svg) return;
-
-        // \u4FEE\u6B63\u8282\u70B9\u5BBD\u5EA6\u4E0D\u8DB3\uFF1Amermaid \u5728\u8BA1\u7B97\u8282\u70B9\u5C3A\u5BF8\u65F6\u6F0F\u6389\u4E86\u7EA6 20px \u7684 padding\uFF0C
-        // \u5BFC\u81F4 rect\uFF08\u8282\u70B9\u6846\uFF09\u548C foreignObject\uFF08\u6587\u5B57\u5BB9\u5668\uFF09\u90FD\u504F\u7A84 20px\u3002
-        // foreignObject \u4F1A\u88C1\u65AD\u8D85\u51FA\u5176\u5BBD\u5EA6\u7684 HTML \u5185\u5BB9\uFF08\u4E0E SVG overflow:visible \u65E0\u5173\uFF09\uFF0C
-        // \u5FC5\u987B\u76F4\u63A5\u4FEE\u6B63 width\u3002\u540C\u65F6\u5C06 label \u7EC4\u5DE6\u79FB 10px \u4EE5\u4FDD\u6301\u5C45\u4E2D\uFF0Crect \u4E5F\u540C\u6B65\u6269\u5BBD\u3002
-        (function() {
-          var EXTRA = 20;
-          svg.querySelectorAll('foreignObject').forEach(function(fo) {
-            var fw = parseFloat(fo.getAttribute('width') || '0');
-            if (fw <= 0) return;
-            fo.setAttribute('width', String(fw + EXTRA));
-            // \u5C06 label \u7236\u7EC4\u5DE6\u79FB EXTRA/2\uFF0C\u4FDD\u6301\u6587\u5B57\u5728\u8282\u70B9\u5185\u5C45\u4E2D
-            var labelG = fo.parentElement;
-            if (labelG && labelG !== svg && labelG.getAttribute) {
-              var tr = labelG.getAttribute('transform') || '';
-              var ti = tr.indexOf('translate(');
-              if (ti >= 0) {
-                var te = tr.indexOf(')', ti);
-                if (te > ti) {
-                  var coords = tr.slice(ti + 10, te).split(',');
-                  if (coords.length >= 2) {
-                    labelG.setAttribute('transform',
-                      tr.slice(0, ti) + 'translate(' +
-                      (parseFloat(coords[0]) - EXTRA / 2) + ',' +
-                      parseFloat(coords[1]) + ')' +
-                      tr.slice(te + 1));
-                  }
-                }
-              }
-            }
-          });
-          svg.querySelectorAll('rect.label-container').forEach(function(rect) {
-            var rw = parseFloat(rect.getAttribute('width') || '0');
-            var rx = parseFloat(rect.getAttribute('x') || '0');
-            if (rw <= 0) return;
-            rect.setAttribute('width', String(rw + EXTRA));
-            rect.setAttribute('x', String(rx - EXTRA / 2));
-          });
-        })();
-
-        // \u4FEE\u6B63 viewBox \u88C1\u65AD\uFF1Amermaid \u7528 canvas \u6D4B\u91CF\u6587\u5B57\u5BBD\u5EA6\uFF0C\u5B9E\u9645\u6E32\u67D3\u53EF\u80FD\u7A0D\u5BBD\uFF0C
-        // \u5BFC\u81F4\u6700\u540E\u4E00\u4E2A\u5B57\u7B26\u88AB viewBox \u8FB9\u754C\u88C1\u65AD\u3002\u7528 getBBox() \u6D4B\u91CF\u5B9E\u9645\u5185\u5BB9\u8FB9\u754C\uFF0C
-        // \u6309\u9700\u6269\u5C55 viewBox\uFF0C\u5E76\u540C\u6B65\u66F4\u65B0 width/max-width\uFF0C\u4FDD\u6301 1:1 \u6BD4\u4F8B\u3002
-        (function() {
-          var vbStr = svg.getAttribute('viewBox');
-          if (!vbStr) return;
-          var parts = vbStr.trim().replace(/,/g, ' ').split(' ').filter(Boolean).map(parseFloat);
-          if (parts.length < 4 || isNaN(parts[2]) || isNaN(parts[3])) return;
-          var minPadW = 8, minPadH = 4;
-          var extraW = minPadW, extraH = 0;
-          try {
-            var bbox = svg.getBBox();
-            var vbRight  = parts[0] + parts[2];
-            var vbBottom = parts[1] + parts[3];
-            var overflowW = Math.ceil(bbox.x + bbox.width  + minPadW - vbRight);
-            var overflowH = Math.ceil(bbox.y + bbox.height + minPadH - vbBottom);
-            if (overflowW > extraW) extraW = overflowW;
-            if (overflowH > 0)      extraH = overflowH;
-          } catch(e) {}
-          if (extraW > 0) {
-            parts[2] += extraW;
-            var wAttr = parseFloat(svg.getAttribute('width') || '0');
-            if (wAttr > 0) svg.setAttribute('width', String(wAttr + extraW));
-            // \u73B0\u4EE3 mermaid \u7528 style.maxWidth \u800C\u975E width \u5C5E\u6027
-            var mwStyle = parseFloat(svg.style.maxWidth || '0');
-            if (mwStyle > 0) svg.style.maxWidth = (mwStyle + extraW) + 'px';
-          }
-          if (extraH > 0) {
-            parts[3] += extraH;
-            var hAttr = parseFloat(svg.getAttribute('height') || '0');
-            if (hAttr > 0) svg.setAttribute('height', String(hAttr + extraH));
-          }
-          if (extraW > 0 || extraH > 0) svg.setAttribute('viewBox', parts.join(' '));
-        })();
-
-        // \u8BFB\u53D6 SVG \u81EA\u7136\u50CF\u7D20\u5BBD\u5EA6\uFF0C\u6309\u4F18\u5148\u7EA7\u4F9D\u6B21\u5C1D\u8BD5\u4E09\u79CD\u6765\u6E90
-        var naturalWidth = parseFloat(svg.getAttribute('width') || '0');
-        if (!naturalWidth) {
-          var vb = svg.getAttribute('viewBox');
-          if (vb) {
-            var parts = vb.trim().replace(/,/g, ' ').split(' ').filter(Boolean);
-            if (parts.length >= 3) naturalWidth = parseFloat(parts[2]);
-          }
-        }
-        if (!naturalWidth) {
-          var mw = svg.style.maxWidth;
-          if (mw) naturalWidth = parseFloat(mw);
-        }
-        var containerWidth = block.clientWidth;
-        if (!naturalWidth || naturalWidth <= containerWidth + 2) return;
-        // \u8D85\u5BBD\uFF1A\u9ED8\u8BA4\u8FDB\u5165 fit-view\uFF08\u7F29\u653E\u9002\u914D\uFF09\uFF0CCSS \u8D1F\u8D23 width:100%
-        block.classList.add('mermaid-overflows', 'mermaid-fit-view');
-        block.addEventListener('click', function() {
-          if (block.classList.contains('mermaid-fit-view')) {
-            // \u5C55\u5F00\uFF1A\u5FC5\u987B\u663E\u5F0F\u8BBE\u50CF\u7D20\u5BBD\uFF0C\u5426\u5219 SVG \u9ED8\u8BA4\u4ECD\u662F 100% \u5BB9\u5668\u5BBD\uFF0C\u65E0\u6CD5\u6EDA\u52A8
-            block.classList.remove('mermaid-fit-view');
-            svg.style.setProperty('width', naturalWidth + 'px', 'important');
-          } else {
-            // \u6536\u8D77\uFF1A\u79FB\u9664\u5185\u8054 width\uFF0C\u8BA9 CSS .mermaid-fit-view svg { width:100% } \u63A5\u7BA1
-            block.classList.add('mermaid-fit-view');
-            svg.style.removeProperty('width');
-          }
-        });
-      });
-    })();
-
-    /* \u2500\u2500 TOC mobile toggle \u2500\u2500 */
-    (function() {
-      var toggle   = document.getElementById('toc-toggle');
-      var sidebar  = document.getElementById('toc-sidebar');
-      var backdrop = document.getElementById('toc-backdrop');
-      var closeBtn = document.getElementById('toc-close');
-      function openToc()  {
-        sidebar.classList.add('is-open');
-        backdrop.classList.add('is-visible');
-        document.body.style.overflow = 'hidden';
-      }
-      function closeToc() {
-        sidebar.classList.remove('is-open');
-        backdrop.classList.remove('is-visible');
-        document.body.style.overflow = '';
-      }
-      if (toggle)   toggle.addEventListener('click', openToc);
-      if (backdrop) backdrop.addEventListener('click', closeToc);
-      if (closeBtn) closeBtn.addEventListener('click', closeToc);
-    })();
-  </script>
-</body>
-</html>`;
-}
 function buildCss() {
   return `/* \u2500\u2500 Reset \u2500\u2500 */
 *, *::before, *::after { box-sizing: border-box; }
@@ -28694,6 +27935,828 @@ ul.dv-list li { margin: 0.25em 0; line-height: 1.6; }
 body:hover ::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.4); }
 ::-webkit-scrollbar-track { background: transparent; }
 `;
+}
+
+// src/renderer.ts
+function extractMath(content) {
+  const entries = [];
+  const codes = [];
+  let processed = content.replace(/```[\s\S]*?```|`[^`\n]+`/g, (m) => {
+    codes.push(m);
+    return `\uE000C${codes.length - 1}\uE001`;
+  });
+  processed = processed.replace(/\$\$([\s\S]+?)\$\$/g, (_, latex) => {
+    const i2 = entries.length;
+    entries.push({ type: "display", latex: latex.trim() });
+    return `
+<div class="math-d" data-mi="${i2}"></div>
+`;
+  });
+  processed = processed.replace(/\$([^\n$]+?)\$/g, (_, latex) => {
+    const i2 = entries.length;
+    entries.push({ type: "inline", latex });
+    return `<span class="math-i" data-mi="${i2}"></span>`;
+  });
+  processed = processed.replace(/C(\d+)/g, (_, i2) => codes[+i2]);
+  return { processed, entries };
+}
+function collectImages(app, sourceFile, el, images = /* @__PURE__ */ new Map()) {
+  const vaultBasePath = app.vault.adapter instanceof import_obsidian4.FileSystemAdapter ? app.vault.adapter.getBasePath() : "";
+  el.querySelectorAll(".internal-embed").forEach((embed) => {
+    var _a2;
+    const imgEl = embed.querySelector("img");
+    if (!imgEl) return;
+    const src = (_a2 = embed.getAttribute("src")) != null ? _a2 : "";
+    const imgFile = app.metadataCache.getFirstLinkpathDest(src, sourceFile.path);
+    if (!imgFile) return;
+    const name = registerImage(imgFile, images);
+    imgEl.setAttribute("src", `images/${name}`);
+    imgEl.removeAttribute("srcset");
+  });
+  el.querySelectorAll("img").forEach((img) => {
+    var _a2;
+    const src = (_a2 = img.getAttribute("src")) != null ? _a2 : "";
+    if (!src.startsWith("app://local") || !vaultBasePath) return;
+    try {
+      const absPath = decodeURIComponent(src.replace(/^app:\/\/local/, ""));
+      if (!absPath.startsWith(vaultBasePath)) return;
+      const relPath = absPath.slice(vaultBasePath.length).replace(/^[/\\]/, "");
+      const imgFile = app.vault.getAbstractFileByPath(relPath);
+      if (!(imgFile instanceof import_obsidian4.TFile)) return;
+      const name = registerImage(imgFile, images);
+      img.setAttribute("src", `images/${name}`);
+      img.removeAttribute("srcset");
+    } catch (e) {
+    }
+  });
+  return images;
+}
+var EMBED_RE = /!\[\[([^\]\n]+)\]\]/g;
+function parseEmbedTarget(inner) {
+  const main = inner.split("|")[0];
+  const hashIdx = main.indexOf("#");
+  return {
+    linkPart: (hashIdx >= 0 ? main.slice(0, hashIdx) : main).trim(),
+    subpath: hashIdx >= 0 ? main.slice(hashIdx + 1).trim() : ""
+  };
+}
+function extractSubpathContent(raw, headings, blocks, subpath) {
+  var _a2;
+  if (!subpath) return "";
+  if (subpath.startsWith("^")) {
+    const block = blocks == null ? void 0 : blocks[subpath.slice(1).toLowerCase()];
+    if (!block) return "";
+    return raw.slice(block.position.start.offset, block.position.end.offset).trim();
+  }
+  const norm = (s) => s.replace(/\s+/g, " ").trim().toLowerCase();
+  const target = norm((_a2 = subpath.split("#").pop()) != null ? _a2 : subpath);
+  const idx = (headings != null ? headings : []).findIndex((h) => norm(h.heading) === target);
+  if (idx < 0) return "";
+  const level = headings[idx].level;
+  const start = headings[idx].position.start.offset;
+  let end = raw.length;
+  for (let j = idx + 1; j < headings.length; j++) {
+    if (headings[j].level <= level) {
+      end = headings[j].position.start.offset;
+      break;
+    }
+  }
+  return raw.slice(start, end).trimEnd();
+}
+function resolveSelfEmbeds(app, file, content, raw) {
+  var _a2, _b2;
+  const cache = app.metadataCache.getFileCache(file);
+  const headings = (_a2 = cache == null ? void 0 : cache.headings) != null ? _a2 : [];
+  const blocks = (_b2 = cache == null ? void 0 : cache.blocks) != null ? _b2 : {};
+  const isSelf = (linkPart) => {
+    if (linkPart === "") return true;
+    const dest = app.metadataCache.getFirstLinkpathDest(linkPart, file.path);
+    return !!dest && dest.path === file.path;
+  };
+  const stripSelf = (text) => text.replace(
+    EMBED_RE,
+    (m, inner) => isSelf(parseEmbedTarget(inner).linkPart) ? "" : m
+  );
+  return content.replace(EMBED_RE, (m, inner) => {
+    const { linkPart, subpath } = parseEmbedTarget(inner);
+    if (!isSelf(linkPart)) return m;
+    if (!subpath) return "";
+    const slice = extractSubpathContent(raw, headings, blocks, subpath);
+    return slice ? `
+
+${stripSelf(slice)}
+
+` : "";
+  });
+}
+var PLUGIN_CODE_LANGS = /* @__PURE__ */ new Set([
+  "dataview",
+  // Dataview DQL → shown as plain code block
+  "dataviewjs",
+  // Dataview JS → shown as plain code block
+  "imgs",
+  // image-cluster
+  "tasks",
+  // Tasks
+  "chart",
+  // Obsidian Charts
+  "ad",
+  "ad-note",
+  "ad-tip",
+  "ad-warning",
+  "ad-danger"
+  // Admonition (legacy)
+]);
+var PLUGIN_LANG_PREFIX = "export-raw-";
+function protectPluginCodeBlocks(content) {
+  return content.replace(
+    /^(`{3,})([\w][\w-]*)[ \t]*$/gm,
+    (match, fence, lang) => {
+      if (!PLUGIN_CODE_LANGS.has(lang.toLowerCase())) return match;
+      return `${fence}${PLUGIN_LANG_PREFIX}${lang}`;
+    }
+  );
+}
+function restorePluginCodeLangs(el) {
+  el.querySelectorAll("code[class]").forEach((code) => {
+    code.className = code.className.replace(
+      new RegExp(`language-${PLUGIN_LANG_PREFIX}(\\S+)`, "g"),
+      "language-$1"
+    );
+  });
+}
+async function renderNote(app, file, rawContent) {
+  var _a2, _b2, _c, _d;
+  let content = stripFrontmatter(rawContent);
+  content = resolveSelfEmbeds(app, file, content, rawContent);
+  content = resolveBaseEmbeds(content);
+  content = protectPluginCodeBlocks(content);
+  const { processed, entries } = extractMath(content);
+  const el = createDiv({ cls: "markdown-preview-view markdown-rendered opal-render-scratch" });
+  activeDocument.body.appendChild(el);
+  const component = new import_obsidian4.Component();
+  component.load();
+  await import_obsidian4.MarkdownRenderer.render(app, processed, el, file.path, component);
+  await new Promise((resolve) => {
+    const start = Date.now();
+    const check = () => {
+      const elapsed = Date.now() - start;
+      const pendingMermaid = el.querySelectorAll("pre code.language-mermaid").length;
+      if (pendingMermaid === 0 && elapsed >= 300 || elapsed >= 1500) {
+        resolve();
+      } else {
+        window.setTimeout(check, 100);
+      }
+    };
+    window.setTimeout(check, 300);
+  });
+  component.unload();
+  el.querySelectorAll("[data-mi]").forEach((placeholder) => {
+    var _a3;
+    const idx = parseInt((_a3 = placeholder.getAttribute("data-mi")) != null ? _a3 : "0");
+    const entry = entries[idx];
+    if (entry) placeholder.textContent = entry.latex;
+  });
+  el.querySelectorAll(".copy-code-button").forEach((b) => b.remove());
+  restorePluginCodeLangs(el);
+  const images = /* @__PURE__ */ new Map();
+  const basePlaceholders = Array.from(el.querySelectorAll("[data-base-embed]"));
+  for (const placeholder of basePlaceholders) {
+    const name = (_a2 = placeholder.getAttribute("data-base-embed")) != null ? _a2 : "";
+    const viewName = (_b2 = placeholder.getAttribute("data-base-view")) != null ? _b2 : void 0;
+    const baseFile = app.vault.getFiles().find(
+      (f) => f.path === name || f.name === name || f.name === name.split("/").pop()
+    );
+    if (baseFile) {
+      const parsed = new DOMParser().parseFromString(
+        await renderBaseAsTable(app, baseFile, images, viewName),
+        "text/html"
+      );
+      placeholder.replaceWith(...Array.from(parsed.body.childNodes));
+    } else {
+      const errorP = createEl("p", { cls: "base-error", text: `Base \u672A\u627E\u5230: ${name}` });
+      placeholder.replaceWith(errorP);
+    }
+  }
+  const internalEmbeds = Array.from(el.querySelectorAll(".internal-embed"));
+  for (const embed of internalEmbeds) {
+    const rawSrc = (_c = embed.getAttribute("src")) != null ? _c : "";
+    const [src, viewName] = rawSrc.split("#");
+    if (!src.endsWith(".base")) continue;
+    const baseName = (_d = src.split("/").pop()) != null ? _d : src;
+    const baseFile = app.vault.getFiles().find(
+      (f) => f.path === src || f.name === baseName
+    );
+    if (baseFile) {
+      const parsed = new DOMParser().parseFromString(
+        await renderBaseAsTable(app, baseFile, images, viewName || void 0),
+        "text/html"
+      );
+      embed.replaceWith(...Array.from(parsed.body.childNodes));
+    } else {
+      const errorP = createEl("p", { cls: "base-error", text: `Base \u672A\u627E\u5230: ${src}` });
+      embed.replaceWith(errorP);
+    }
+  }
+  el.querySelectorAll("table").forEach((table) => {
+    var _a3;
+    if (table.closest(".table-wrapper")) return;
+    const wrapper = createDiv({ cls: "table-wrapper" });
+    (_a3 = table.parentNode) == null ? void 0 : _a3.insertBefore(wrapper, table);
+    wrapper.appendChild(table);
+  });
+  processImgsBlocks(app, file, el, images);
+  collectImages(app, file, el, images);
+  el.querySelectorAll("img").forEach((img) => {
+    img.setAttribute("loading", "lazy");
+    img.setAttribute("decoding", "async");
+  });
+  const html = el.innerHTML;
+  activeDocument.body.removeChild(el);
+  return { html, css: buildCss(), images };
+}
+
+// src/analytics.ts
+function escapeAttr(value) {
+  return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+}
+function getGoatCounterScriptTag(cfg) {
+  const endpoint = escapeAttr(cfg.endpoint);
+  const scriptSrc = escapeAttr(cfg.endpoint + ".js");
+  return `<script data-goatcounter="${endpoint}" async src="${scriptSrc}"></script>`;
+}
+function extractPathname(shareLink) {
+  try {
+    return new URL(shareLink).pathname;
+  } catch (e) {
+    return null;
+  }
+}
+function deriveApiBase(endpoint) {
+  try {
+    return new URL(endpoint).origin + "/api/v0";
+  } catch (e) {
+    return null;
+  }
+}
+function parseStatsResponse(json) {
+  if (!json || typeof json !== "object") return null;
+  const obj = json;
+  const hits = obj.hits;
+  if (Array.isArray(hits)) {
+    let sum = 0;
+    let found = false;
+    for (const h of hits) {
+      const count = h == null ? void 0 : h.count;
+      if (typeof count === "number") {
+        sum += count;
+        found = true;
+      }
+    }
+    if (found || hits.length === 0) return { views: sum };
+  }
+  if (typeof obj.total === "number") return { views: obj.total };
+  return null;
+}
+function parseHitsList(json) {
+  if (!json || typeof json !== "object") return null;
+  const hits = json.hits;
+  if (!Array.isArray(hits)) return null;
+  const out = [];
+  for (const h of hits) {
+    const obj = h;
+    if (obj && typeof obj.path === "string" && typeof obj.count === "number") {
+      const id = obj.path_id;
+      out.push({ path: obj.path, count: obj.count, pathId: typeof id === "number" ? id : null });
+    }
+  }
+  return out;
+}
+function parseDimensionStats(json) {
+  if (!json || typeof json !== "object") return null;
+  const stats = json.stats;
+  if (!Array.isArray(stats)) return null;
+  const out = [];
+  for (const s of stats) {
+    const obj = s;
+    if (obj && typeof obj.name === "string" && typeof obj.count === "number") {
+      const item = { name: obj.name, count: obj.count };
+      if (typeof obj.id === "string") item.id = obj.id;
+      out.push(item);
+    }
+  }
+  return out;
+}
+var CN_PROVINCE_ZH = {
+  Beijing: "\u5317\u4EAC",
+  Tianjin: "\u5929\u6D25",
+  Hebei: "\u6CB3\u5317",
+  Shanxi: "\u5C71\u897F",
+  "Inner Mongolia": "\u5185\u8499\u53E4",
+  "Nei Mongol": "\u5185\u8499\u53E4",
+  Liaoning: "\u8FBD\u5B81",
+  Jilin: "\u5409\u6797",
+  Heilongjiang: "\u9ED1\u9F99\u6C5F",
+  Shanghai: "\u4E0A\u6D77",
+  Jiangsu: "\u6C5F\u82CF",
+  Zhejiang: "\u6D59\u6C5F",
+  Anhui: "\u5B89\u5FBD",
+  Fujian: "\u798F\u5EFA",
+  Jiangxi: "\u6C5F\u897F",
+  Shandong: "\u5C71\u4E1C",
+  Henan: "\u6CB3\u5357",
+  Hubei: "\u6E56\u5317",
+  Hunan: "\u6E56\u5357",
+  Guangdong: "\u5E7F\u4E1C",
+  Guangxi: "\u5E7F\u897F",
+  "Guangxi Zhuangzu": "\u5E7F\u897F",
+  Hainan: "\u6D77\u5357",
+  Chongqing: "\u91CD\u5E86",
+  Sichuan: "\u56DB\u5DDD",
+  Guizhou: "\u8D35\u5DDE",
+  Yunnan: "\u4E91\u5357",
+  Tibet: "\u897F\u85CF",
+  Xizang: "\u897F\u85CF",
+  Shaanxi: "\u9655\u897F",
+  Gansu: "\u7518\u8083",
+  Qinghai: "\u9752\u6D77",
+  Ningxia: "\u5B81\u590F",
+  "Ningxia Huizu": "\u5B81\u590F",
+  Xinjiang: "\u65B0\u7586",
+  "Xinjiang Uygur": "\u65B0\u7586",
+  Taiwan: "\u53F0\u6E7E",
+  "Hong Kong": "\u9999\u6E2F",
+  Macao: "\u6FB3\u95E8",
+  Macau: "\u6FB3\u95E8"
+};
+var COUNTRY_ZH = {
+  CN: "\u4E2D\u56FD",
+  HK: "\u4E2D\u56FD\u9999\u6E2F",
+  MO: "\u4E2D\u56FD\u6FB3\u95E8",
+  TW: "\u4E2D\u56FD\u53F0\u6E7E",
+  US: "\u7F8E\u56FD",
+  JP: "\u65E5\u672C",
+  KR: "\u97E9\u56FD",
+  SG: "\u65B0\u52A0\u5761",
+  GB: "\u82F1\u56FD",
+  DE: "\u5FB7\u56FD",
+  FR: "\u6CD5\u56FD",
+  CA: "\u52A0\u62FF\u5927",
+  AU: "\u6FB3\u5927\u5229\u4E9A",
+  RU: "\u4FC4\u7F57\u65AF",
+  IN: "\u5370\u5EA6",
+  MY: "\u9A6C\u6765\u897F\u4E9A",
+  TH: "\u6CF0\u56FD",
+  VN: "\u8D8A\u5357"
+};
+function provinceLabel(name) {
+  var _a2;
+  return (_a2 = CN_PROVINCE_ZH[name]) != null ? _a2 : name;
+}
+function countryLabel(code, fallbackName) {
+  var _a2;
+  return (_a2 = COUNTRY_ZH[code]) != null ? _a2 : fallbackName || code;
+}
+function buildLocationRows(countries, regionsByCode, limit) {
+  var _a2, _b2;
+  const rows = [];
+  for (const c of countries) {
+    const code = (_a2 = c.id) != null ? _a2 : "";
+    const countryZh = countryLabel(code, c.name);
+    const regions = code ? regionsByCode[code] : void 0;
+    const named = (_b2 = regions == null ? void 0 : regions.filter((r) => r.name.trim() !== "")) != null ? _b2 : [];
+    if (named.length > 0) {
+      for (const r of named) {
+        rows.push({ name: `${countryZh}-${provinceLabel(r.name)}`, count: r.count });
+      }
+      const unknown = regions.filter((r) => r.name.trim() === "").reduce((sum, r) => sum + r.count, 0);
+      if (unknown > 0) rows.push({ name: countryZh, count: unknown });
+    } else {
+      rows.push({ name: countryZh, count: c.count });
+    }
+  }
+  rows.sort((a, b) => b.count - a.count);
+  return rows.slice(0, limit);
+}
+function parseDailySeries(json) {
+  var _a2;
+  if (!json || typeof json !== "object") return null;
+  const hits = json.hits;
+  if (!Array.isArray(hits)) return null;
+  if (hits.length === 0) return [];
+  const stats = (_a2 = hits[0]) == null ? void 0 : _a2.stats;
+  if (!Array.isArray(stats)) return [];
+  const out = [];
+  for (const p of stats) {
+    const obj = p;
+    if (obj && typeof obj.day === "string" && typeof obj.daily === "number") {
+      out.push({ day: obj.day, count: obj.daily });
+    }
+  }
+  return out;
+}
+function buildStatsRows(pages, hitsByPath) {
+  return pages.map((p) => {
+    var _a2;
+    return { ...p, views: (_a2 = hitsByPath.get(p.path)) != null ? _a2 : 0 };
+  }).sort((a, b) => {
+    var _a2, _b2;
+    return b.views - a.views || ((_a2 = b.publishedAt) != null ? _a2 : 0) - ((_b2 = a.publishedAt) != null ? _b2 : 0);
+  });
+}
+function getAnalyticsInjectConfig(s) {
+  const endpoint = s.goatcounterEndpoint.trim();
+  if (!endpoint) return void 0;
+  return { endpoint };
+}
+function canReadAnalytics(s) {
+  return !!s.goatcounterEndpoint.trim();
+}
+
+// src/page-template.ts
+var KATEX_CDN_BASE = "https://cdn.jsdelivr.net/npm/katex@0.16.9/dist";
+function containsMath(htmlBody) {
+  return /class="math-[di]"/.test(htmlBody);
+}
+function buildHtml(title, htmlBody, css, katexBase, analytics) {
+  const svgCopy = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+  const svgCheck = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${THEME}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+  const calloutIcons = {
+    note: `<path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/>`,
+    info: `<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>`,
+    tip: `<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>`,
+    warning: `<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>`,
+    danger: `<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>`,
+    success: `<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>`,
+    question: `<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>`,
+    bug: `<path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6z"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/>`,
+    example: `<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>`,
+    quote: `<path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"/>`,
+    abstract: `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>`,
+    todo: `<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>`
+  };
+  const calloutAliases = {
+    caution: "warning",
+    attention: "warning",
+    error: "danger",
+    failure: "danger",
+    fail: "danger",
+    missing: "danger",
+    check: "success",
+    done: "success",
+    help: "question",
+    faq: "question",
+    hint: "tip",
+    important: "tip",
+    summary: "abstract",
+    tldr: "abstract",
+    cite: "quote"
+  };
+  const iconsJson = JSON.stringify(calloutIcons);
+  const aliasJson = JSON.stringify(calloutAliases);
+  const base = katexBase != null ? katexBase : KATEX_CDN_BASE;
+  const hasMath = containsMath(htmlBody);
+  const katexCssTag = hasMath ? `
+  <link rel="stylesheet" href="${base}/katex.min.css">` : "";
+  const katexJsTag = hasMath ? `
+  <script src="${base}/katex.min.js"></script>` : "";
+  const analyticsTag = analytics ? `
+  ${getGoatCounterScriptTag(analytics)}` : "";
+  return `<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title}</title>${katexCssTag}${analyticsTag}
+  <style>${css}</style>
+</head>
+<body>
+  <button class="toc-toggle" id="toc-toggle" title="OUTLINE">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+  </button>
+  <div class="toc-backdrop" id="toc-backdrop"></div>
+  <div class="lightbox" id="lightbox"><img id="lightbox-img" src="" alt=""></div>
+  <nav class="toc-sidebar" id="toc-sidebar">
+    <div class="toc-header">
+      <span class="toc-title">OUTLINE</span>
+      <button class="toc-close" id="toc-close" title="\u5173\u95ED">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div id="toc-inner"></div>
+  </nav>
+  <div class="markdown-preview-view">
+${htmlBody}
+  </div>
+
+${katexJsTag}
+  <script>
+    (function() {
+      var COPY_ICON  = '${svgCopy}';
+      var CHECK_ICON = '${svgCheck}';
+      var ICONS   = ${iconsJson};
+      var ALIASES = ${aliasJson};
+
+      /* \u2500\u2500 KaTeX math \u2500\u2500 */
+      document.querySelectorAll('.math-d').forEach(function(el) {
+        try { katex.render(el.textContent.trim(), el, { displayMode: true,  throwOnError: false }); } catch(e) {}
+      });
+      document.querySelectorAll('.math-i').forEach(function(el) {
+        try { katex.render(el.textContent.trim(), el, { displayMode: false, throwOnError: false }); } catch(e) {}
+      });
+
+      /* \u2500\u2500 Callout icons \u2500\u2500 */
+      document.querySelectorAll('.callout').forEach(function(callout) {
+        var iconEl = callout.querySelector('.callout-icon');
+        if (!iconEl) return;
+        var hasSvg = iconEl.querySelector('svg') && iconEl.querySelector('svg').childElementCount > 0;
+        if (hasSvg) return;
+        var type = (callout.getAttribute('data-callout') || 'note').toLowerCase();
+        type = ALIASES[type] || type;
+        var paths = ICONS[type] || ICONS['note'];
+        iconEl.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + paths + '</svg>';
+      });
+
+      /* \u2500\u2500 Callout fold/unfold \u2500\u2500 */
+      document.querySelectorAll('.callout').forEach(function(callout) {
+        var hasFold = callout.hasAttribute('data-callout-fold') ||
+                      callout.classList.contains('is-collapsed');
+        if (!hasFold) return;
+        var title   = callout.querySelector('.callout-title');
+        var content = callout.querySelector('.callout-content');
+        if (!title) return;
+
+        // Clear any inline display:none Obsidian may have set \u2014 CSS handles visibility
+        if (content) content.style.display = '';
+
+        title.style.cursor = 'pointer';
+        title.addEventListener('click', function() {
+          callout.classList.toggle('is-collapsed');
+        });
+      });
+
+      /* \u2500\u2500 Code block: language label (via wrapper) + copy button \u2500\u2500 */
+      document.querySelectorAll('pre').forEach(function(pre) {
+        var code = pre.querySelector('code');
+
+        // Wrap pre so label can escape pre's overflow:auto clipping
+        var wrapper = document.createElement('div');
+        wrapper.className = 'pre-wrapper';
+        pre.parentNode.insertBefore(wrapper, pre);
+        wrapper.appendChild(pre);
+
+        // Language label \u2014 attached to wrapper, not pre
+        if (code) {
+          var m = code.className.match(/language-(\\S+)/);
+          if (m && m[1] && m[1] !== 'undefined' && m[1] !== 'text') {
+            var label = document.createElement('span');
+            label.className = 'code-lang';
+            label.textContent = m[1];
+            wrapper.appendChild(label);
+          }
+        }
+
+        // Copy button \u2014 stays inside pre (positioned relative to pre)
+        var btn = document.createElement('button');
+        btn.className = 'copy-btn';
+        btn.title = '\u590D\u5236\u4EE3\u7801';
+        btn.innerHTML = COPY_ICON;
+        pre.appendChild(btn);
+        btn.addEventListener('click', function() {
+          navigator.clipboard.writeText(code ? code.innerText : pre.innerText).then(function() {
+            btn.innerHTML = CHECK_ICON;
+            setTimeout(function() { btn.innerHTML = COPY_ICON; }, 2000);
+          });
+        });
+      });
+    })();
+
+    /* \u2500\u2500 TOC generation \u2500\u2500 */
+    (function() {
+      var sidebar  = document.getElementById('toc-sidebar');
+      var tocInner = document.getElementById('toc-inner');
+      if (!sidebar || !tocInner) return;
+
+      var headings = Array.prototype.slice.call(
+        document.querySelectorAll('.markdown-preview-view h1, .markdown-preview-view h2, .markdown-preview-view h3, .markdown-preview-view h4')
+      );
+      if (headings.length < 2) {
+        sidebar.style.display = 'none';
+        var tog = document.getElementById('toc-toggle');
+        if (tog) tog.style.display = 'none';
+        return;
+      }
+
+      // Ensure each heading has an id
+      headings.forEach(function(h, i) {
+        if (!h.id) h.id = 'toc-h-' + i;
+      });
+
+      // Build list
+      var ul = document.createElement('ul');
+      ul.className = 'toc-list';
+      headings.forEach(function(h) {
+        var li = document.createElement('li');
+        li.className = 'toc-item toc-' + h.tagName.toLowerCase();
+        var a = document.createElement('a');
+        a.href = '#' + h.id;
+        a.className = 'toc-link';
+        a.textContent = h.textContent.replace(/\xB6$/, '').trim(); // strip Obsidian \xB6
+        a.addEventListener('click', function(e) {
+          e.preventDefault();
+          document.getElementById(h.id).scrollIntoView({ behavior: 'smooth' });
+        });
+        li.appendChild(a);
+        ul.appendChild(li);
+      });
+      tocInner.appendChild(ul);
+
+      // Active link tracking
+      var links = tocInner.querySelectorAll('.toc-link');
+      var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            links.forEach(function(l) { l.classList.remove('is-active'); });
+            var active = tocInner.querySelector('[href="#' + entry.target.id + '"]');
+            if (active) active.classList.add('is-active');
+          }
+        });
+      }, { rootMargin: '-8% 0px -80% 0px', threshold: 0 });
+      headings.forEach(function(h) { observer.observe(h); });
+
+      // Close drawer on link click (mobile)
+      tocInner.querySelectorAll('.toc-link').forEach(function(a) {
+        a.addEventListener('click', function() {
+          sidebar.classList.remove('is-open');
+          document.getElementById('toc-backdrop').classList.remove('is-visible');
+          document.body.style.overflow = '';
+        });
+      });
+    })();
+
+    /* \u2500\u2500 Imgs lightbox \u2500\u2500 */
+    (function() {
+      var lightbox = document.getElementById('lightbox');
+      var lbImg    = document.getElementById('lightbox-img');
+      if (!lightbox || !lbImg) return;
+      document.querySelectorAll('.imgs-gallery img').forEach(function(img) {
+        img.addEventListener('click', function(e) {
+          e.stopPropagation();
+          lbImg.setAttribute('src', img.getAttribute('src'));
+          lbImg.setAttribute('alt', img.getAttribute('alt') || '');
+          lightbox.classList.add('is-open');
+          document.body.style.overflow = 'hidden';
+        });
+      });
+      lightbox.addEventListener('click', function(e) {
+        if (e.target === lbImg) return; // click on image itself does nothing
+        lightbox.classList.remove('is-open');
+        document.body.style.overflow = '';
+        lbImg.setAttribute('src', '');
+      });
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          lightbox.classList.remove('is-open');
+          document.body.style.overflow = '';
+          lbImg.setAttribute('src', '');
+        }
+      });
+    })();
+
+    /* \u2500\u2500 Mermaid zoom toggle \u2500\u2500 */
+    (function() {
+      document.querySelectorAll('.mermaid').forEach(function(block) {
+        var svg = block.querySelector('svg');
+        if (!svg) return;
+
+        // \u4FEE\u6B63\u8282\u70B9\u5BBD\u5EA6\u4E0D\u8DB3\uFF1Amermaid \u5728\u8BA1\u7B97\u8282\u70B9\u5C3A\u5BF8\u65F6\u6F0F\u6389\u4E86\u7EA6 20px \u7684 padding\uFF0C
+        // \u5BFC\u81F4 rect\uFF08\u8282\u70B9\u6846\uFF09\u548C foreignObject\uFF08\u6587\u5B57\u5BB9\u5668\uFF09\u90FD\u504F\u7A84 20px\u3002
+        // foreignObject \u4F1A\u88C1\u65AD\u8D85\u51FA\u5176\u5BBD\u5EA6\u7684 HTML \u5185\u5BB9\uFF08\u4E0E SVG overflow:visible \u65E0\u5173\uFF09\uFF0C
+        // \u5FC5\u987B\u76F4\u63A5\u4FEE\u6B63 width\u3002\u540C\u65F6\u5C06 label \u7EC4\u5DE6\u79FB 10px \u4EE5\u4FDD\u6301\u5C45\u4E2D\uFF0Crect \u4E5F\u540C\u6B65\u6269\u5BBD\u3002
+        (function() {
+          var EXTRA = 20;
+          svg.querySelectorAll('foreignObject').forEach(function(fo) {
+            var fw = parseFloat(fo.getAttribute('width') || '0');
+            if (fw <= 0) return;
+            fo.setAttribute('width', String(fw + EXTRA));
+            // \u5C06 label \u7236\u7EC4\u5DE6\u79FB EXTRA/2\uFF0C\u4FDD\u6301\u6587\u5B57\u5728\u8282\u70B9\u5185\u5C45\u4E2D
+            var labelG = fo.parentElement;
+            if (labelG && labelG !== svg && labelG.getAttribute) {
+              var tr = labelG.getAttribute('transform') || '';
+              var ti = tr.indexOf('translate(');
+              if (ti >= 0) {
+                var te = tr.indexOf(')', ti);
+                if (te > ti) {
+                  var coords = tr.slice(ti + 10, te).split(',');
+                  if (coords.length >= 2) {
+                    labelG.setAttribute('transform',
+                      tr.slice(0, ti) + 'translate(' +
+                      (parseFloat(coords[0]) - EXTRA / 2) + ',' +
+                      parseFloat(coords[1]) + ')' +
+                      tr.slice(te + 1));
+                  }
+                }
+              }
+            }
+          });
+          svg.querySelectorAll('rect.label-container').forEach(function(rect) {
+            var rw = parseFloat(rect.getAttribute('width') || '0');
+            var rx = parseFloat(rect.getAttribute('x') || '0');
+            if (rw <= 0) return;
+            rect.setAttribute('width', String(rw + EXTRA));
+            rect.setAttribute('x', String(rx - EXTRA / 2));
+          });
+        })();
+
+        // \u4FEE\u6B63 viewBox \u88C1\u65AD\uFF1Amermaid \u7528 canvas \u6D4B\u91CF\u6587\u5B57\u5BBD\u5EA6\uFF0C\u5B9E\u9645\u6E32\u67D3\u53EF\u80FD\u7A0D\u5BBD\uFF0C
+        // \u5BFC\u81F4\u6700\u540E\u4E00\u4E2A\u5B57\u7B26\u88AB viewBox \u8FB9\u754C\u88C1\u65AD\u3002\u7528 getBBox() \u6D4B\u91CF\u5B9E\u9645\u5185\u5BB9\u8FB9\u754C\uFF0C
+        // \u6309\u9700\u6269\u5C55 viewBox\uFF0C\u5E76\u540C\u6B65\u66F4\u65B0 width/max-width\uFF0C\u4FDD\u6301 1:1 \u6BD4\u4F8B\u3002
+        (function() {
+          var vbStr = svg.getAttribute('viewBox');
+          if (!vbStr) return;
+          var parts = vbStr.trim().replace(/,/g, ' ').split(' ').filter(Boolean).map(parseFloat);
+          if (parts.length < 4 || isNaN(parts[2]) || isNaN(parts[3])) return;
+          var minPadW = 8, minPadH = 4;
+          var extraW = minPadW, extraH = 0;
+          try {
+            var bbox = svg.getBBox();
+            var vbRight  = parts[0] + parts[2];
+            var vbBottom = parts[1] + parts[3];
+            var overflowW = Math.ceil(bbox.x + bbox.width  + minPadW - vbRight);
+            var overflowH = Math.ceil(bbox.y + bbox.height + minPadH - vbBottom);
+            if (overflowW > extraW) extraW = overflowW;
+            if (overflowH > 0)      extraH = overflowH;
+          } catch(e) {}
+          if (extraW > 0) {
+            parts[2] += extraW;
+            var wAttr = parseFloat(svg.getAttribute('width') || '0');
+            if (wAttr > 0) svg.setAttribute('width', String(wAttr + extraW));
+            // \u73B0\u4EE3 mermaid \u7528 style.maxWidth \u800C\u975E width \u5C5E\u6027
+            var mwStyle = parseFloat(svg.style.maxWidth || '0');
+            if (mwStyle > 0) svg.style.maxWidth = (mwStyle + extraW) + 'px';
+          }
+          if (extraH > 0) {
+            parts[3] += extraH;
+            var hAttr = parseFloat(svg.getAttribute('height') || '0');
+            if (hAttr > 0) svg.setAttribute('height', String(hAttr + extraH));
+          }
+          if (extraW > 0 || extraH > 0) svg.setAttribute('viewBox', parts.join(' '));
+        })();
+
+        // \u8BFB\u53D6 SVG \u81EA\u7136\u50CF\u7D20\u5BBD\u5EA6\uFF0C\u6309\u4F18\u5148\u7EA7\u4F9D\u6B21\u5C1D\u8BD5\u4E09\u79CD\u6765\u6E90
+        var naturalWidth = parseFloat(svg.getAttribute('width') || '0');
+        if (!naturalWidth) {
+          var vb = svg.getAttribute('viewBox');
+          if (vb) {
+            var parts = vb.trim().replace(/,/g, ' ').split(' ').filter(Boolean);
+            if (parts.length >= 3) naturalWidth = parseFloat(parts[2]);
+          }
+        }
+        if (!naturalWidth) {
+          var mw = svg.style.maxWidth;
+          if (mw) naturalWidth = parseFloat(mw);
+        }
+        var containerWidth = block.clientWidth;
+        if (!naturalWidth || naturalWidth <= containerWidth + 2) return;
+        // \u8D85\u5BBD\uFF1A\u9ED8\u8BA4\u8FDB\u5165 fit-view\uFF08\u7F29\u653E\u9002\u914D\uFF09\uFF0CCSS \u8D1F\u8D23 width:100%
+        block.classList.add('mermaid-overflows', 'mermaid-fit-view');
+        block.addEventListener('click', function() {
+          if (block.classList.contains('mermaid-fit-view')) {
+            // \u5C55\u5F00\uFF1A\u5FC5\u987B\u663E\u5F0F\u8BBE\u50CF\u7D20\u5BBD\uFF0C\u5426\u5219 SVG \u9ED8\u8BA4\u4ECD\u662F 100% \u5BB9\u5668\u5BBD\uFF0C\u65E0\u6CD5\u6EDA\u52A8
+            block.classList.remove('mermaid-fit-view');
+            svg.style.setProperty('width', naturalWidth + 'px', 'important');
+          } else {
+            // \u6536\u8D77\uFF1A\u79FB\u9664\u5185\u8054 width\uFF0C\u8BA9 CSS .mermaid-fit-view svg { width:100% } \u63A5\u7BA1
+            block.classList.add('mermaid-fit-view');
+            svg.style.removeProperty('width');
+          }
+        });
+      });
+    })();
+
+    /* \u2500\u2500 TOC mobile toggle \u2500\u2500 */
+    (function() {
+      var toggle   = document.getElementById('toc-toggle');
+      var sidebar  = document.getElementById('toc-sidebar');
+      var backdrop = document.getElementById('toc-backdrop');
+      var closeBtn = document.getElementById('toc-close');
+      function openToc()  {
+        sidebar.classList.add('is-open');
+        backdrop.classList.add('is-visible');
+        document.body.style.overflow = 'hidden';
+      }
+      function closeToc() {
+        sidebar.classList.remove('is-open');
+        backdrop.classList.remove('is-visible');
+        document.body.style.overflow = '';
+      }
+      if (toggle)   toggle.addEventListener('click', openToc);
+      if (backdrop) backdrop.addEventListener('click', closeToc);
+      if (closeBtn) closeBtn.addEventListener('click', closeToc);
+    })();
+  </script>
+</body>
+</html>`;
 }
 
 // src/exporter.ts
