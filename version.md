@@ -5,6 +5,12 @@
 
 ---
 
+## Version 0.1.9
+
+- Fixed the ZIP export so page files are written as correct binary data, ensuring the downloaded archive is always valid
+
+- 修复 ZIP 导出，页面文件以正确的二进制数据写入，确保下载的压缩包始终有效
+
 ## Version 0.1.8
 
 - Changed local export to download a self-contained ZIP archive instead of writing files to a folder you pick — no more native folder dialog, and the export-path setting has been removed
