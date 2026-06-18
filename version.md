@@ -5,6 +5,14 @@
 
 ---
 
+## Version 0.1.10
+
+- Added a redesigned share popover card (replacing the old share modal) with a live progress bar that shows rendering and per-page upload/delete steps while publishing, updating, or unpublishing
+- Added a 14-day visit trend chart and expandable visitor breakdowns (referrers, browsers, and more) to the share popover, served instantly from a session cache so reopening no longer flickers
+
+- 新增重新设计的分享气泡卡片（取代旧的分享弹窗），发布、更新、取消发布时显示实时进度条，呈现渲染与各页面的上传/删除步骤
+- 分享气泡新增近 14 天访问趋势图与可展开的访客来源细分（来源、浏览器等），并借助会话缓存即时展示，重新打开不再闪烁
+
 ## Version 0.1.9
 
 - Fixed the ZIP export so page files are written as correct binary data, ensuring the downloaded archive is always valid
