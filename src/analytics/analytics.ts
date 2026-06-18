@@ -1,5 +1,5 @@
 // 纯函数模块：禁止 import obsidian，保证可被 vitest 直接单测。
-import type { ShareOnlineSettings } from "./settings";
+import type { ShareOnlineSettings } from "../ui/settings";
 
 /** GoatCounter 埋点脚本注入所需的最小配置。 */
 export interface GoatCounterInjectConfig {

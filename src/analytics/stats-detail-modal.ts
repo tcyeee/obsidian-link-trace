@@ -1,7 +1,7 @@
 import { Modal, setIcon } from "obsidian";
 import type { App } from "obsidian";
-import { t } from "./i18n";
-import type { ShareOnlineSettings } from "./settings";
+import { t } from "../core/i18n";
+import type { ShareOnlineSettings } from "../ui/settings";
 import type { DimensionItem, PageDetail, StatsRow } from "./analytics";
 import { fetchPageDetail } from "./analytics-client";
 

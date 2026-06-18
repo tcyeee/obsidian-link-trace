@@ -1,8 +1,8 @@
 import { App, Vault, TFile } from "obsidian";
 import { zipSync, strToU8 } from "fflate";
-import { renderNote } from "./renderer";
-import { buildHtml, containsMath } from "./page-template";
-import type { GoatCounterInjectConfig } from "./analytics";
+import { renderNote } from "../render/renderer";
+import { buildHtml, containsMath } from "../render/page-template";
+import type { GoatCounterInjectConfig } from "../analytics/analytics";
 
 /** Base36 alphabet size — names are drawn from [0-9a-z]. */
 const NAME_ALPHABET_SIZE = 36;

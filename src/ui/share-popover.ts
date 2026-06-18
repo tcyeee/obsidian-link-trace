@@ -1,15 +1,15 @@
 import { TFile, setIcon, setTooltip } from "obsidian";
-import type ShareOnlinePlugin from "../main";
-import { t } from "./i18n";
-import { canReadAnalytics, type DailyPoint, type DimensionItem } from "./analytics";
+import type ShareOnlinePlugin from "../../main";
+import { t } from "../core/i18n";
+import { canReadAnalytics, type DailyPoint, type DimensionItem } from "../analytics/analytics";
 import {
 	fetchPageViews,
 	fetchDailyTrend,
 	fetchPopoverDimensions,
 	type PopoverDimensionKey,
-} from "./analytics-client";
-import { sizeLabel } from "./stats-detail-modal";
-import { collectLinkedNotesWithStatus } from "./exporter";
+} from "../analytics/analytics-client";
+import { sizeLabel } from "../analytics/stats-detail-modal";
+import { collectLinkedNotesWithStatus } from "../publish/exporter";
 
 /** A linked note plus its current share link (empty when not yet published). */
 type SubNoteStatus = { file: TFile; shareLink: string };

@@ -25640,10 +25640,10 @@ __export(main_exports, {
 module.exports = __toCommonJS(main_exports);
 var import_obsidian10 = require("obsidian");
 
-// src/settings.ts
+// src/ui/settings.ts
 var import_obsidian = require("obsidian");
 
-// src/i18n.ts
+// src/core/i18n.ts
 var zh = {
   "settings.language": "\u8BED\u8A00 / Language",
   "settings.language.desc": "\u5207\u6362\u754C\u9762\u8BED\u8A00",
@@ -25916,7 +25916,7 @@ function formatPageCount(count) {
   }
 }
 
-// src/settings.ts
+// src/ui/settings.ts
 var DEFAULT_SETTINGS = {
   includeLinkedNotes: false,
   ossRegion: "",
@@ -26764,13 +26764,13 @@ function zipSync(data, opts) {
   return out;
 }
 
-// src/renderer.ts
+// src/render/renderer.ts
 var import_obsidian4 = require("obsidian");
 
-// src/base-renderer.ts
+// src/render/base-renderer.ts
 var import_obsidian3 = require("obsidian");
 
-// src/imgs-renderer.ts
+// src/render/imgs-renderer.ts
 var import_obsidian2 = require("obsidian");
 function registerImage(imgFile, images) {
   for (const [name2, f] of images) {
@@ -26839,7 +26839,7 @@ function processImgsBlocks(app, sourceFile, el, images) {
   });
 }
 
-// src/base-renderer.ts
+// src/render/base-renderer.ts
 function splitTopLevelArgs(s) {
   const args = [];
   let depth = 0, cur = "", inStr = false, strChar = "";
@@ -27312,7 +27312,7 @@ function resolveBaseEmbeds(content) {
   );
 }
 
-// src/note-hash.ts
+// src/core/note-hash.ts
 function stripFrontmatter(raw) {
   return raw.replace(/^---[\s\S]*?---\n?/, "");
 }
@@ -27324,7 +27324,7 @@ function hashBody(body) {
   return (h >>> 0).toString(36);
 }
 
-// src/page-css.ts
+// src/render/page-css.ts
 var THEME = "#65A692";
 function buildCss() {
   return `/* \u2500\u2500 Reset \u2500\u2500 */
@@ -27937,7 +27937,7 @@ body:hover ::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.4); }
 `;
 }
 
-// src/renderer.ts
+// src/render/renderer.ts
 function extractMath(content) {
   const entries = [];
   const codes = [];
@@ -28176,7 +28176,7 @@ async function renderNote(app, file, rawContent) {
   return { html, css: buildCss(), images };
 }
 
-// src/analytics.ts
+// src/analytics/analytics.ts
 function escapeAttr(value) {
   return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
 }
@@ -28373,7 +28373,7 @@ function canReadAnalytics(s) {
   return !!s.goatcounterEndpoint.trim();
 }
 
-// src/page-template.ts
+// src/render/page-template.ts
 var KATEX_CDN_BASE = "https://cdn.jsdelivr.net/npm/katex@0.16.9/dist";
 function containsMath(htmlBody) {
   return /class="math-[di]"/.test(htmlBody);
@@ -28759,7 +28759,7 @@ ${katexJsTag}
 </html>`;
 }
 
-// src/exporter.ts
+// src/publish/exporter.ts
 var NAME_ALPHABET_SIZE = 36;
 var CROWD_THRESHOLD = 2 / 3;
 function randomName(length) {
@@ -28873,7 +28873,7 @@ async function exportToZip(app, vault, file, includeLinkedNotes = false, pageLin
   return { result, zip };
 }
 
-// src/oss.ts
+// src/publish/oss.ts
 var import_obsidian5 = require("obsidian");
 var import_ali_oss = __toESM(require_client());
 var zlib = __toESM(require("zlib"));
@@ -29042,10 +29042,10 @@ async function deleteFromOss(settings, noteName) {
   }
 }
 
-// src/share-popover.ts
+// src/ui/share-popover.ts
 var import_obsidian8 = require("obsidian");
 
-// src/analytics-client.ts
+// src/analytics/analytics-client.ts
 var import_obsidian6 = require("obsidian");
 var STATS_START = "2020-01-01T00:00:00Z";
 var sleep = (ms) => new Promise((r) => window.setTimeout(r, ms));
@@ -29248,7 +29248,7 @@ async function fetchDailyTrend(settings, shareLink, days) {
   }
 }
 
-// src/stats-detail-modal.ts
+// src/analytics/stats-detail-modal.ts
 var import_obsidian7 = require("obsidian");
 function formatDateTime(ms) {
   if (ms == null) return t("stats.views.unknown");
@@ -29392,7 +29392,7 @@ var StatsDetailModal = class extends import_obsidian7.Modal {
   }
 };
 
-// src/share-popover.ts
+// src/ui/share-popover.ts
 var POPOVER_CLASS = "opal-share-popover";
 var POPOVER_TREND_DAYS = 14;
 function formatDateTime2(d) {
@@ -30146,7 +30146,7 @@ var SharePopover = class {
   }
 };
 
-// src/stats-view.ts
+// src/analytics/stats-view.ts
 var import_obsidian9 = require("obsidian");
 var VIEW_TYPE_SHARE_STATS = "share-stats-view";
 function formatDate(ms) {

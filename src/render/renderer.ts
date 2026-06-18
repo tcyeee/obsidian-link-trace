@@ -1,7 +1,7 @@
 import { App, TFile, MarkdownRenderer, Component, FileSystemAdapter } from "obsidian";
 import { renderBaseAsTable, resolveBaseEmbeds } from "./base-renderer";
 import { registerImage, processImgsBlocks } from "./imgs-renderer";
-import { stripFrontmatter } from "./note-hash";
+import { stripFrontmatter } from "../core/note-hash";
 import { buildCss } from "./page-css";
 
 /* ── Math extraction ──────────────────────────────────────────────────────

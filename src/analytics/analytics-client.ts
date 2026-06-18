@@ -1,5 +1,5 @@
 import { requestUrl } from "obsidian";
-import type { ShareOnlineSettings } from "./settings";
+import type { ShareOnlineSettings } from "../ui/settings";
 import {
 	parseStatsResponse,
 	parseHitsList,

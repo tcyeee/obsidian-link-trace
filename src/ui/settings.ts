@@ -1,6 +1,6 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
-import type ShareOnlinePlugin from "../main";
-import { Language, t, setLanguage, formatPageCount } from "./i18n";
+import type ShareOnlinePlugin from "../../main";
+import { Language, t, setLanguage, formatPageCount } from "../core/i18n";
 
 export interface ShareOnlineSettings {
 	includeLinkedNotes: boolean;

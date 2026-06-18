@@ -1,5 +1,5 @@
 import { Vault, TFile, requestUrl } from "obsidian";
-import type { ShareOnlineSettings } from "./settings";
+import type { ShareOnlineSettings } from "../ui/settings";
 import OSS from "ali-oss";
 import * as zlib from "zlib";
 

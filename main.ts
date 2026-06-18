@@ -1,12 +1,12 @@
 import { MarkdownView, Notice, Plugin, TFile, debounce, setIcon, setTooltip } from "obsidian";
-import { ShareOnlineSettings, DEFAULT_SETTINGS, ShareOnlineSettingTab } from "./src/settings";
-import { exportToZip, prepareExport, generateUniqueName, collectLinkedNotesWithStatus, rewriteInternalLinks } from "./src/exporter";
-import { uploadToOss, uploadSubNoteToOss, deleteFromOss, listPublishedNames, ensureKatexAssets, katexBaseUrl } from "./src/oss";
-import { t, setLanguage } from "./src/i18n";
-import { getAnalyticsInjectConfig } from "./src/analytics";
-import { hashBody, stripFrontmatter } from "./src/note-hash";
-import { SharePopover } from "./src/share-popover";
-import { ShareStatsView, VIEW_TYPE_SHARE_STATS } from "./src/stats-view";
+import { ShareOnlineSettings, DEFAULT_SETTINGS, ShareOnlineSettingTab } from "./src/ui/settings";
+import { exportToZip, prepareExport, generateUniqueName, collectLinkedNotesWithStatus, rewriteInternalLinks } from "./src/publish/exporter";
+import { uploadToOss, uploadSubNoteToOss, deleteFromOss, listPublishedNames, ensureKatexAssets, katexBaseUrl } from "./src/publish/oss";
+import { t, setLanguage } from "./src/core/i18n";
+import { getAnalyticsInjectConfig } from "./src/analytics/analytics";
+import { hashBody, stripFrontmatter } from "./src/core/note-hash";
+import { SharePopover } from "./src/ui/share-popover";
+import { ShareStatsView, VIEW_TYPE_SHARE_STATS } from "./src/analytics/stats-view";
 
 export default class ShareOnlinePlugin extends Plugin {
 	settings: ShareOnlineSettings;

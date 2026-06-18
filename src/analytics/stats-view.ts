@@ -1,7 +1,7 @@
 import { ItemView, WorkspaceLeaf, TFile, setIcon, setTooltip } from "obsidian";
 import type { App } from "obsidian";
-import type ShareOnlinePlugin from "../main";
-import { t } from "./i18n";
+import type ShareOnlinePlugin from "../../main";
+import { t } from "../core/i18n";
 import {
 	extractPathname,
 	canReadAnalytics,

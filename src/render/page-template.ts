@@ -1,4 +1,4 @@
-import { getGoatCounterScriptTag, type GoatCounterInjectConfig } from "./analytics";
+import { getGoatCounterScriptTag, type GoatCounterInjectConfig } from "../analytics/analytics";
 import { THEME } from "./page-css";
 
 /* ── HTML builder ──────────────────────────────────────────────────────── */

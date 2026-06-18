@@ -16,7 +16,7 @@ pnpm dev          # esbuild watch build (inline sourcemap) → main.js
 pnpm build        # production build (no sourcemap) → main.js
 pnpm typecheck    # tsc --noEmit
 pnpm test         # vitest run (one shot)
-pnpm vitest run src/note-hash.test.ts   # run a single test file
+pnpm vitest run src/core/note-hash.test.ts   # run a single test file
 ```
 
 Per the user's global instructions: **after any code change, run `pnpm build` and deploy** `main.js`,
@@ -30,7 +30,19 @@ Note: `package.json` `version` (0.1.5) and `manifest.json` `version` (0.1.6) are
 ## Architecture
 
 `main.ts` is the `Plugin` subclass and orchestrator. It owns settings, the status-bar share icon, and
-the publish/unpublish/update/export flows. Everything else lives in `src/`.
+the publish/unpublish/update/export flows. Everything else lives in `src/`, grouped by concern:
+
+```
+src/
+  render/     renderer, base-renderer, imgs-renderer, page-template, page-css  (note → self-contained HTML)
+  publish/    exporter, oss                                                    (destinations: local / OSS)
+  analytics/  analytics, analytics-client, stats-view, stats-detail-modal      (GoatCounter + stats page)
+  ui/         share-popover, settings                                          (status-bar popover, settings tab)
+  core/       note-hash, i18n                                                  (pure infra/util)
+  ali-oss.d.ts, stubs/, __mocks__/                                             (ambient types, build stubs, test mock)
+```
+
+Test files (`*.test.ts`) sit next to the source they cover.
 
 **The core pipeline** (publish and local export share it):
 
@@ -60,20 +72,20 @@ hash against `share_hash` to show **published (green) vs stale** state.
 
 ### Key modules
 
-- `base-renderer.ts` — **hand-written Obsidian Bases engine**: parses `.base` YAML, evaluates filter
+- `render/base-renderer.ts` — **hand-written Obsidian Bases engine**: parses `.base` YAML, evaluates filter
   expressions / formulas, renders list/table/cards to static HTML. Deliberately not replaced by native
   rendering — see `BASES-RENDER-DECISION.md` (native table view is hard-virtualized and can't be
   snapshotted). If touching base logic, read that decision first.
-- `imgs-renderer.ts` — renders the [Image Cluster](https://github.com/musSpeaking/obsidian-image-layouts)
+- `render/imgs-renderer.ts` — renders the [Image Cluster](https://github.com/musSpeaking/obsidian-image-layouts)
   `imgs` code-block gallery format.
-- `analytics.ts` / `analytics-client.ts` — tracking-script injection into exported HTML, and reading
+- `analytics/analytics.ts` / `analytics/analytics-client.ts` — tracking-script injection into exported HTML, and reading
   back page-view stats for the share popover. Target the self-hosted **GoatCounter** instance; see
   [Analytics backend](#analytics-backend).
-- `i18n.ts` — `t(key, replacements?)` translation; language set from settings. User-facing strings go here.
-- `settings.ts` — `ShareOnlineSettings` + settings tab (OSS creds, export path, link length, analytics).
-- `share-popover.ts` — the status-bar popover UI, including the inline publish/unpublish
+- `core/i18n.ts` — `t(key, replacements?)` translation; language set from settings. User-facing strings go here.
+- `ui/settings.ts` — `ShareOnlineSettings` + settings tab (OSS creds, export path, link length, analytics).
+- `ui/share-popover.ts` — the status-bar popover UI, including the inline publish/unpublish
   confirmation panel (main note + linked sub-note selection) that replaced the old `ShareModal`.
-- `stats-view.ts` — the **share-stats page**: a dedicated `ItemView` (`VIEW_TYPE_SHARE_STATS`, opened
+- `analytics/stats-view.ts` — the **share-stats page**: a dedicated `ItemView` (`VIEW_TYPE_SHARE_STATS`, opened
   via a ribbon icon + the `open-share-stats` command) listing every published share page and its
   cumulative views. The page list is the canonical local record — `collectPublishedPages()` scans all
   notes' `share_link` frontmatter (so zero-view pages still appear); view counts come from one bulk
