@@ -173,8 +173,8 @@ var require_common = __commonJS({
       createDebug.formatters = {};
       function selectColor(namespace) {
         let hash = 0;
-        for (let i = 0; i < namespace.length; i++) {
-          hash = (hash << 5) - hash + namespace.charCodeAt(i);
+        for (let i2 = 0; i2 < namespace.length; i2++) {
+          hash = (hash << 5) - hash + namespace.charCodeAt(i2);
           hash |= 0;
         }
         return createDebug.colors[Math.abs(hash) % createDebug.colors.length];
@@ -657,8 +657,8 @@ var require_node = __commonJS({
     function init(debug) {
       debug.inspectOpts = {};
       const keys = Object.keys(exports2.inspectOpts);
-      for (let i = 0; i < keys.length; i++) {
-        debug.inspectOpts[keys[i]] = exports2.inspectOpts[keys[i]];
+      for (let i2 = 0; i2 < keys.length; i2++) {
+        debug.inspectOpts[keys[i2]] = exports2.inspectOpts[keys[i2]];
       }
     }
     module2.exports = require_common()(exports2);
@@ -711,10 +711,10 @@ var require_stream_wormhole = __commonJS({
           cleanup();
           resolve();
         }
-        function onError(err) {
+        function onError(err2) {
           cleanup();
           if (throwError) {
-            reject(err);
+            reject(err2);
           } else {
             resolve();
           }
@@ -809,13 +809,13 @@ var require_Utility = __commonJS({
     (function() {
       var assign, getValue, isArray, isEmpty, isFunction, isObject, isPlainObject, slice = [].slice, hasProp = {}.hasOwnProperty;
       assign = function() {
-        var i, key, len, source, sources, target;
+        var i2, key, len, source, sources, target;
         target = arguments[0], sources = 2 <= arguments.length ? slice.call(arguments, 1) : [];
         if (isFunction(Object.assign)) {
           Object.assign.apply(null, arguments);
         } else {
-          for (i = 0, len = sources.length; i < len; i++) {
-            source = sources[i];
+          for (i2 = 0, len = sources.length; i2 < len; i2++) {
+            source = sources[i2];
             if (source != null) {
               for (key in source) {
                 if (!hasProp.call(source, key)) continue;
@@ -1416,7 +1416,7 @@ var require_XMLElement = __commonJS({
           throw new Error("This DOM method is not implemented." + this.debugInfo());
         };
         XMLElement2.prototype.isEqualNode = function(node) {
-          var i, j, ref1;
+          var i2, j, ref1;
           if (!XMLElement2.__super__.isEqualNode.apply(this, arguments).isEqualNode(node)) {
             return false;
           }
@@ -1432,8 +1432,8 @@ var require_XMLElement = __commonJS({
           if (node.attribs.length !== this.attribs.length) {
             return false;
           }
-          for (i = j = 0, ref1 = this.attribs.length - 1; 0 <= ref1 ? j <= ref1 : j >= ref1; i = 0 <= ref1 ? ++j : --j) {
-            if (!this.attribs[i].isEqualNode(node.attribs[i])) {
+          for (i2 = j = 0, ref1 = this.attribs.length - 1; 0 <= ref1 ? j <= ref1 : j >= ref1; i2 = 0 <= ref1 ? ++j : --j) {
+            if (!this.attribs[i2].isEqualNode(node.attribs[i2])) {
               return false;
             }
           }
@@ -1936,13 +1936,13 @@ var require_XMLDocType = __commonJS({
       module2.exports = XMLDocType = (function(superClass) {
         extend(XMLDocType2, superClass);
         function XMLDocType2(parent, pubID, sysID) {
-          var child, i, len, ref, ref1, ref2;
+          var child, i2, len, ref, ref1, ref2;
           XMLDocType2.__super__.constructor.call(this, parent);
           this.type = NodeType.DocType;
           if (parent.children) {
             ref = parent.children;
-            for (i = 0, len = ref.length; i < len; i++) {
-              child = ref[i];
+            for (i2 = 0, len = ref.length; i2 < len; i2++) {
+              child = ref[i2];
               if (child.type === NodeType.Element) {
                 this.name = child.name;
                 break;
@@ -1965,11 +1965,11 @@ var require_XMLDocType = __commonJS({
         }
         Object.defineProperty(XMLDocType2.prototype, "entities", {
           get: function() {
-            var child, i, len, nodes, ref;
+            var child, i2, len, nodes, ref;
             nodes = {};
             ref = this.children;
-            for (i = 0, len = ref.length; i < len; i++) {
-              child = ref[i];
+            for (i2 = 0, len = ref.length; i2 < len; i2++) {
+              child = ref[i2];
               if (child.type === NodeType.EntityDeclaration && !child.pe) {
                 nodes[child.name] = child;
               }
@@ -1979,11 +1979,11 @@ var require_XMLDocType = __commonJS({
         });
         Object.defineProperty(XMLDocType2.prototype, "notations", {
           get: function() {
-            var child, i, len, nodes, ref;
+            var child, i2, len, nodes, ref;
             nodes = {};
             ref = this.children;
-            for (i = 0, len = ref.length; i < len; i++) {
-              child = ref[i];
+            for (i2 = 0, len = ref.length; i2 < len; i2++) {
+              child = ref[i2];
               if (child.type === NodeType.NotationDeclaration) {
                 nodes[child.name] = child;
               }
@@ -2404,16 +2404,16 @@ var require_XMLNode = __commonJS({
         });
         Object.defineProperty(XMLNode2.prototype, "previousSibling", {
           get: function() {
-            var i;
-            i = this.parent.children.indexOf(this);
-            return this.parent.children[i - 1] || null;
+            var i2;
+            i2 = this.parent.children.indexOf(this);
+            return this.parent.children[i2 - 1] || null;
           }
         });
         Object.defineProperty(XMLNode2.prototype, "nextSibling", {
           get: function() {
-            var i;
-            i = this.parent.children.indexOf(this);
-            return this.parent.children[i + 1] || null;
+            var i2;
+            i2 = this.parent.children.indexOf(this);
+            return this.parent.children[i2 + 1] || null;
           }
         });
         Object.defineProperty(XMLNode2.prototype, "ownerDocument", {
@@ -2536,14 +2536,14 @@ var require_XMLNode = __commonJS({
           return lastChild;
         };
         XMLNode2.prototype.insertBefore = function(name, attributes, text) {
-          var child, i, newChild, refChild, removed;
+          var child, i2, newChild, refChild, removed;
           if (name != null ? name.type : void 0) {
             newChild = name;
             refChild = attributes;
             newChild.setParent(this);
             if (refChild) {
-              i = children.indexOf(refChild);
-              removed = children.splice(i);
+              i2 = children.indexOf(refChild);
+              removed = children.splice(i2);
               children.push(newChild);
               Array.prototype.push.apply(children, removed);
             } else {
@@ -2554,31 +2554,31 @@ var require_XMLNode = __commonJS({
             if (this.isRoot) {
               throw new Error("Cannot insert elements at root level. " + this.debugInfo(name));
             }
-            i = this.parent.children.indexOf(this);
-            removed = this.parent.children.splice(i);
+            i2 = this.parent.children.indexOf(this);
+            removed = this.parent.children.splice(i2);
             child = this.parent.element(name, attributes, text);
             Array.prototype.push.apply(this.parent.children, removed);
             return child;
           }
         };
         XMLNode2.prototype.insertAfter = function(name, attributes, text) {
-          var child, i, removed;
+          var child, i2, removed;
           if (this.isRoot) {
             throw new Error("Cannot insert elements at root level. " + this.debugInfo(name));
           }
-          i = this.parent.children.indexOf(this);
-          removed = this.parent.children.splice(i + 1);
+          i2 = this.parent.children.indexOf(this);
+          removed = this.parent.children.splice(i2 + 1);
           child = this.parent.element(name, attributes, text);
           Array.prototype.push.apply(this.parent.children, removed);
           return child;
         };
         XMLNode2.prototype.remove = function() {
-          var i, ref2;
+          var i2, ref2;
           if (this.isRoot) {
             throw new Error("Cannot remove the root element. " + this.debugInfo());
           }
-          i = this.parent.children.indexOf(this);
-          [].splice.apply(this.parent.children, [i, i - i + 1].concat(ref2 = [])), ref2;
+          i2 = this.parent.children.indexOf(this);
+          [].splice.apply(this.parent.children, [i2, i2 - i2 + 1].concat(ref2 = [])), ref2;
           return this.parent;
         };
         XMLNode2.prototype.node = function(name, attributes, text) {
@@ -2620,17 +2620,17 @@ var require_XMLNode = __commonJS({
           return this;
         };
         XMLNode2.prototype.commentBefore = function(value) {
-          var child, i, removed;
-          i = this.parent.children.indexOf(this);
-          removed = this.parent.children.splice(i);
+          var child, i2, removed;
+          i2 = this.parent.children.indexOf(this);
+          removed = this.parent.children.splice(i2);
           child = this.parent.comment(value);
           Array.prototype.push.apply(this.parent.children, removed);
           return this;
         };
         XMLNode2.prototype.commentAfter = function(value) {
-          var child, i, removed;
-          i = this.parent.children.indexOf(this);
-          removed = this.parent.children.splice(i + 1);
+          var child, i2, removed;
+          i2 = this.parent.children.indexOf(this);
+          removed = this.parent.children.splice(i2 + 1);
           child = this.parent.comment(value);
           Array.prototype.push.apply(this.parent.children, removed);
           return this;
@@ -2675,17 +2675,17 @@ var require_XMLNode = __commonJS({
           return this;
         };
         XMLNode2.prototype.instructionBefore = function(target, value) {
-          var child, i, removed;
-          i = this.parent.children.indexOf(this);
-          removed = this.parent.children.splice(i);
+          var child, i2, removed;
+          i2 = this.parent.children.indexOf(this);
+          removed = this.parent.children.splice(i2);
           child = this.parent.instruction(target, value);
           Array.prototype.push.apply(this.parent.children, removed);
           return this;
         };
         XMLNode2.prototype.instructionAfter = function(target, value) {
-          var child, i, removed;
-          i = this.parent.children.indexOf(this);
-          removed = this.parent.children.splice(i + 1);
+          var child, i2, removed;
+          i2 = this.parent.children.indexOf(this);
+          removed = this.parent.children.splice(i2 + 1);
           child = this.parent.instruction(target, value);
           Array.prototype.push.apply(this.parent.children, removed);
           return this;
@@ -2704,22 +2704,22 @@ var require_XMLNode = __commonJS({
           return doc.root() || doc;
         };
         XMLNode2.prototype.dtd = function(pubID, sysID) {
-          var child, doc, doctype, i, j, k, len, len1, ref2, ref3;
+          var child, doc, doctype, i2, j, k, len, len1, ref2, ref3;
           doc = this.document();
           doctype = new XMLDocType(doc, pubID, sysID);
           ref2 = doc.children;
-          for (i = j = 0, len = ref2.length; j < len; i = ++j) {
-            child = ref2[i];
+          for (i2 = j = 0, len = ref2.length; j < len; i2 = ++j) {
+            child = ref2[i2];
             if (child.type === NodeType.DocType) {
-              doc.children[i] = doctype;
+              doc.children[i2] = doctype;
               return doctype;
             }
           }
           ref3 = doc.children;
-          for (i = k = 0, len1 = ref3.length; k < len1; i = ++k) {
-            child = ref3[i];
+          for (i2 = k = 0, len1 = ref3.length; k < len1; i2 = ++k) {
+            child = ref3[i2];
             if (child.isRoot) {
-              doc.children.splice(i, 0, doctype);
+              doc.children.splice(i2, 0, doctype);
               return doctype;
             }
           }
@@ -2760,20 +2760,20 @@ var require_XMLNode = __commonJS({
           return this.document().end(options);
         };
         XMLNode2.prototype.prev = function() {
-          var i;
-          i = this.parent.children.indexOf(this);
-          if (i < 1) {
+          var i2;
+          i2 = this.parent.children.indexOf(this);
+          if (i2 < 1) {
             throw new Error("Already at the first node. " + this.debugInfo());
           }
-          return this.parent.children[i - 1];
+          return this.parent.children[i2 - 1];
         };
         XMLNode2.prototype.next = function() {
-          var i;
-          i = this.parent.children.indexOf(this);
-          if (i === -1 || i === this.parent.children.length - 1) {
+          var i2;
+          i2 = this.parent.children.indexOf(this);
+          if (i2 === -1 || i2 === this.parent.children.length - 1) {
             throw new Error("Already at the last node. " + this.debugInfo());
           }
-          return this.parent.children[i + 1];
+          return this.parent.children[i2 + 1];
         };
         XMLNode2.prototype.importDocument = function(doc) {
           var clonedRoot;
@@ -2907,15 +2907,15 @@ var require_XMLNode = __commonJS({
           throw new Error("This DOM method is not implemented." + this.debugInfo());
         };
         XMLNode2.prototype.isEqualNode = function(node) {
-          var i, j, ref2;
+          var i2, j, ref2;
           if (node.nodeType !== this.nodeType) {
             return false;
           }
           if (node.children.length !== this.children.length) {
             return false;
           }
-          for (i = j = 0, ref2 = this.children.length - 1; 0 <= ref2 ? j <= ref2 : j >= ref2; i = 0 <= ref2 ? ++j : --j) {
-            if (!this.children[i].isEqualNode(node.children[i])) {
+          for (i2 = j = 0, ref2 = this.children.length - 1; 0 <= ref2 ? j <= ref2 : j >= ref2; i2 = 0 <= ref2 ? ++j : --j) {
+            if (!this.children[i2].isEqualNode(node.children[i2])) {
               return false;
             }
           }
@@ -3370,7 +3370,7 @@ var require_XMLWriterBase = __commonJS({
           return r;
         };
         XMLWriterBase2.prototype.docType = function(node, options, level) {
-          var child, i, len, r, ref;
+          var child, i2, len, r, ref;
           level || (level = 0);
           this.openNode(node, options, level);
           options.state = WriterState.OpenTag;
@@ -3386,8 +3386,8 @@ var require_XMLWriterBase = __commonJS({
             r += this.endline(node, options, level);
             options.state = WriterState.InsideTag;
             ref = node.children;
-            for (i = 0, len = ref.length; i < len; i++) {
-              child = ref[i];
+            for (i2 = 0, len = ref.length; i2 < len; i2++) {
+              child = ref[i2];
               r += this.writeChildNode(child, options, level + 1);
             }
             options.state = WriterState.CloseTag;
@@ -3401,7 +3401,7 @@ var require_XMLWriterBase = __commonJS({
           return r;
         };
         XMLWriterBase2.prototype.element = function(node, options, level) {
-          var att, child, childNodeCount, firstChildNode, i, j, len, len1, name, prettySuppressed, r, ref, ref1, ref2;
+          var att, child, childNodeCount, firstChildNode, i2, j, len, len1, name, prettySuppressed, r, ref, ref1, ref2;
           level || (level = 0);
           prettySuppressed = false;
           r = "";
@@ -3440,8 +3440,8 @@ var require_XMLWriterBase = __commonJS({
           } else {
             if (options.dontPrettyTextNodes) {
               ref1 = node.children;
-              for (i = 0, len = ref1.length; i < len; i++) {
-                child = ref1[i];
+              for (i2 = 0, len = ref1.length; i2 < len; i2++) {
+                child = ref1[i2];
                 if ((child.type === NodeType.Text || child.type === NodeType.Raw) && child.value != null) {
                   options.suppressPrettyCount++;
                   prettySuppressed = true;
@@ -3659,12 +3659,12 @@ var require_XMLStringWriter = __commonJS({
           XMLStringWriter2.__super__.constructor.call(this, options);
         }
         XMLStringWriter2.prototype.document = function(doc, options) {
-          var child, i, len, r, ref;
+          var child, i2, len, r, ref;
           options = this.filterOptions(options);
           r = "";
           ref = doc.children;
-          for (i = 0, len = ref.length; i < len; i++) {
-            child = ref[i];
+          for (i2 = 0, len = ref.length; i2 < len; i2++) {
+            child = ref[i2];
             r += this.writeChildNode(child, options, 0);
           }
           if (options.pretty && r.slice(-options.newline.length) === options.newline) {
@@ -3721,10 +3721,10 @@ var require_XMLDocument = __commonJS({
         });
         Object.defineProperty(XMLDocument2.prototype, "doctype", {
           get: function() {
-            var child, i, len, ref;
+            var child, i2, len, ref;
             ref = this.children;
-            for (i = 0, len = ref.length; i < len; i++) {
-              child = ref[i];
+            for (i2 = 0, len = ref.length; i2 < len; i2++) {
+              child = ref[i2];
               if (child.type === NodeType.DocType) {
                 return child;
               }
@@ -3938,7 +3938,7 @@ var require_XMLDocumentCB = __commonJS({
           this.root = null;
         }
         XMLDocumentCB2.prototype.createChildNode = function(node) {
-          var att, attName, attributes, child, i, len, ref1, ref2;
+          var att, attName, attributes, child, i2, len, ref1, ref2;
           switch (node.type) {
             case NodeType.CData:
               this.cdata(node.value);
@@ -3972,8 +3972,8 @@ var require_XMLDocumentCB = __commonJS({
               throw new Error("This XML node type is not supported in a JS object: " + node.constructor.name);
           }
           ref2 = node.children;
-          for (i = 0, len = ref2.length; i < len; i++) {
-            child = ref2[i];
+          for (i2 = 0, len = ref2.length; i2 < len; i2++) {
+            child = ref2[i2];
             this.createChildNode(child);
             if (child.type === NodeType.Element) {
               this.up();
@@ -4011,7 +4011,7 @@ var require_XMLDocumentCB = __commonJS({
           return this;
         };
         XMLDocumentCB2.prototype.element = function(name, attributes, text) {
-          var child, i, len, oldValidationFlag, ref1, root;
+          var child, i2, len, oldValidationFlag, ref1, root;
           if (this.currentNode && this.currentNode.type === NodeType.DocType) {
             this.dtdElement.apply(this, arguments);
           } else {
@@ -4022,8 +4022,8 @@ var require_XMLDocumentCB = __commonJS({
               root.element(name);
               this.options.noValidation = oldValidationFlag;
               ref1 = root.children;
-              for (i = 0, len = ref1.length; i < len; i++) {
-                child = ref1[i];
+              for (i2 = 0, len = ref1.length; i2 < len; i2++) {
+                child = ref1[i2];
                 this.createChildNode(child);
                 if (child.type === NodeType.Element) {
                   this.up();
@@ -4090,7 +4090,7 @@ var require_XMLDocumentCB = __commonJS({
           return this;
         };
         XMLDocumentCB2.prototype.instruction = function(target, value) {
-          var i, insTarget, insValue, len, node;
+          var i2, insTarget, insValue, len, node;
           this.openCurrent();
           if (target != null) {
             target = getValue(target);
@@ -4099,8 +4099,8 @@ var require_XMLDocumentCB = __commonJS({
             value = getValue(value);
           }
           if (Array.isArray(target)) {
-            for (i = 0, len = target.length; i < len; i++) {
-              insTarget = target[i];
+            for (i2 = 0, len = target.length; i2 < len; i2++) {
+              insTarget = target[i2];
               this.instruction(insTarget);
             }
           } else if (isObject(target)) {
@@ -4384,11 +4384,11 @@ var require_XMLStreamWriter = __commonJS({
           }
         };
         XMLStreamWriter2.prototype.document = function(doc, options) {
-          var child, i, j, k, len, len1, ref, ref1, results;
+          var child, i2, j, k, len, len1, ref, ref1, results;
           ref = doc.children;
-          for (i = j = 0, len = ref.length; j < len; i = ++j) {
-            child = ref[i];
-            child.isLastRootNode = i === doc.children.length - 1;
+          for (i2 = j = 0, len = ref.length; j < len; i2 = ++j) {
+            child = ref[i2];
+            child.isLastRootNode = i2 === doc.children.length - 1;
           }
           options = this.filterOptions(options);
           ref1 = doc.children;
@@ -4786,17 +4786,17 @@ var require_sax = __commonJS({
       if (!Object.keys) {
         Object.keys = function(o) {
           var a = [];
-          for (var i in o) if (o.hasOwnProperty(i)) a.push(i);
+          for (var i2 in o) if (o.hasOwnProperty(i2)) a.push(i2);
           return a;
         };
       }
       function checkBufferLength(parser) {
         var maxAllowed = Math.max(sax.MAX_BUFFER_LENGTH, 10);
         var maxActual = 0;
-        for (var i = 0, l = buffers.length; i < l; i++) {
-          var len = parser[buffers[i]].length;
+        for (var i2 = 0, l = buffers.length; i2 < l; i2++) {
+          var len = parser[buffers[i2]].length;
           if (len > maxAllowed) {
-            switch (buffers[i]) {
+            switch (buffers[i2]) {
               case "textNode":
                 closeText(parser);
                 break;
@@ -4809,7 +4809,7 @@ var require_sax = __commonJS({
                 parser.script = "";
                 break;
               default:
-                error(parser, "Max buffer length exceeded: " + buffers[i]);
+                error(parser, "Max buffer length exceeded: " + buffers[i2]);
             }
           }
           maxActual = Math.max(maxActual, len);
@@ -4818,8 +4818,8 @@ var require_sax = __commonJS({
         parser.bufferCheckPosition = m + parser.position;
       }
       function clearBuffers(parser) {
-        for (var i = 0, l = buffers.length; i < l; i++) {
-          parser[buffers[i]] = "";
+        for (var i2 = 0, l = buffers.length; i2 < l; i2++) {
+          parser[buffers[i2]] = "";
         }
       }
       function flushBuffers(parser) {
@@ -5451,8 +5451,8 @@ var require_sax = __commonJS({
         emitNode(parser, "onopentagstart", tag);
       }
       function qname(name, attribute) {
-        var i = name.indexOf(":");
-        var qualName = i < 0 ? ["", name] : name.split(":");
+        var i2 = name.indexOf(":");
+        var qualName = i2 < 0 ? ["", name] : name.split(":");
         var prefix = qualName[0];
         var local = qualName[1];
         if (attribute && name === "xmlns") {
@@ -5526,8 +5526,8 @@ var require_sax = __commonJS({
               });
             });
           }
-          for (var i = 0, l = parser.attribList.length; i < l; i++) {
-            var nv = parser.attribList[i];
+          for (var i2 = 0, l = parser.attribList.length; i2 < l; i2++) {
+            var nv = parser.attribList[i2];
             var name = nv[0];
             var value = nv[1];
             var qualName = qname(name, true);
@@ -5612,9 +5612,9 @@ var require_sax = __commonJS({
           var tag = parser.tag = parser.tags.pop();
           parser.tagName = parser.tag.name;
           emitNode(parser, "onclosetag", parser.tagName);
-          var x = {};
-          for (var i in tag.ns) {
-            x[i] = tag.ns[i];
+          var x2 = {};
+          for (var i2 in tag.ns) {
+            x2[i2] = tag.ns[i2];
           }
           var parent = parser.tags[parser.tags.length - 1] || parser;
           if (parser.opt.xmlns && tag.ns !== parent.ns) {
@@ -5669,10 +5669,10 @@ var require_sax = __commonJS({
           parser.state = S.TEXT;
         }
       }
-      function charAt(chunk, i) {
+      function charAt(chunk, i2) {
         var result = "";
-        if (i < chunk.length) {
-          result = chunk.charAt(i);
+        if (i2 < chunk.length) {
+          result = chunk.charAt(i2);
         }
         return result;
       }
@@ -5693,10 +5693,10 @@ var require_sax = __commonJS({
         if (typeof chunk === "object") {
           chunk = chunk.toString();
         }
-        var i = 0;
+        var i2 = 0;
         var c = "";
         while (true) {
-          c = charAt(chunk, i++);
+          c = charAt(chunk, i2++);
           parser.c = c;
           if (!c) {
             break;
@@ -5723,9 +5723,9 @@ var require_sax = __commonJS({
               continue;
             case S.TEXT:
               if (parser.sawRoot && !parser.closedRoot) {
-                var starti = i - 1;
+                var starti = i2 - 1;
                 while (c && c !== "<" && c !== "&") {
-                  c = charAt(chunk, i++);
+                  c = charAt(chunk, i2++);
                   if (c && parser.trackPosition) {
                     parser.position++;
                     if (c === "\n") {
@@ -5736,7 +5736,7 @@ var require_sax = __commonJS({
                     }
                   }
                 }
-                parser.textNode += chunk.substring(starti, i - 1);
+                parser.textNode += chunk.substring(starti, i2 - 1);
               }
               if (c === "<" && !(parser.sawRoot && parser.closedRoot && !parser.strict)) {
                 parser.state = S.OPEN_WAKA;
@@ -5911,9 +5911,9 @@ var require_sax = __commonJS({
               }
               continue;
             case S.CDATA:
-              var starti = i - 1;
+              var starti = i2 - 1;
               while (c && c !== "]") {
-                c = charAt(chunk, i++);
+                c = charAt(chunk, i2++);
                 if (c && parser.trackPosition) {
                   parser.position++;
                   if (c === "\n") {
@@ -5924,7 +5924,7 @@ var require_sax = __commonJS({
                   }
                 }
               }
-              parser.cdata += chunk.substring(starti, i - 1);
+              parser.cdata += chunk.substring(starti, i2 - 1);
               if (c === "]") {
                 parser.state = S.CDATA_ENDING;
               }
@@ -6363,9 +6363,9 @@ var require_parser = __commonJS({
         return typeof thing === "object" && thing != null && Object.keys(thing).length === 0;
       };
       processItem = function(processors2, item, key) {
-        var i, len, process2;
-        for (i = 0, len = processors2.length; i < len; i++) {
-          process2 = processors2[i];
+        var i2, len, process2;
+        for (i2 = 0, len = processors2.length; i2 < len; i2++) {
+          process2 = processors2[i2];
           item = process2(item, key);
         }
         return item;
@@ -6415,7 +6415,7 @@ var require_parser = __commonJS({
           this.reset();
         }
         Parser.prototype.processAsync = function() {
-          var chunk, err;
+          var chunk, err2;
           try {
             if (this.remaining.length <= this.options.chunkSize) {
               chunk = this.remaining;
@@ -6429,10 +6429,10 @@ var require_parser = __commonJS({
               return setImmediate2(this.processAsync);
             }
           } catch (error1) {
-            err = error1;
+            err2 = error1;
             if (!this.saxParser.errThrown) {
               this.saxParser.errThrown = true;
-              return this.emit(err);
+              return this.emit(err2);
             }
           }
         };
@@ -6550,21 +6550,21 @@ var require_parser = __commonJS({
               }
               if (_this.options.validator != null) {
                 xpath = "/" + (function() {
-                  var i, len, results;
+                  var i2, len, results;
                   results = [];
-                  for (i = 0, len = stack.length; i < len; i++) {
-                    node = stack[i];
+                  for (i2 = 0, len = stack.length; i2 < len; i2++) {
+                    node = stack[i2];
                     results.push(node["#name"]);
                   }
                   return results;
                 })().concat(nodeName).join("/");
                 (function() {
-                  var err;
+                  var err2;
                   try {
                     return obj = _this.options.validator(xpath, s && s[nodeName], obj);
                   } catch (error1) {
-                    err = error1;
-                    return _this.emit("error", err);
+                    err2 = error1;
+                    return _this.emit("error", err2);
                   }
                 })();
               }
@@ -6644,15 +6644,15 @@ var require_parser = __commonJS({
           })(this);
         };
         Parser.prototype.parseString = function(str, cb) {
-          var err;
+          var err2;
           if (cb != null && typeof cb === "function") {
             this.on("end", function(result) {
               this.reset();
               return cb(null, result);
             });
-            this.on("error", function(err2) {
+            this.on("error", function(err3) {
               this.reset();
-              return cb(err2);
+              return cb(err3);
             });
           }
           try {
@@ -6669,21 +6669,21 @@ var require_parser = __commonJS({
             }
             return this.saxParser.write(str).close();
           } catch (error1) {
-            err = error1;
+            err2 = error1;
             if (!(this.saxParser.errThrown || this.saxParser.ended)) {
-              this.emit("error", err);
+              this.emit("error", err2);
               return this.saxParser.errThrown = true;
             } else if (this.saxParser.ended) {
-              throw err;
+              throw err2;
             }
           }
         };
         Parser.prototype.parseStringPromise = function(str) {
           return new Promise(/* @__PURE__ */ (function(_this) {
             return function(resolve, reject) {
-              return _this.parseString(str, function(err, value) {
-                if (err) {
-                  return reject(err);
+              return _this.parseString(str, function(err2, value) {
+                if (err2) {
+                  return reject(err2);
                 } else {
                   return resolve(value);
                 }
@@ -6830,9 +6830,9 @@ var require_http_agent = __commonJS({
     }
     util.inherits(Agent, EventEmitter);
     exports2.Agent = Agent;
-    function freeSocketErrorListener(err) {
+    function freeSocketErrorListener(err2) {
       var socket = this;
-      debug("SOCKET ERROR on FREE socket:", err.message, err.stack);
+      debug("SOCKET ERROR on FREE socket:", err2.message, err2.stack);
       socket.destroy();
       socket.emit("agentRemove");
     }
@@ -6851,10 +6851,10 @@ var require_http_agent = __commonJS({
       return name;
     };
     function handleSocketCreation(req) {
-      return function(err, newSocket) {
-        if (err) {
+      return function(err2, newSocket) {
+        if (err2) {
           process.nextTick(function() {
-            req.emit("error", err);
+            req.emit("error", err2);
           });
           return;
         }
@@ -6920,12 +6920,12 @@ var require_http_agent = __commonJS({
       if (newSocket) {
         oncreate(null, Object.assign(newSocket, { createdTime: Date.now() }));
       }
-      function oncreate(err, s) {
+      function oncreate(err2, s) {
         if (called)
           return;
         called = true;
-        if (err)
-          return cb(err);
+        if (err2)
+          return cb(err2);
         if (!self2.sockets[name]) {
           self2.sockets[name] = [];
         }
@@ -6935,7 +6935,7 @@ var require_http_agent = __commonJS({
           self2.emit("free", s, options);
         }
         s.on("free", onFree);
-        function onClose(err2) {
+        function onClose(err3) {
           debug("CLIENT socket onClose");
           self2.removeSocket(s, options);
           self2.emit("close");
@@ -7000,10 +7000,10 @@ var require_http_agent = __commonJS({
       if (this.requests[name] && this.requests[name].length && sockLen < this.maxSockets) {
         debug("removeSocket, have a request, make a socket");
         var req = this.requests[name][0];
-        this.createSocket(req, options, function(err, newSocket) {
-          if (err) {
+        this.createSocket(req, options, function(err2, newSocket) {
+          if (err2) {
             process.nextTick(function() {
-              req.emit("error", err);
+              req.emit("error", err2);
             });
             return;
           }
@@ -7038,8 +7038,8 @@ var require_humanize_ms = __commonJS({
       if (typeof t2 === "number") return t2;
       var r = ms(t2);
       if (r === void 0) {
-        var err = new Error(util.format("humanize-ms(%j) result undefined", t2));
-        console.warn(err.stack);
+        var err2 = new Error(util.format("humanize-ms(%j) result undefined", t2));
+        console.warn(err2.stack);
       }
       return r;
     };
@@ -7098,10 +7098,10 @@ var require_agent = __commonJS({
         });
       }
       createSocket(req, options, cb) {
-        super.createSocket(req, options, (err, socket) => {
-          if (err) {
+        super.createSocket(req, options, (err2, socket) => {
+          if (err2) {
             this.createSocketErrorCount++;
-            return cb(err);
+            return cb(err2);
           }
           if (this.keepAlive) {
             socket.setNoDelay(true);
@@ -7249,7 +7249,7 @@ var require_platform = __commonJS({
         string = String(string);
         return string.charAt(0).toUpperCase() + string.slice(1);
       }
-      function cleanupOS(os2, pattern, label) {
+      function cleanupOS(os, pattern, label) {
         var data = {
           "10.0": "10",
           "6.4": "10 Technical Preview",
@@ -7264,17 +7264,17 @@ var require_platform = __commonJS({
           "4.0": "NT",
           "4.90": "ME"
         };
-        if (pattern && label && /^Win/i.test(os2) && !/^Windows Phone /i.test(os2) && (data = data[/[\d.]+$/.exec(os2)])) {
-          os2 = "Windows " + data;
+        if (pattern && label && /^Win/i.test(os) && !/^Windows Phone /i.test(os) && (data = data[/[\d.]+$/.exec(os)])) {
+          os = "Windows " + data;
         }
-        os2 = String(os2);
+        os = String(os);
         if (pattern && label) {
-          os2 = os2.replace(RegExp(pattern, "i"), label);
+          os = os.replace(RegExp(pattern, "i"), label);
         }
-        os2 = format(
-          os2.replace(/ ce$/i, " CE").replace(/\bhpw/i, "web").replace(/\bMacintosh\b/, "Mac OS").replace(/_PowerPC\b/i, " OS").replace(/\b(OS X) [^ \d]+/i, "$1").replace(/\bMac (OS X)\b/, "$1").replace(/\/(\d)/, " $1").replace(/_/g, ".").replace(/(?: BePC|[ .]*fc[ \d.]+)$/i, "").replace(/\bx86\.64\b/gi, "x86_64").replace(/\b(Windows Phone) OS\b/, "$1").replace(/\b(Chrome OS \w+) [\d.]+\b/, "$1").split(" on ")[0]
+        os = format(
+          os.replace(/ ce$/i, " CE").replace(/\bhpw/i, "web").replace(/\bMacintosh\b/, "Mac OS").replace(/_PowerPC\b/i, " OS").replace(/\b(OS X) [^ \d]+/i, "$1").replace(/\bMac (OS X)\b/, "$1").replace(/\/(\d)/, " $1").replace(/_/g, ".").replace(/(?: BePC|[ .]*fc[ \d.]+)$/i, "").replace(/\bx86\.64\b/gi, "x86_64").replace(/\b(Windows Phone) OS\b/, "$1").replace(/\b(Chrome OS \w+) [\d.]+\b/, "$1").split(" on ")[0]
         );
-        return os2;
+        return os;
       }
       function each(object, callback) {
         var index = -1, length = object ? object.length : 0;
@@ -7463,7 +7463,7 @@ var require_platform = __commonJS({
           "Sony": { "PlayStation": 1, "PlayStation Vita": 1 },
           "Xiaomi": { "Mi": 1, "Redmi": 1 }
         });
-        var os2 = getOS([
+        var os = getOS([
           "Windows Phone",
           "KaiOS",
           "Android",
@@ -7542,7 +7542,7 @@ var require_platform = __commonJS({
           return this.description || "";
         }
         layout && (layout = [layout]);
-        if (/\bAndroid\b/.test(os2) && !product && (data = /\bAndroid[^;]*;(.*?)(?:Build|\) AppleWebKit)\b/i.exec(ua))) {
+        if (/\bAndroid\b/.test(os) && !product && (data = /\bAndroid[^;]*;(.*?)(?:Build|\) AppleWebKit)\b/i.exec(ua))) {
           product = trim(data[1]).replace(/^[a-z]{2}-[a-z]{2};\s*/i, "") || null;
         }
         if (manufacturer && !product) {
@@ -7565,15 +7565,15 @@ var require_platform = __commonJS({
           product = data.product;
         } else if (/^iP/.test(product)) {
           name || (name = "Safari");
-          os2 = "iOS" + ((data = / OS ([\d_]+)/i.exec(ua)) ? " " + data[1].replace(/_/g, ".") : "");
-        } else if (name == "Konqueror" && /^Linux\b/i.test(os2)) {
-          os2 = "Kubuntu";
-        } else if (manufacturer && manufacturer != "Google" && (/Chrome/.test(name) && !/\bMobile Safari\b/i.test(ua) || /\bVita\b/.test(product)) || /\bAndroid\b/.test(os2) && /^Chrome/.test(name) && /\bVersion\//i.test(ua)) {
+          os = "iOS" + ((data = / OS ([\d_]+)/i.exec(ua)) ? " " + data[1].replace(/_/g, ".") : "");
+        } else if (name == "Konqueror" && /^Linux\b/i.test(os)) {
+          os = "Kubuntu";
+        } else if (manufacturer && manufacturer != "Google" && (/Chrome/.test(name) && !/\bMobile Safari\b/i.test(ua) || /\bVita\b/.test(product)) || /\bAndroid\b/.test(os) && /^Chrome/.test(name) && /\bVersion\//i.test(ua)) {
           name = "Android Browser";
-          os2 = /\bAndroid\b/.test(os2) ? os2 : "Android";
+          os = /\bAndroid\b/.test(os) ? os : "Android";
         } else if (name == "Silk") {
           if (!/\bMobi/i.test(ua)) {
-            os2 = "Android";
+            os = "Android";
             description.unshift("desktop mode");
           }
           if (/Accelerated *= *true/i.test(ua)) {
@@ -7584,14 +7584,14 @@ var require_platform = __commonJS({
         } else if (name == "PaleMoon" && (data = /\bFirefox\/([\d.]+)\b/.exec(ua))) {
           description.push("identifying as Firefox " + data[1]);
         } else if (name == "Firefox" && (data = /\b(Mobile|Tablet|TV)\b/i.exec(ua))) {
-          os2 || (os2 = "Firefox OS");
+          os || (os = "Firefox OS");
           product || (product = data[1]);
         } else if (!name || (data = !/\bMinefield\b/i.test(ua) && /\b(?:Firefox|Safari)\b/.exec(name))) {
           if (name && !product && /[\/,]|^[^(]+?\)/.test(ua.slice(ua.indexOf(data + "/") + 8))) {
             name = null;
           }
-          if ((data = product || manufacturer || os2) && (product || manufacturer || /\b(?:Android|Symbian OS|Tablet OS|webOS)\b/.test(os2))) {
-            name = /[a-z]+(?: Hat)?/i.exec(/\bAndroid\b/.test(os2) ? os2 : data) + " Browser";
+          if ((data = product || manufacturer || os) && (product || manufacturer || /\b(?:Android|Symbian OS|Tablet OS|webOS)\b/.test(os))) {
+            name = /[a-z]+(?: Hat)?/i.exec(/\bAndroid\b/.test(os) ? os : data) + " Browser";
           }
         } else if (name == "Electron" && (data = (/\bChrome\/([\d.]+)\b/.exec(ua) || 0)[1])) {
           description.push("Chromium " + data);
@@ -7604,16 +7604,16 @@ var require_platform = __commonJS({
             "(?:Firefox|Minefield|NetFront)"
           ]);
         }
-        if (data = layout == "iCab" && parseFloat(version) > 3 && "WebKit" || /\bOpera\b/.test(name) && (/\bOPR\b/.test(ua) ? "Blink" : "Presto") || /\b(?:Midori|Nook|Safari)\b/i.test(ua) && !/^(?:Trident|EdgeHTML)$/.test(layout) && "WebKit" || !layout && /\bMSIE\b/i.test(ua) && (os2 == "Mac OS" ? "Tasman" : "Trident") || layout == "WebKit" && /\bPlayStation\b(?! Vita\b)/i.test(name) && "NetFront") {
+        if (data = layout == "iCab" && parseFloat(version) > 3 && "WebKit" || /\bOpera\b/.test(name) && (/\bOPR\b/.test(ua) ? "Blink" : "Presto") || /\b(?:Midori|Nook|Safari)\b/i.test(ua) && !/^(?:Trident|EdgeHTML)$/.test(layout) && "WebKit" || !layout && /\bMSIE\b/i.test(ua) && (os == "Mac OS" ? "Tasman" : "Trident") || layout == "WebKit" && /\bPlayStation\b(?! Vita\b)/i.test(name) && "NetFront") {
           layout = [data];
         }
         if (name == "IE" && (data = (/; *(?:XBLWP|ZuneWP)(\d+)/i.exec(ua) || 0)[1])) {
           name += " Mobile";
-          os2 = "Windows Phone " + (/\+$/.test(data) ? data : data + ".x");
+          os = "Windows Phone " + (/\+$/.test(data) ? data : data + ".x");
           description.unshift("desktop mode");
         } else if (/\bWPDesktop\b/i.test(ua)) {
           name = "IE Mobile";
-          os2 = "Windows Phone 8.x";
+          os = "Windows Phone 8.x";
           description.unshift("desktop mode");
           version || (version = (/\brv:([\d.]+)/.exec(ua) || 0)[1]);
         } else if (name != "IE" && layout == "Trident" && (data = /\brv:([\d.]+)/.exec(ua))) {
@@ -7628,7 +7628,7 @@ var require_platform = __commonJS({
             if (java) {
               data = java.lang.System;
               arch = data.getProperty("os.arch");
-              os2 = os2 || data.getProperty("os.name") + " " + data.getProperty("os.version");
+              os = os || data.getProperty("os.name") + " " + data.getProperty("os.version");
             }
             if (rhino) {
               try {
@@ -7637,7 +7637,7 @@ var require_platform = __commonJS({
               } catch (e) {
                 if ((data = context.system) && data.global.system == context.system) {
                   name = "Narwhal";
-                  os2 || (os2 = data[0].os || null);
+                  os || (os = data[0].os || null);
                 }
               }
               if (!name) {
@@ -7658,14 +7658,14 @@ var require_platform = __commonJS({
               if (!name) {
                 name = "Node.js";
                 arch = data.arch;
-                os2 = data.platform;
+                os = data.platform;
                 version = /[\d.]+/.exec(data.version);
                 version = version ? version[0] : null;
               }
             }
           } else if (getClassOf(data = context.runtime) == airRuntimeClass) {
             name = "Adobe AIR";
-            os2 = data.flash.system.Capabilities.os;
+            os = data.flash.system.Capabilities.os;
           } else if (getClassOf(data = context.phantom) == phantomClass) {
             name = "PhantomJS";
             version = (data = data.version || null) && data.major + "." + data.minor + "." + data.patch;
@@ -7682,26 +7682,26 @@ var require_platform = __commonJS({
             name = "IE";
             version = "11.0";
             layout = ["Trident"];
-            os2 = "Windows";
+            os = "Windows";
           }
-          os2 = os2 && format(os2);
+          os = os && format(os);
         }
         if (version && (data = /(?:[ab]|dp|pre|[ab]\d+pre)(?:\d+\+?)?$/i.exec(version) || /(?:alpha|beta)(?: ?\d)?/i.exec(ua + ";" + (useFeatures && nav.appMinorVersion)) || /\bMinefield\b/i.test(ua) && "a")) {
           prerelease = /b/i.test(data) ? "beta" : "alpha";
           version = version.replace(RegExp(data + "\\+?$"), "") + (prerelease == "beta" ? beta : alpha) + (/\d+\+?/.exec(data) || "");
         }
-        if (name == "Fennec" || name == "Firefox" && /\b(?:Android|Firefox OS|KaiOS)\b/.test(os2)) {
+        if (name == "Fennec" || name == "Firefox" && /\b(?:Android|Firefox OS|KaiOS)\b/.test(os)) {
           name = "Firefox Mobile";
         } else if (name == "Maxthon" && version) {
           version = version.replace(/\.[\d.]+/, ".x");
         } else if (/\bXbox\b/i.test(product)) {
           if (product == "Xbox 360") {
-            os2 = null;
+            os = null;
           }
           if (product == "Xbox 360" && /\bIEMobile\b/.test(ua)) {
             description.unshift("mobile mode");
           }
-        } else if ((/^(?:Chrome|IE|Opera)$/.test(name) || name && !product && !/Browser|Mobi/.test(name)) && (os2 == "Windows CE" || /Mobi/i.test(ua))) {
+        } else if ((/^(?:Chrome|IE|Opera)$/.test(name) || name && !product && !/Browser|Mobi/.test(name)) && (os == "Windows CE" || /Mobi/i.test(ua))) {
           name += " Mobile";
         } else if (name == "IE" && useFeatures) {
           try {
@@ -7713,13 +7713,13 @@ var require_platform = __commonJS({
           }
         } else if ((/\bBlackBerry\b/.test(product) || /\bBB10\b/.test(ua)) && (data = (RegExp(product.replace(/ +/g, " *") + "/([.\\d]+)", "i").exec(ua) || 0)[1] || version)) {
           data = [data, /BB10/.test(ua)];
-          os2 = (data[1] ? (product = null, manufacturer = "BlackBerry") : "Device Software") + " " + data[0];
+          os = (data[1] ? (product = null, manufacturer = "BlackBerry") : "Device Software") + " " + data[0];
           version = null;
-        } else if (this != forOwn && product != "Wii" && (useFeatures && opera || /Opera/.test(name) && /\b(?:MSIE|Firefox)\b/i.test(ua) || name == "Firefox" && /\bOS X (?:\d+\.){2,}/.test(os2) || name == "IE" && (os2 && !/^Win/.test(os2) && version > 5.5 || /\bWindows XP\b/.test(os2) && version > 8 || version == 8 && !/\bTrident\b/.test(ua))) && !reOpera.test(data = parse.call(forOwn, ua.replace(reOpera, "") + ";")) && data.name) {
+        } else if (this != forOwn && product != "Wii" && (useFeatures && opera || /Opera/.test(name) && /\b(?:MSIE|Firefox)\b/i.test(ua) || name == "Firefox" && /\bOS X (?:\d+\.){2,}/.test(os) || name == "IE" && (os && !/^Win/.test(os) && version > 5.5 || /\bWindows XP\b/.test(os) && version > 8 || version == 8 && !/\bTrident\b/.test(ua))) && !reOpera.test(data = parse.call(forOwn, ua.replace(reOpera, "") + ";")) && data.name) {
           data = "ing as " + data.name + ((data = data.version) ? " " + data : "");
           if (reOpera.test(name)) {
-            if (/\bIE\b/.test(data) && os2 == "Mac OS") {
-              os2 = null;
+            if (/\bIE\b/.test(data) && os == "Mac OS") {
+              os = null;
             }
             data = "identify" + data;
           } else {
@@ -7730,7 +7730,7 @@ var require_platform = __commonJS({
               name = "Opera";
             }
             if (/\bIE\b/.test(data)) {
-              os2 = null;
+              os = null;
             }
             if (!useFeatures) {
               version = null;
@@ -7766,7 +7766,7 @@ var require_platform = __commonJS({
             description.unshift("headless");
           }
         }
-        if (name == "Opera" && (data = /\bzbov|zvav$/.exec(os2))) {
+        if (name == "Opera" && (data = /\bzbov|zvav$/.exec(os))) {
           name += " ";
           description.unshift("desktop mode");
           if (data == "zvav") {
@@ -7775,27 +7775,27 @@ var require_platform = __commonJS({
           } else {
             name += "Mobile";
           }
-          os2 = os2.replace(RegExp(" *" + data + "$"), "");
+          os = os.replace(RegExp(" *" + data + "$"), "");
         } else if (name == "Safari" && /\bChrome\b/.exec(layout && layout[1])) {
           description.unshift("desktop mode");
           name = "Chrome Mobile";
           version = null;
-          if (/\bOS X\b/.test(os2)) {
+          if (/\bOS X\b/.test(os)) {
             manufacturer = "Apple";
-            os2 = "iOS 4.3+";
+            os = "iOS 4.3+";
           } else {
-            os2 = null;
+            os = null;
           }
         } else if (/\bSRWare Iron\b/.test(name) && !version) {
           version = getVersion("Chrome");
         }
-        if (version && version.indexOf(data = /[\d.]+$/.exec(os2)) == 0 && ua.indexOf("/" + data + "-") > -1) {
-          os2 = trim(os2.replace(data, ""));
+        if (version && version.indexOf(data = /[\d.]+$/.exec(os)) == 0 && ua.indexOf("/" + data + "-") > -1) {
+          os = trim(os.replace(data, ""));
         }
-        if (os2 && os2.indexOf(name) != -1 && !RegExp(name + " OS").test(os2)) {
-          os2 = os2.replace(RegExp(" *" + qualify(name) + " *"), "");
+        if (os && os.indexOf(name) != -1 && !RegExp(name + " OS").test(os)) {
+          os = os.replace(RegExp(" *" + qualify(name) + " *"), "");
         }
-        if (layout && !/\b(?:Avant|Nook)\b/.test(name) && (/Browser|Lunascape|Maxthon/.test(name) || name != "Safari" && /^iOS/.test(os2) && /\bSafari\b/.test(layout[1]) || /^(?:Adobe|Arora|Breach|Midori|Opera|Phantom|Rekonq|Rock|Samsung Internet|Sleipnir|SRWare Iron|Vivaldi|Web)/.test(name) && layout[1])) {
+        if (layout && !/\b(?:Avant|Nook)\b/.test(name) && (/Browser|Lunascape|Maxthon/.test(name) || name != "Safari" && /^iOS/.test(os) && /\bSafari\b/.test(layout[1]) || /^(?:Adobe|Arora|Breach|Midori|Opera|Phantom|Rekonq|Rock|Samsung Internet|Sleipnir|SRWare Iron|Vivaldi|Web)/.test(name) && layout[1])) {
           (data = layout[layout.length - 1]) && description.push(data);
         }
         if (description.length) {
@@ -7807,12 +7807,12 @@ var require_platform = __commonJS({
         if (product) {
           description.push((/^on /.test(description[description.length - 1]) ? "" : "on ") + product);
         }
-        if (os2) {
-          data = / ([\d.+]+)$/.exec(os2);
-          isSpecialCasedOS = data && os2.charAt(os2.length - data[0].length - 1) == "/";
-          os2 = {
+        if (os) {
+          data = / ([\d.+]+)$/.exec(os);
+          isSpecialCasedOS = data && os.charAt(os.length - data[0].length - 1) == "/";
+          os = {
             "architecture": 32,
-            "family": data && !isSpecialCasedOS ? os2.replace(data[0], "") : os2,
+            "family": data && !isSpecialCasedOS ? os.replace(data[0], "") : os,
             "version": data ? data[1] : null,
             "toString": function() {
               var version2 = this.version;
@@ -7821,15 +7821,15 @@ var require_platform = __commonJS({
           };
         }
         if ((data = /\b(?:AMD|IA|Win|WOW|x86_|x)64\b/i.exec(arch)) && !/\bi686\b/i.test(arch)) {
-          if (os2) {
-            os2.architecture = 64;
-            os2.family = os2.family.replace(RegExp(" *" + data), "");
+          if (os) {
+            os.architecture = 64;
+            os.family = os.family.replace(RegExp(" *" + data), "");
           }
           if (name && (/\bWOW64\b/i.test(ua) || useFeatures && /\w(?:86|32)$/.test(nav.cpuClass || nav.platform) && !/\bWin64; x64\b/i.test(ua))) {
             description.unshift("32-bit");
           }
-        } else if (os2 && /^OS X/.test(os2.family) && name == "Chrome" && parseFloat(version) >= 39) {
-          os2.architecture = 64;
+        } else if (os && /^OS X/.test(os.family) && name == "Chrome" && parseFloat(version) >= 39) {
+          os.architecture = 64;
         }
         ua || (ua = null);
         var platform2 = {};
@@ -7841,7 +7841,7 @@ var require_platform = __commonJS({
         platform2.product = product;
         platform2.ua = ua;
         platform2.version = name && version;
-        platform2.os = os2 || {
+        platform2.os = os || {
           /**
            * The CPU architecture the OS is built for.
            *
@@ -7886,8 +7886,8 @@ var require_platform = __commonJS({
         if (platform2.name) {
           description.unshift(name);
         }
-        if (os2 && name && !(os2 == String(os2).split(" ")[0] && (os2 == name.split(" ")[0] || product))) {
-          description.push(product ? "(" + os2 + ")" : "on " + os2);
+        if (os && name && !(os == String(os).split(" ")[0] && (os == name.split(" ")[0] || product))) {
+          description.push(product ? "(" + os + ")" : "on " + os);
         }
         if (description.length) {
           platform2.description = description.join(" ");
@@ -7940,15 +7940,15 @@ var require_copy_to = __commonJS({
       if (!this.src) return to;
       var keys = this.keys || Object.keys(this.src);
       if (!this._withAccess) {
-        for (var i = 0; i < keys.length; i++) {
-          key = keys[i];
+        for (var i2 = 0; i2 < keys.length; i2++) {
+          key = keys[i2];
           if (to[key] !== void 0) continue;
           to[key] = this.src[key];
         }
         return to;
       }
-      for (var i = 0; i < keys.length; i++) {
-        var key = keys[i];
+      for (var i2 = 0; i2 < keys.length; i2++) {
+        var key = keys[i2];
         if (!notDefined(to, key)) continue;
         var getter = this.src.__lookupGetter__(key);
         var setter = this.src.__lookupSetter__(key);
@@ -7962,8 +7962,8 @@ var require_copy_to = __commonJS({
     };
     Copy.prototype.toCover = function(to) {
       var keys = this.keys || Object.keys(this.src);
-      for (var i = 0; i < keys.length; i++) {
-        var key = keys[i];
+      for (var i2 = 0; i2 < keys.length; i2++) {
+        var key = keys[i2];
         delete to[key];
         var getter = this.src.__lookupGetter__(key);
         var setter = this.src.__lookupSetter__(key);
@@ -8032,8 +8032,8 @@ var require_optimize = __commonJS({
       };
       try {
         res.value = fn();
-      } catch (err) {
-        res.error = err instanceof Error ? err : new Error(err);
+      } catch (err2) {
+        res.error = err2 instanceof Error ? err2 : new Error(err2);
       }
       return res;
     };
@@ -8048,18 +8048,18 @@ var require_optimize = __commonJS({
         return obj;
       }
       var value = obj[arguments[1]];
-      for (var i = 2; i < arguments.length; i++) {
+      for (var i2 = 2; i2 < arguments.length; i2++) {
         if (!value) {
           break;
         }
-        value = value[arguments[i]];
+        value = value[arguments[i2]];
       }
       return value;
     };
     exports2.argumentsToArray = function(args) {
       var res = new Array(args.length);
-      for (var i = 0; i < args.length; i++) {
-        res[i] = args[i];
+      for (var i2 = 0; i2 < args.length; i2++) {
+        res[i2] = args[i2];
       }
       return res;
     };
@@ -8122,8 +8122,8 @@ var require_crypto = __commonJS({
       var keys = Object.keys(o);
       keys.sort();
       var values = [];
-      for (var i = 0; i < keys.length; i++) {
-        var k = keys[i];
+      for (var i2 = 0; i2 < keys.length; i2++) {
+        var k = keys[i2];
         values.push([k, sortObject(o[k])]);
       }
       return values;
@@ -8191,8 +8191,8 @@ var require_string = __commonJS({
       sep = sep || ",";
       var items = str.split(sep);
       var needs = [];
-      for (var i = 0; i < items.length; i++) {
-        var s = items[i].trim();
+      for (var i2 = 0; i2 < items.length; i2++) {
+        var s = items[i2].trim();
         if (s.length > 0) {
           needs.push(s);
         }
@@ -8210,8 +8210,8 @@ var require_string = __commonJS({
       }
       var items = str.split(sep);
       var needs = [];
-      for (var i = 0; i < items.length; i++) {
-        var s = items[i].trim();
+      for (var i2 = 0; i2 < items.length; i2++) {
+        var s = items[i2].trim();
         if (s.length > 0) {
           needs.push(s);
         }
@@ -8506,13 +8506,13 @@ var require_string = __commonJS({
       }
       var replacementType = typeof replacement;
       var chars;
-      for (var i = 0; i < val.length; ++i) {
-        if (!validHdrChars[val.charCodeAt(i)]) {
+      for (var i2 = 0; i2 < val.length; ++i2) {
+        if (!validHdrChars[val.charCodeAt(i2)]) {
           chars = chars || val.split("");
           if (replacementType === "function") {
-            chars[i] = replacement(chars[i]);
+            chars[i2] = replacement(chars[i2]);
           } else {
-            chars[i] = replacement;
+            chars[i2] = replacement;
           }
         }
       }
@@ -8529,8 +8529,8 @@ var require_string = __commonJS({
       if (!val || typeof val !== "string") {
         return false;
       }
-      for (var i = 0; i < val.length; ++i) {
-        if (!validHdrChars[val.charCodeAt(i)]) {
+      for (var i2 = 0; i2 < val.length; ++i2) {
+        if (!validHdrChars[val.charCodeAt(i2)]) {
           return true;
         }
       }
@@ -8549,7 +8549,7 @@ var require_array = __commonJS({
       }
       var index = Math.floor(Math.random() * arr.length);
       var a = [];
-      for (var i = 0, j = index; i < num; i++) {
+      for (var i2 = 0, j = index; i2 < num; i2++) {
         a.push(arr[j++]);
         if (j === arr.length) {
           j = 0;
@@ -8567,8 +8567,8 @@ var require_array = __commonJS({
       if (index >= arr.length) {
         return arr;
       }
-      for (var i = index, k = i + 1, n = arr.length; k < n; i += 1, k += 1) {
-        arr[i] = arr[k];
+      for (var i2 = index, k = i2 + 1, n = arr.length; k < n; i2 += 1, k += 1) {
+        arr[i2] = arr[k];
       }
       arr.pop();
       return arr;
@@ -8579,8 +8579,8 @@ var require_array = __commonJS({
 // node_modules/.pnpm/mkdirp@0.5.6/node_modules/mkdirp/index.js
 var require_mkdirp = __commonJS({
   "node_modules/.pnpm/mkdirp@0.5.6/node_modules/mkdirp/index.js"(exports2, module2) {
-    var path3 = require("path");
-    var fs2 = require("fs");
+    var path = require("path");
+    var fs = require("fs");
     var _0777 = parseInt("0777", 8);
     module2.exports = mkdirP.mkdirp = mkdirP.mkdirP = mkdirP;
     function mkdirP(p, opts, f, made) {
@@ -8591,7 +8591,7 @@ var require_mkdirp = __commonJS({
         opts = { mode: opts };
       }
       var mode = opts.mode;
-      var xfs = opts.fs || fs2;
+      var xfs = opts.fs || fs;
       if (mode === void 0) {
         mode = _0777;
       }
@@ -8599,7 +8599,7 @@ var require_mkdirp = __commonJS({
       var cb = f || /* istanbul ignore next */
       function() {
       };
-      p = path3.resolve(p);
+      p = path.resolve(p);
       xfs.mkdir(p, mode, function(er) {
         if (!er) {
           made = made || p;
@@ -8607,8 +8607,8 @@ var require_mkdirp = __commonJS({
         }
         switch (er.code) {
           case "ENOENT":
-            if (path3.dirname(p) === p) return cb(er);
-            mkdirP(path3.dirname(p), opts, function(er2, made2) {
+            if (path.dirname(p) === p) return cb(er);
+            mkdirP(path.dirname(p), opts, function(er2, made2) {
               if (er2) cb(er2, made2);
               else mkdirP(p, opts, cb, made2);
             });
@@ -8630,19 +8630,19 @@ var require_mkdirp = __commonJS({
         opts = { mode: opts };
       }
       var mode = opts.mode;
-      var xfs = opts.fs || fs2;
+      var xfs = opts.fs || fs;
       if (mode === void 0) {
         mode = _0777;
       }
       if (!made) made = null;
-      p = path3.resolve(p);
+      p = path.resolve(p);
       try {
         xfs.mkdirSync(p, mode);
         made = made || p;
       } catch (err0) {
         switch (err0.code) {
           case "ENOENT":
-            made = sync(path3.dirname(p), opts, made);
+            made = sync(path.dirname(p), opts, made);
             sync(p, opts, made);
             break;
           // In the case of any other error, just see if there's a dir
@@ -8748,10 +8748,10 @@ var require_register = __commonJS({
         "lie",
         "vow"
       ];
-      var i = 0, len = libs.length;
-      for (; i < len; i++) {
+      var i2 = 0, len = libs.length;
+      for (; i2 < len; i2++) {
         try {
-          return loadImplementation(libs[i]);
+          return loadImplementation(libs[i2]);
         } catch (e) {
         }
       }
@@ -8785,17 +8785,17 @@ var require_thenify = __commonJS({
     };
     function createCallback(resolve, reject, multiArgs) {
       if (multiArgs === void 0) multiArgs = true;
-      return function(err, value) {
-        if (err) return reject(err);
+      return function(err2, value) {
+        if (err2) return reject(err2);
         var length = arguments.length;
         if (length <= 2 || !multiArgs) return resolve(value);
         if (Array.isArray(multiArgs)) {
           var values = {};
-          for (var i = 1; i < length; i++) values[multiArgs[i - 1]] = arguments[i];
+          for (var i2 = 1; i2 < length; i2++) values[multiArgs[i2 - 1]] = arguments[i2];
           return resolve(values);
         }
         var values = new Array(length - 1);
-        for (var i = 1; i < length; ++i) values[i - 1] = arguments[i];
+        for (var i2 = 1; i2 < length; ++i2) values[i2 - 1] = arguments[i2];
         resolve(values);
       };
     }
@@ -8811,8 +8811,8 @@ var require_thenify = __commonJS({
           if (lastType === "function") return fn.apply(self2, arguments);
         }
         var args = new Array(len + 1);
-        for (var i = 0; i < len; ++i) args[i] = arguments[i];
-        var lastIndex = i;
+        for (var i2 = 0; i2 < len; ++i2) args[i2] = arguments[i2];
+        var lastIndex = i2;
         return new Promise2(function(resolve, reject) {
           args[lastIndex] = createCallback(resolve, reject, options.multiArgs);
           fn.apply(self2, args);
@@ -8873,11 +8873,11 @@ var require_thenify_all = __commonJS({
 var require_fs = __commonJS({
   "node_modules/.pnpm/mz@2.7.0/node_modules/mz/fs.js"(exports2) {
     var Promise2 = require_any_promise();
-    var fs2;
+    var fs;
     try {
-      fs2 = require("graceful-fs");
-    } catch (err) {
-      fs2 = require("fs");
+      fs = require("graceful-fs");
+    } catch (err2) {
+      fs = require("fs");
     }
     var api = [
       "appendFile",
@@ -8911,19 +8911,19 @@ var require_fs = __commonJS({
       "write",
       "writeFile"
     ];
-    typeof fs2.access === "function" && api.push("access");
-    typeof fs2.copyFile === "function" && api.push("copyFile");
-    typeof fs2.mkdtemp === "function" && api.push("mkdtemp");
-    require_thenify_all().withCallback(fs2, exports2, api);
+    typeof fs.access === "function" && api.push("access");
+    typeof fs.copyFile === "function" && api.push("copyFile");
+    typeof fs.mkdtemp === "function" && api.push("mkdtemp");
+    require_thenify_all().withCallback(fs, exports2, api);
     exports2.exists = function(filename, callback) {
       if (typeof callback === "function") {
-        return fs2.stat(filename, function(err) {
-          callback(null, !err);
+        return fs.stat(filename, function(err2) {
+          callback(null, !err2);
         });
       }
       return new Promise2(function(resolve) {
-        fs2.stat(filename, function(err) {
-          resolve(!err);
+        fs.stat(filename, function(err2) {
+          resolve(!err2);
         });
       });
     };
@@ -8934,7 +8934,7 @@ var require_fs = __commonJS({
 var require_json = __commonJS({
   "node_modules/.pnpm/utility@1.18.0/node_modules/utility/json.js"(exports2) {
     "use strict";
-    var path3 = require("path");
+    var path = require("path");
     var _mkdirp;
     function getMkdirp() {
       if (!_mkdirp) {
@@ -8967,7 +8967,7 @@ var require_json = __commonJS({
       if (!("space" in options)) {
         options.space = 2;
       }
-      getMkdirp().sync(path3.dirname(filepath));
+      getMkdirp().sync(path.dirname(filepath));
       if (typeof str === "object") {
         str = JSON.stringify(str, options.replacer, options.space) + "\n";
       }
@@ -8991,15 +8991,15 @@ var require_json = __commonJS({
       if (typeof str === "object") {
         str = JSON.stringify(str, options.replacer, options.space) + "\n";
       }
-      return mkdir(path3.dirname(filepath)).then(function() {
+      return mkdir(path.dirname(filepath)).then(function() {
         return getFS().writeFile(filepath, str);
       });
     };
     function mkdir(dir) {
       return new Promise(function(resolve, reject) {
-        getMkdirp()(dir, function(err) {
-          if (err) {
-            return reject(err);
+        getMkdirp()(dir, function(err2) {
+          if (err2) {
+            return reject(err2);
           }
           resolve();
         });
@@ -9181,8 +9181,8 @@ var require_object = __commonJS({
       if (!Array.isArray(objects)) {
         objects = [objects];
       }
-      for (var i = 0; i < objects.length; i++) {
-        var obj = objects[i];
+      for (var i2 = 0; i2 < objects.length; i2++) {
+        var obj = objects[i2];
         if (obj) {
           var keys = Object.keys(obj);
           for (var j = 0; j < keys.length; j++) {
@@ -9293,8 +9293,8 @@ var require_extend_shallow = __commonJS({
         o = {};
       }
       var len = arguments.length;
-      for (var i = 1; i < len; i++) {
-        var obj = arguments[i];
+      for (var i2 = 1; i2 < len; i2++) {
+        var obj = arguments[i2];
         if (isObject(obj)) {
           assign(o, obj);
         }
@@ -9582,8 +9582,8 @@ var require_object_inspect = __commonJS({
       if (isElement(obj)) {
         var s = "<" + $toLowerCase.call(String(obj.nodeName));
         var attrs = obj.attributes || [];
-        for (var i = 0; i < attrs.length; i++) {
-          s += " " + attrs[i].name + "=" + wrapQuotes(quote(attrs[i].value), "double", opts);
+        for (var i2 = 0; i2 < attrs.length; i2++) {
+          s += " " + attrs[i2].name + "=" + wrapQuotes(quote(attrs[i2].value), "double", opts);
         }
         s += ">";
         if (obj.childNodes && obj.childNodes.length) {
@@ -9760,100 +9760,100 @@ var require_object_inspect = __commonJS({
       }
       return null;
     }
-    function indexOf(xs, x) {
+    function indexOf(xs, x2) {
       if (xs.indexOf) {
-        return xs.indexOf(x);
+        return xs.indexOf(x2);
       }
-      for (var i = 0, l = xs.length; i < l; i++) {
-        if (xs[i] === x) {
-          return i;
+      for (var i2 = 0, l = xs.length; i2 < l; i2++) {
+        if (xs[i2] === x2) {
+          return i2;
         }
       }
       return -1;
     }
-    function isMap(x) {
-      if (!mapSize || !x || typeof x !== "object") {
+    function isMap(x2) {
+      if (!mapSize || !x2 || typeof x2 !== "object") {
         return false;
       }
       try {
-        mapSize.call(x);
+        mapSize.call(x2);
         try {
-          setSize.call(x);
+          setSize.call(x2);
         } catch (s) {
           return true;
         }
-        return x instanceof Map;
+        return x2 instanceof Map;
       } catch (e) {
       }
       return false;
     }
-    function isWeakMap(x) {
-      if (!weakMapHas || !x || typeof x !== "object") {
+    function isWeakMap(x2) {
+      if (!weakMapHas || !x2 || typeof x2 !== "object") {
         return false;
       }
       try {
-        weakMapHas.call(x, weakMapHas);
+        weakMapHas.call(x2, weakMapHas);
         try {
-          weakSetHas.call(x, weakSetHas);
+          weakSetHas.call(x2, weakSetHas);
         } catch (s) {
           return true;
         }
-        return x instanceof WeakMap;
+        return x2 instanceof WeakMap;
       } catch (e) {
       }
       return false;
     }
-    function isWeakRef(x) {
-      if (!weakRefDeref || !x || typeof x !== "object") {
+    function isWeakRef(x2) {
+      if (!weakRefDeref || !x2 || typeof x2 !== "object") {
         return false;
       }
       try {
-        weakRefDeref.call(x);
+        weakRefDeref.call(x2);
         return true;
       } catch (e) {
       }
       return false;
     }
-    function isSet(x) {
-      if (!setSize || !x || typeof x !== "object") {
+    function isSet(x2) {
+      if (!setSize || !x2 || typeof x2 !== "object") {
         return false;
       }
       try {
-        setSize.call(x);
+        setSize.call(x2);
         try {
-          mapSize.call(x);
+          mapSize.call(x2);
         } catch (m) {
           return true;
         }
-        return x instanceof Set;
+        return x2 instanceof Set;
       } catch (e) {
       }
       return false;
     }
-    function isWeakSet(x) {
-      if (!weakSetHas || !x || typeof x !== "object") {
+    function isWeakSet(x2) {
+      if (!weakSetHas || !x2 || typeof x2 !== "object") {
         return false;
       }
       try {
-        weakSetHas.call(x, weakSetHas);
+        weakSetHas.call(x2, weakSetHas);
         try {
-          weakMapHas.call(x, weakMapHas);
+          weakMapHas.call(x2, weakMapHas);
         } catch (s) {
           return true;
         }
-        return x instanceof WeakSet;
+        return x2 instanceof WeakSet;
       } catch (e) {
       }
       return false;
     }
-    function isElement(x) {
-      if (!x || typeof x !== "object") {
+    function isElement(x2) {
+      if (!x2 || typeof x2 !== "object") {
         return false;
       }
-      if (typeof HTMLElement !== "undefined" && x instanceof HTMLElement) {
+      if (typeof HTMLElement !== "undefined" && x2 instanceof HTMLElement) {
         return true;
       }
-      return typeof x.nodeName === "string" && typeof x.getAttribute === "function";
+      return typeof x2.nodeName === "string" && typeof x2.getAttribute === "function";
     }
     function inspectString(str, opts) {
       if (str.length > opts.maxStringLength) {
@@ -9868,15 +9868,15 @@ var require_object_inspect = __commonJS({
     }
     function lowbyte(c) {
       var n = c.charCodeAt(0);
-      var x = {
+      var x2 = {
         8: "b",
         9: "t",
         10: "n",
         12: "f",
         13: "r"
       }[n];
-      if (x) {
-        return "\\" + x;
+      if (x2) {
+        return "\\" + x2;
       }
       return "\\x" + (n < 16 ? "0" : "") + $toUpperCase.call(n.toString(16));
     }
@@ -9891,8 +9891,8 @@ var require_object_inspect = __commonJS({
       return type + " (" + size + ") {" + joinedEntries + "}";
     }
     function singleLineValues(xs) {
-      for (var i = 0; i < xs.length; i++) {
-        if (indexOf(xs[i], "\n") >= 0) {
+      for (var i2 = 0; i2 < xs.length; i2++) {
+        if (indexOf(xs[i2], "\n") >= 0) {
           return false;
         }
       }
@@ -9924,8 +9924,8 @@ var require_object_inspect = __commonJS({
       var xs = [];
       if (isArr) {
         xs.length = obj.length;
-        for (var i = 0; i < obj.length; i++) {
-          xs[i] = has(obj, i) ? inspect(obj[i], obj) : "";
+        for (var i2 = 0; i2 < obj.length; i2++) {
+          xs[i2] = has(obj, i2) ? inspect(obj[i2], obj) : "";
         }
       }
       var syms = typeof gOPS === "function" ? gOPS(obj) : [];
@@ -10330,8 +10330,8 @@ var require_implementation = __commonJS({
     var funcType = "[object Function]";
     var concatty = function concatty2(a, b) {
       var arr = [];
-      for (var i = 0; i < a.length; i += 1) {
-        arr[i] = a[i];
+      for (var i2 = 0; i2 < a.length; i2 += 1) {
+        arr[i2] = a[i2];
       }
       for (var j = 0; j < b.length; j += 1) {
         arr[j + a.length] = b[j];
@@ -10340,16 +10340,16 @@ var require_implementation = __commonJS({
     };
     var slicy = function slicy2(arrLike, offset) {
       var arr = [];
-      for (var i = offset || 0, j = 0; i < arrLike.length; i += 1, j += 1) {
-        arr[j] = arrLike[i];
+      for (var i2 = offset || 0, j = 0; i2 < arrLike.length; i2 += 1, j += 1) {
+        arr[j] = arrLike[i2];
       }
       return arr;
     };
     var joiny = function(arr, joiner) {
       var str = "";
-      for (var i = 0; i < arr.length; i += 1) {
-        str += arr[i];
-        if (i + 1 < arr.length) {
+      for (var i2 = 0; i2 < arr.length; i2 += 1) {
+        str += arr[i2];
+        if (i2 + 1 < arr.length) {
           str += joiner;
         }
       }
@@ -10380,8 +10380,8 @@ var require_implementation = __commonJS({
       };
       var boundLength = max(0, target.length - args.length);
       var boundArgs = [];
-      for (var i = 0; i < boundLength; i++) {
-        boundArgs[i] = "$" + i;
+      for (var i2 = 0; i2 < boundLength; i2++) {
+        boundArgs[i2] = "$" + i2;
       }
       bound = Function("binder", "return function (" + joiny(boundArgs, ",") + "){ return binder.apply(this,arguments); }")(binder);
       if (target.prototype) {
@@ -10808,8 +10808,8 @@ var require_get_intrinsic = __commonJS({
         intrinsicBaseName = alias[0];
         $spliceApply(parts, $concat([0, 1], alias));
       }
-      for (var i = 1, isOwn = true; i < parts.length; i += 1) {
-        var part = parts[i];
+      for (var i2 = 1, isOwn = true; i2 < parts.length; i2 += 1) {
+        var part = parts[i2];
         var first = $strSlice(part, 0, 1);
         var last = $strSlice(part, -1);
         if ((first === '"' || first === "'" || first === "`" || (last === '"' || last === "'" || last === "`")) && first !== last) {
@@ -10829,7 +10829,7 @@ var require_get_intrinsic = __commonJS({
             }
             return void undefined2;
           }
-          if ($gOPD && i + 1 >= parts.length) {
+          if ($gOPD && i2 + 1 >= parts.length) {
             var desc = $gOPD(value, part);
             isOwn = !!desc;
             if (isOwn && "get" in desc && !("originalValue" in desc.get)) {
@@ -11092,8 +11092,8 @@ var require_utils = __commonJS({
     };
     var hexTable = (function() {
       var array = [];
-      for (var i = 0; i < 256; ++i) {
-        array[array.length] = "%" + ((i < 16 ? "0" : "") + i.toString(16)).toUpperCase();
+      for (var i2 = 0; i2 < 256; ++i2) {
+        array[array.length] = "%" + ((i2 < 16 ? "0" : "") + i2.toString(16)).toUpperCase();
       }
       return array;
     })();
@@ -11114,9 +11114,9 @@ var require_utils = __commonJS({
     };
     var arrayToObject = function arrayToObject2(source, options) {
       var obj = options && options.plainObjects ? { __proto__: null } : {};
-      for (var i = 0; i < source.length; ++i) {
-        if (typeof source[i] !== "undefined") {
-          obj[i] = source[i];
+      for (var i2 = 0; i2 < source.length; ++i2) {
+        if (typeof source[i2] !== "undefined") {
+          obj[i2] = source[i2];
         }
       }
       return obj;
@@ -11168,16 +11168,16 @@ var require_utils = __commonJS({
         mergeTarget = arrayToObject(target, options);
       }
       if (isArray(target) && isArray(source)) {
-        source.forEach(function(item, i) {
-          if (has.call(target, i)) {
-            var targetItem = target[i];
+        source.forEach(function(item, i2) {
+          if (has.call(target, i2)) {
+            var targetItem = target[i2];
             if (targetItem && typeof targetItem === "object" && item && typeof item === "object") {
-              target[i] = merge2(targetItem, item, options);
+              target[i2] = merge2(targetItem, item, options);
             } else {
               target[target.length] = item;
             }
           } else {
-            target[i] = item;
+            target[i2] = item;
           }
         });
         return target;
@@ -11238,10 +11238,10 @@ var require_utils = __commonJS({
       for (var j = 0; j < string.length; j += limit) {
         var segment = string.length >= limit ? string.slice(j, j + limit) : string;
         var arr = [];
-        for (var i = 0; i < segment.length; ++i) {
-          var c = segment.charCodeAt(i);
+        for (var i2 = 0; i2 < segment.length; ++i2) {
+          var c = segment.charCodeAt(i2);
           if (c === 45 || c === 46 || c === 95 || c === 126 || c >= 48 && c <= 57 || c >= 65 && c <= 90 || c >= 97 && c <= 122 || format === formats.RFC1738 && (c === 40 || c === 41)) {
-            arr[arr.length] = segment.charAt(i);
+            arr[arr.length] = segment.charAt(i2);
             continue;
           }
           if (c < 128) {
@@ -11256,8 +11256,8 @@ var require_utils = __commonJS({
             arr[arr.length] = hexTable[224 | c >> 12] + hexTable[128 | c >> 6 & 63] + hexTable[128 | c & 63];
             continue;
           }
-          i += 1;
-          c = 65536 + ((c & 1023) << 10 | segment.charCodeAt(i) & 1023);
+          i2 += 1;
+          c = 65536 + ((c & 1023) << 10 | segment.charCodeAt(i2) & 1023);
           arr[arr.length] = hexTable[240 | c >> 18] + hexTable[128 | c >> 12 & 63] + hexTable[128 | c >> 6 & 63] + hexTable[128 | c & 63];
         }
         out += arr.join("");
@@ -11267,8 +11267,8 @@ var require_utils = __commonJS({
     var compact = function compact2(value) {
       var queue = [{ obj: { o: value }, prop: "o" }];
       var refs = [];
-      for (var i = 0; i < queue.length; ++i) {
-        var item = queue[i];
+      for (var i2 = 0; i2 < queue.length; ++i2) {
+        var item = queue[i2];
         var obj = item.obj[item.prop];
         var keys = Object.keys(obj);
         for (var j = 0; j < keys.length; ++j) {
@@ -11308,8 +11308,8 @@ var require_utils = __commonJS({
     var maybeMap = function maybeMap2(val, fn) {
       if (isArray(val)) {
         var mapped = [];
-        for (var i = 0; i < val.length; i += 1) {
-          mapped[mapped.length] = fn(val[i]);
+        for (var i2 = 0; i2 < val.length; i2 += 1) {
+          mapped[mapped.length] = fn(val[i2]);
         }
         return mapped;
       }
@@ -11576,8 +11576,8 @@ var require_stringify = __commonJS({
         objKeys.sort(options.sort);
       }
       var sideChannel = getSideChannel();
-      for (var i = 0; i < objKeys.length; ++i) {
-        var key = objKeys[i];
+      for (var i2 = 0; i2 < objKeys.length; ++i2) {
+        var key = objKeys[i2];
         if (typeof key === "undefined" || key === null) {
           continue;
         }
@@ -11680,26 +11680,26 @@ var require_parse = __commonJS({
         throw new RangeError("Parameter limit exceeded. Only " + limit + " parameter" + (limit === 1 ? "" : "s") + " allowed.");
       }
       var skipIndex = -1;
-      var i;
+      var i2;
       var charset = options.charset;
       if (options.charsetSentinel) {
-        for (i = 0; i < parts.length; ++i) {
-          if (parts[i].indexOf("utf8=") === 0) {
-            if (parts[i] === charsetSentinel) {
+        for (i2 = 0; i2 < parts.length; ++i2) {
+          if (parts[i2].indexOf("utf8=") === 0) {
+            if (parts[i2] === charsetSentinel) {
               charset = "utf-8";
-            } else if (parts[i] === isoSentinel) {
+            } else if (parts[i2] === isoSentinel) {
               charset = "iso-8859-1";
             }
-            skipIndex = i;
-            i = parts.length;
+            skipIndex = i2;
+            i2 = parts.length;
           }
         }
       }
-      for (i = 0; i < parts.length; ++i) {
-        if (i === skipIndex) {
+      for (i2 = 0; i2 < parts.length; ++i2) {
+        if (i2 === skipIndex) {
           continue;
         }
-        var part = parts[i];
+        var part = parts[i2];
         var bracketEqualsPos = part.indexOf("]=");
         var pos = bracketEqualsPos === -1 ? part.indexOf("=") : bracketEqualsPos + 1;
         var key;
@@ -11757,9 +11757,9 @@ var require_parse = __commonJS({
         currentArrayLength = Array.isArray(val) && val[parentKey] ? val[parentKey].length : 0;
       }
       var leaf = valuesParsed ? val : parseArrayValue(val, options, currentArrayLength);
-      for (var i = chain.length - 1; i >= 0; --i) {
+      for (var i2 = chain.length - 1; i2 >= 0; --i2) {
         var obj;
-        var root = chain[i];
+        var root = chain[i2];
         if (root === "[]" && options.parseArrays) {
           if (utils.isOverflow(leaf)) {
             obj = leaf;
@@ -11821,19 +11821,19 @@ var require_parse = __commonJS({
       var collected = 0;
       while (open >= 0 && collected < options.depth) {
         var level = 1;
-        var i = open + 1;
+        var i2 = open + 1;
         var close = -1;
-        while (i < n && close < 0) {
-          var cu = key.charCodeAt(i);
+        while (i2 < n && close < 0) {
+          var cu = key.charCodeAt(i2);
           if (cu === 91) {
             level += 1;
           } else if (cu === 93) {
             level -= 1;
             if (level === 0) {
-              close = i;
+              close = i2;
             }
           }
-          i += 1;
+          i2 += 1;
         }
         if (close < 0) {
           segments[segments.length] = "[" + key.slice(open) + "]";
@@ -11925,8 +11925,8 @@ var require_parse = __commonJS({
       var tempObj = typeof str === "string" ? parseValues(str, options) : str;
       var obj = options.plainObjects ? { __proto__: null } : {};
       var keys = Object.keys(tempObj);
-      for (var i = 0; i < keys.length; ++i) {
-        var key = keys[i];
+      for (var i2 = 0; i2 < keys.length; ++i2) {
+        var key = keys[i2];
         var newObj = parseKeys(key, tempObj[key], options, typeof str === "string");
         obj = utils.merge(obj, newObj, options);
       }
@@ -11957,7 +11957,7 @@ var require_lib2 = __commonJS({
 var require_osx_release = __commonJS({
   "node_modules/.pnpm/osx-release@1.1.0/node_modules/osx-release/index.js"(exports2, module2) {
     "use strict";
-    var os2 = require("os");
+    var os = require("os");
     var nameMap = {
       "15": "El Capitan",
       "14": "Yosemite",
@@ -11972,7 +11972,7 @@ var require_osx_release = __commonJS({
       "5": "Puma"
     };
     module2.exports = function(release) {
-      release = (release || os2.release()).split(".")[0];
+      release = (release || os.release()).split(".")[0];
       return {
         name: nameMap[release],
         version: "10." + (Number(release) - 4)
@@ -11985,7 +11985,7 @@ var require_osx_release = __commonJS({
 var require_win_release = __commonJS({
   "src/stubs/win-release.js"(exports2, module2) {
     "use strict";
-    var os2 = require("os");
+    var os = require("os");
     var nameMap = {
       "10.0": "10",
       "6.3": "8.1",
@@ -11999,7 +11999,7 @@ var require_win_release = __commonJS({
       "4.0": "95"
     };
     module2.exports = function(release) {
-      var version = /\d+\.\d+/.exec(release || os2.release());
+      var version = /\d+\.\d+/.exec(release || os.release());
       return nameMap[(version || [])[0]] || "";
     };
   }
@@ -12009,15 +12009,15 @@ var require_win_release = __commonJS({
 var require_os_name = __commonJS({
   "node_modules/.pnpm/os-name@1.0.3/node_modules/os-name/index.js"(exports2, module2) {
     "use strict";
-    var os2 = require("os");
+    var os = require("os");
     var osxRelease = require_osx_release();
     var winRelease = require_win_release();
     module2.exports = function(platform, release) {
       if (!platform && release) {
         throw new Error("You can't specify a `release` without specfying `platform`");
       }
-      platform = platform || os2.platform();
-      release = release || os2.release();
+      platform = platform || os.platform();
+      release = release || os.release();
       var id;
       if (platform === "darwin") {
         id = osxRelease(release).name;
@@ -12064,8 +12064,8 @@ var require_digest_header = __commonJS({
     function digestAuthHeader(method, uri, wwwAuthenticate, userpass) {
       const parts = wwwAuthenticate.split(",");
       const opts = {};
-      for (let i = 0; i < parts.length; i++) {
-        const m = AUTH_KEY_VALUE_RE.exec(parts[i]);
+      for (let i2 = 0; i2 < parts.length; i2++) {
+        const m = AUTH_KEY_VALUE_RE.exec(parts[i2]);
         if (m) {
           opts[m[1]] = m[2].replace(/["']/g, "");
         }
@@ -12256,8 +12256,8 @@ var require_content_type = __commonJS({
       if (parameters && typeof parameters === "object") {
         var param;
         var params = Object.keys(parameters).sort();
-        for (var i = 0; i < params.length; i++) {
-          param = params[i];
+        for (var i2 = 0; i2 < params.length; i2++) {
+          param = params[i2];
           if (!TOKEN_REGEXP.test(param)) {
             throw new TypeError("invalid parameter name");
           }
@@ -12344,8 +12344,8 @@ var require_ee_first = __commonJS({
       if (!Array.isArray(stuff))
         throw new TypeError("arg must be an array of [ee, events...] arrays");
       var cleanups = [];
-      for (var i = 0; i < stuff.length; i++) {
-        var arr = stuff[i];
+      for (var i2 = 0; i2 < stuff.length; i2++) {
+        var arr = stuff[i2];
         if (!Array.isArray(arr) || arr.length < 2)
           throw new TypeError("each array member must be [ee, events...]");
         var ee = arr[0];
@@ -12365,10 +12365,10 @@ var require_ee_first = __commonJS({
         done.apply(null, arguments);
       }
       function cleanup() {
-        var x;
-        for (var i2 = 0; i2 < cleanups.length; i2++) {
-          x = cleanups[i2];
-          x.ee.removeListener(x.event, x.fn);
+        var x2;
+        for (var i3 = 0; i3 < cleanups.length; i3++) {
+          x2 = cleanups[i3];
+          x2.ee.removeListener(x2.event, x2.fn);
         }
       }
       function thunk(fn2) {
@@ -12381,11 +12381,11 @@ var require_ee_first = __commonJS({
       return function onevent(arg1) {
         var args = new Array(arguments.length);
         var ee = this;
-        var err = event === "error" ? arg1 : null;
-        for (var i = 0; i < args.length; i++) {
-          args[i] = arguments[i];
+        var err2 = event === "error" ? arg1 : null;
+        for (var i2 = 0; i2 < args.length; i2++) {
+          args[i2] = arguments[i2];
         }
-        done(err, ee, event, args);
+        done(err2, ee, event, args);
       };
     }
   }
@@ -12405,8 +12405,8 @@ var require_wrappy = __commonJS({
       return wrapper;
       function wrapper() {
         var args = new Array(arguments.length);
-        for (var i = 0; i < args.length; i++) {
-          args[i] = arguments[i];
+        for (var i2 = 0; i2 < args.length; i2++) {
+          args[i2] = arguments[i2];
         }
         var ret = fn.apply(this, args);
         var cb2 = args[args.length - 1];
@@ -12501,8 +12501,8 @@ var require_end_of_stream = __commonJS({
       var onexit = function(exitCode) {
         callback.call(stream, exitCode ? new Error("exited with error code: " + exitCode) : null);
       };
-      var onerror = function(err) {
-        callback.call(stream, err);
+      var onerror = function(err2) {
+        callback.call(stream, err2);
       };
       var onclose = function() {
         qnt(onclosenexttick);
@@ -12553,9 +12553,9 @@ var require_pump = __commonJS({
   "node_modules/.pnpm/pump@3.0.4/node_modules/pump/index.js"(exports2, module2) {
     var once = require_once();
     var eos = require_end_of_stream();
-    var fs2;
+    var fs;
     try {
-      fs2 = require("fs");
+      fs = require("fs");
     } catch (e) {
     }
     var noop = function() {
@@ -12566,8 +12566,8 @@ var require_pump = __commonJS({
     };
     var isFS = function(stream) {
       if (!ancient) return false;
-      if (!fs2) return false;
-      return (stream instanceof (fs2.ReadStream || noop) || stream instanceof (fs2.WriteStream || noop)) && isFn(stream.close);
+      if (!fs) return false;
+      return (stream instanceof (fs.ReadStream || noop) || stream instanceof (fs.WriteStream || noop)) && isFn(stream.close);
     };
     var isRequest = function(stream) {
       return stream.setHeader && isFn(stream.abort);
@@ -12578,20 +12578,20 @@ var require_pump = __commonJS({
       stream.on("close", function() {
         closed = true;
       });
-      eos(stream, { readable: reading, writable: writing }, function(err) {
-        if (err) return callback(err);
+      eos(stream, { readable: reading, writable: writing }, function(err2) {
+        if (err2) return callback(err2);
         closed = true;
         callback();
       });
       var destroyed = false;
-      return function(err) {
+      return function(err2) {
         if (closed) return;
         if (destroyed) return;
         destroyed = true;
         if (isFS(stream)) return stream.close(noop);
         if (isRequest(stream)) return stream.abort();
         if (isFn(stream.destroy)) return stream.destroy();
-        callback(err || new Error("stream was destroyed"));
+        callback(err2 || new Error("stream was destroyed"));
       };
     };
     var call = function(fn) {
@@ -12606,12 +12606,12 @@ var require_pump = __commonJS({
       if (Array.isArray(streams[0])) streams = streams[0];
       if (streams.length < 2) throw new Error("pump requires two streams per minimum");
       var error;
-      var destroys = streams.map(function(stream, i) {
-        var reading = i < streams.length - 1;
-        var writing = i > 0;
-        return destroyer(stream, reading, writing, function(err) {
-          if (!error) error = err;
-          if (err) destroys.forEach(call);
+      var destroys = streams.map(function(stream, i2) {
+        var reading = i2 < streams.length - 1;
+        var writing = i2 > 0;
+        return destroyer(stream, reading, writing, function(err2) {
+          if (!error) error = err2;
+          if (err2) destroys.forEach(call);
           if (reading) return;
           destroys.forEach(call);
           callback(error);
@@ -12724,8 +12724,8 @@ var require_Mime = __commonJS({
     function Mime() {
       this._types = /* @__PURE__ */ Object.create(null);
       this._extensions = /* @__PURE__ */ Object.create(null);
-      for (let i = 0; i < arguments.length; i++) {
-        this.define(arguments[i]);
+      for (let i2 = 0; i2 < arguments.length; i2++) {
+        this.define(arguments[i2]);
       }
       this.define = this.define.bind(this);
       this.getType = this.getType.bind(this);
@@ -12737,8 +12737,8 @@ var require_Mime = __commonJS({
           return t2.toLowerCase();
         });
         type = type.toLowerCase();
-        for (let i = 0; i < extensions.length; i++) {
-          const ext = extensions[i];
+        for (let i2 = 0; i2 < extensions.length; i2++) {
+          const ext = extensions[i2];
           if (ext[0] === "*") {
             continue;
           }
@@ -12755,11 +12755,11 @@ var require_Mime = __commonJS({
         }
       }
     };
-    Mime.prototype.getType = function(path3) {
-      path3 = String(path3);
-      let last = path3.replace(/^.*[/\\]/, "").toLowerCase();
+    Mime.prototype.getType = function(path) {
+      path = String(path);
+      let last = path.replace(/^.*[/\\]/, "").toLowerCase();
       let ext = last.replace(/^.*\./, "").toLowerCase();
-      let hasPath = last.length < path3.length;
+      let hasPath = last.length < path.length;
       let hasDot = ext.length < last.length - 1;
       return (hasDot || !hasPath) && this._types[ext] || null;
     };
@@ -12897,15 +12897,15 @@ var require_lib3 = __commonJS({
       var last = buffer.length % 16 || 16;
       var offsetLength = buffer.length.toString(16).length;
       if (offsetLength < 6) offsetLength = 6;
-      var i;
+      var i2;
       var str = "";
       var b = 0;
       var lastBytes;
       var lastSpaces;
       var v;
-      for (i = 0; i < rows; i++) {
+      for (i2 = 0; i2 < rows; i2++) {
         str += "\x1B[36m" + zero(b, offsetLength) + "\x1B[0m  ";
-        lastBytes = i === rows - 1 ? last : 16;
+        lastBytes = i2 === rows - 1 ? last : 16;
         lastSpaces = 16 - lastBytes;
         var j;
         for (j = 0; j < lastBytes; j++) {
@@ -12939,8 +12939,8 @@ var require_formstream = __commonJS({
     var parseStream = require_pause_stream();
     var util = require("util");
     var mime = require_mime();
-    var path3 = require("path");
-    var fs2 = require("fs");
+    var path = require("path");
+    var fs = require("fs");
     var destroy = require_destroy();
     var hex = require_lib3();
     var PADDING = "--";
@@ -12972,8 +12972,8 @@ var require_formstream = __commonJS({
         return this;
       }
       size = size || 0;
-      for (var i = 0; i < this._streams.length; i++) {
-        size += this._streams[i][0].length;
+      for (var i2 = 0; i2 < this._streams.length; i2++) {
+        size += this._streams[i2][0].length;
         size += NEW_LINE_BUFFER.length;
       }
       this._knownStreamSize = size;
@@ -13001,13 +13001,13 @@ var require_formstream = __commonJS({
     FormStream.prototype.file = function(name, filepath, filename, filesize) {
       if (typeof filename === "number" && !filesize) {
         filesize = filename;
-        filename = path3.basename(filepath);
+        filename = path.basename(filepath);
       }
       if (!filename) {
-        filename = path3.basename(filepath);
+        filename = path.basename(filepath);
       }
       var mimeType = mime.getType(filename);
-      var stream = fs2.createReadStream(filepath);
+      var stream = fs.createReadStream(filepath);
       return this.stream(name, stream, filename, mimeType, filesize);
     };
     FormStream.prototype.field = function(name, value, mimeType) {
@@ -13096,8 +13096,8 @@ var require_formstream = __commonJS({
       if (!this._buffers.length) {
         return;
       }
-      for (var i = 0; i < this._buffers.length; i++) {
-        this.emit("data", this._buffers[i]);
+      for (var i2 = 0; i2 < this._buffers.length; i2++) {
+        this.emit("data", this._buffers[i2]);
       }
       this._buffers = [];
     };
@@ -13613,8 +13613,8 @@ var require_internal = __commonJS({
     }
     InternalEncoderCesu8.prototype.write = function(str) {
       var buf = Buffer2.alloc(str.length * 3), bufIdx = 0;
-      for (var i = 0; i < str.length; i++) {
-        var charCode = str.charCodeAt(i);
+      for (var i2 = 0; i2 < str.length; i2++) {
+        var charCode = str.charCodeAt(i2);
         if (charCode < 128)
           buf[bufIdx++] = charCode;
         else if (charCode < 2048) {
@@ -13638,8 +13638,8 @@ var require_internal = __commonJS({
     }
     InternalDecoderCesu8.prototype.write = function(buf) {
       var acc = this.acc, contBytes = this.contBytes, accBytes = this.accBytes, res = "";
-      for (var i = 0; i < buf.length; i++) {
-        var curByte = buf[i];
+      for (var i2 = 0; i2 < buf.length; i2++) {
+        var curByte = buf[i2];
         if ((curByte & 192) !== 128) {
           if (contBytes > 0) {
             res += this.defaultCharUnicode;
@@ -13716,8 +13716,8 @@ var require_utf32 = __commonJS({
       var dst = Buffer2.alloc(src.length * 2);
       var write32 = this.isLE ? dst.writeUInt32LE : dst.writeUInt32BE;
       var offset = 0;
-      for (var i = 0; i < src.length; i += 2) {
-        var code = src.readUInt16LE(i);
+      for (var i2 = 0; i2 < src.length; i2 += 2) {
+        var code = src.readUInt16LE(i2);
         var isHighSurrogate = 55296 <= code && code < 56320;
         var isLowSurrogate = 56320 <= code && code < 57344;
         if (this.highSurrogate) {
@@ -13763,7 +13763,7 @@ var require_utf32 = __commonJS({
     Utf32Decoder.prototype.write = function(src) {
       if (src.length === 0)
         return "";
-      var i = 0;
+      var i2 = 0;
       var codepoint = 0;
       var dst = Buffer2.alloc(src.length + 4);
       var offset = 0;
@@ -13771,28 +13771,28 @@ var require_utf32 = __commonJS({
       var overflow = this.overflow;
       var badChar = this.badChar;
       if (overflow.length > 0) {
-        for (; i < src.length && overflow.length < 4; i++)
-          overflow.push(src[i]);
+        for (; i2 < src.length && overflow.length < 4; i2++)
+          overflow.push(src[i2]);
         if (overflow.length === 4) {
           if (isLE) {
-            codepoint = overflow[i] | overflow[i + 1] << 8 | overflow[i + 2] << 16 | overflow[i + 3] << 24;
+            codepoint = overflow[i2] | overflow[i2 + 1] << 8 | overflow[i2 + 2] << 16 | overflow[i2 + 3] << 24;
           } else {
-            codepoint = overflow[i + 3] | overflow[i + 2] << 8 | overflow[i + 1] << 16 | overflow[i] << 24;
+            codepoint = overflow[i2 + 3] | overflow[i2 + 2] << 8 | overflow[i2 + 1] << 16 | overflow[i2] << 24;
           }
           overflow.length = 0;
           offset = _writeCodepoint(dst, offset, codepoint, badChar);
         }
       }
-      for (; i < src.length - 3; i += 4) {
+      for (; i2 < src.length - 3; i2 += 4) {
         if (isLE) {
-          codepoint = src[i] | src[i + 1] << 8 | src[i + 2] << 16 | src[i + 3] << 24;
+          codepoint = src[i2] | src[i2 + 1] << 8 | src[i2 + 2] << 16 | src[i2 + 3] << 24;
         } else {
-          codepoint = src[i + 3] | src[i + 2] << 8 | src[i + 1] << 16 | src[i] << 24;
+          codepoint = src[i2 + 3] | src[i2 + 2] << 8 | src[i2 + 1] << 16 | src[i2] << 24;
         }
         offset = _writeCodepoint(dst, offset, codepoint, badChar);
       }
-      for (; i < src.length; i++) {
-        overflow.push(src[i]);
+      for (; i2 < src.length; i2++) {
+        overflow.push(src[i2]);
       }
       return dst.slice(0, offset).toString("ucs2");
     };
@@ -13849,8 +13849,8 @@ var require_utf32 = __commonJS({
         var encoding = detectEncoding(this.initialBufs, this.options.defaultEncoding);
         this.decoder = this.iconv.getDecoder(encoding, this.options);
         var resStr = "";
-        for (var i = 0; i < this.initialBufs.length; i++)
-          resStr += this.decoder.write(this.initialBufs[i]);
+        for (var i2 = 0; i2 < this.initialBufs.length; i2++)
+          resStr += this.decoder.write(this.initialBufs[i2]);
         this.initialBufs.length = this.initialBufsLen = 0;
         return resStr;
       }
@@ -13861,8 +13861,8 @@ var require_utf32 = __commonJS({
         var encoding = detectEncoding(this.initialBufs, this.options.defaultEncoding);
         this.decoder = this.iconv.getDecoder(encoding, this.options);
         var resStr = "";
-        for (var i = 0; i < this.initialBufs.length; i++)
-          resStr += this.decoder.write(this.initialBufs[i]);
+        for (var i2 = 0; i2 < this.initialBufs.length; i2++)
+          resStr += this.decoder.write(this.initialBufs[i2]);
         var trail = this.decoder.end();
         if (trail)
           resStr += trail;
@@ -13877,8 +13877,8 @@ var require_utf32 = __commonJS({
       var invalidLE = 0, invalidBE = 0;
       var bmpCharsLE = 0, bmpCharsBE = 0;
       outer_loop:
-        for (var i = 0; i < bufs.length; i++) {
-          var buf = bufs[i];
+        for (var i2 = 0; i2 < bufs.length; i2++) {
+          var buf = bufs[i2];
           for (var j = 0; j < buf.length; j++) {
             b.push(buf[j]);
             if (b.length === 4) {
@@ -13924,10 +13924,10 @@ var require_utf16 = __commonJS({
     }
     Utf16BEEncoder.prototype.write = function(str) {
       var buf = Buffer2.from(str, "ucs2");
-      for (var i = 0; i < buf.length; i += 2) {
-        var tmp = buf[i];
-        buf[i] = buf[i + 1];
-        buf[i + 1] = tmp;
+      for (var i2 = 0; i2 < buf.length; i2 += 2) {
+        var tmp = buf[i2];
+        buf[i2] = buf[i2 + 1];
+        buf[i2 + 1] = tmp;
       }
       return buf;
     };
@@ -13939,18 +13939,18 @@ var require_utf16 = __commonJS({
     Utf16BEDecoder.prototype.write = function(buf) {
       if (buf.length == 0)
         return "";
-      var buf2 = Buffer2.alloc(buf.length + 1), i = 0, j = 0;
+      var buf2 = Buffer2.alloc(buf.length + 1), i2 = 0, j = 0;
       if (this.overflowByte !== -1) {
         buf2[0] = buf[0];
         buf2[1] = this.overflowByte;
-        i = 1;
+        i2 = 1;
         j = 2;
       }
-      for (; i < buf.length - 1; i += 2, j += 2) {
-        buf2[j] = buf[i + 1];
-        buf2[j + 1] = buf[i];
+      for (; i2 < buf.length - 1; i2 += 2, j += 2) {
+        buf2[j] = buf[i2 + 1];
+        buf2[j + 1] = buf[i2];
       }
-      this.overflowByte = i == buf.length - 1 ? buf[buf.length - 1] : -1;
+      this.overflowByte = i2 == buf.length - 1 ? buf[buf.length - 1] : -1;
       return buf2.slice(0, j).toString("ucs2");
     };
     Utf16BEDecoder.prototype.end = function() {
@@ -13990,8 +13990,8 @@ var require_utf16 = __commonJS({
         var encoding = detectEncoding(this.initialBufs, this.options.defaultEncoding);
         this.decoder = this.iconv.getDecoder(encoding, this.options);
         var resStr = "";
-        for (var i = 0; i < this.initialBufs.length; i++)
-          resStr += this.decoder.write(this.initialBufs[i]);
+        for (var i2 = 0; i2 < this.initialBufs.length; i2++)
+          resStr += this.decoder.write(this.initialBufs[i2]);
         this.initialBufs.length = this.initialBufsLen = 0;
         return resStr;
       }
@@ -14002,8 +14002,8 @@ var require_utf16 = __commonJS({
         var encoding = detectEncoding(this.initialBufs, this.options.defaultEncoding);
         this.decoder = this.iconv.getDecoder(encoding, this.options);
         var resStr = "";
-        for (var i = 0; i < this.initialBufs.length; i++)
-          resStr += this.decoder.write(this.initialBufs[i]);
+        for (var i2 = 0; i2 < this.initialBufs.length; i2++)
+          resStr += this.decoder.write(this.initialBufs[i2]);
         var trail = this.decoder.end();
         if (trail)
           resStr += trail;
@@ -14017,8 +14017,8 @@ var require_utf16 = __commonJS({
       var charsProcessed = 0;
       var asciiCharsLE = 0, asciiCharsBE = 0;
       outer_loop:
-        for (var i = 0; i < bufs.length; i++) {
-          var buf = bufs[i];
+        for (var i2 = 0; i2 < bufs.length; i2++) {
+          var buf = bufs[i2];
           for (var j = 0; j < buf.length; j++) {
             b.push(buf[j]);
             if (b.length === 2) {
@@ -14074,32 +14074,32 @@ var require_utf7 = __commonJS({
     }
     var base64Regex = /[A-Za-z0-9\/+]/;
     var base64Chars = [];
-    for (i = 0; i < 256; i++)
-      base64Chars[i] = base64Regex.test(String.fromCharCode(i));
-    var i;
+    for (i2 = 0; i2 < 256; i2++)
+      base64Chars[i2] = base64Regex.test(String.fromCharCode(i2));
+    var i2;
     var plusChar = "+".charCodeAt(0);
     var minusChar = "-".charCodeAt(0);
     var andChar = "&".charCodeAt(0);
     Utf7Decoder.prototype.write = function(buf) {
       var res = "", lastI = 0, inBase64 = this.inBase64, base64Accum = this.base64Accum;
-      for (var i2 = 0; i2 < buf.length; i2++) {
+      for (var i3 = 0; i3 < buf.length; i3++) {
         if (!inBase64) {
-          if (buf[i2] == plusChar) {
-            res += this.iconv.decode(buf.slice(lastI, i2), "ascii");
-            lastI = i2 + 1;
+          if (buf[i3] == plusChar) {
+            res += this.iconv.decode(buf.slice(lastI, i3), "ascii");
+            lastI = i3 + 1;
             inBase64 = true;
           }
         } else {
-          if (!base64Chars[buf[i2]]) {
-            if (i2 == lastI && buf[i2] == minusChar) {
+          if (!base64Chars[buf[i3]]) {
+            if (i3 == lastI && buf[i3] == minusChar) {
               res += "+";
             } else {
-              var b64str = base64Accum + this.iconv.decode(buf.slice(lastI, i2), "ascii");
+              var b64str = base64Accum + this.iconv.decode(buf.slice(lastI, i3), "ascii");
               res += this.iconv.decode(Buffer2.from(b64str, "base64"), "utf16-be");
             }
-            if (buf[i2] != minusChar)
-              i2--;
-            lastI = i2 + 1;
+            if (buf[i3] != minusChar)
+              i3--;
+            lastI = i3 + 1;
             inBase64 = false;
             base64Accum = "";
           }
@@ -14141,8 +14141,8 @@ var require_utf7 = __commonJS({
     }
     Utf7IMAPEncoder.prototype.write = function(str) {
       var inBase64 = this.inBase64, base64Accum = this.base64Accum, base64AccumIdx = this.base64AccumIdx, buf = Buffer2.alloc(str.length * 5 + 10), bufIdx = 0;
-      for (var i2 = 0; i2 < str.length; i2++) {
-        var uChar = str.charCodeAt(i2);
+      for (var i3 = 0; i3 < str.length; i3++) {
+        var uChar = str.charCodeAt(i3);
         if (32 <= uChar && uChar <= 126) {
           if (inBase64) {
             if (base64AccumIdx > 0) {
@@ -14197,24 +14197,24 @@ var require_utf7 = __commonJS({
     base64IMAPChars[",".charCodeAt(0)] = true;
     Utf7IMAPDecoder.prototype.write = function(buf) {
       var res = "", lastI = 0, inBase64 = this.inBase64, base64Accum = this.base64Accum;
-      for (var i2 = 0; i2 < buf.length; i2++) {
+      for (var i3 = 0; i3 < buf.length; i3++) {
         if (!inBase64) {
-          if (buf[i2] == andChar) {
-            res += this.iconv.decode(buf.slice(lastI, i2), "ascii");
-            lastI = i2 + 1;
+          if (buf[i3] == andChar) {
+            res += this.iconv.decode(buf.slice(lastI, i3), "ascii");
+            lastI = i3 + 1;
             inBase64 = true;
           }
         } else {
-          if (!base64IMAPChars[buf[i2]]) {
-            if (i2 == lastI && buf[i2] == minusChar) {
+          if (!base64IMAPChars[buf[i3]]) {
+            if (i3 == lastI && buf[i3] == minusChar) {
               res += "&";
             } else {
-              var b64str = base64Accum + this.iconv.decode(buf.slice(lastI, i2), "ascii").replace(/,/g, "/");
+              var b64str = base64Accum + this.iconv.decode(buf.slice(lastI, i3), "ascii").replace(/,/g, "/");
               res += this.iconv.decode(Buffer2.from(b64str, "base64"), "utf16-be");
             }
-            if (buf[i2] != minusChar)
-              i2--;
-            lastI = i2 + 1;
+            if (buf[i3] != minusChar)
+              i3--;
+            lastI = i3 + 1;
             inBase64 = false;
             base64Accum = "";
           }
@@ -14257,14 +14257,14 @@ var require_sbcs_codec = __commonJS({
         throw new Error("Encoding '" + codecOptions.type + "' has incorrect 'chars' (must be of len 128 or 256)");
       if (codecOptions.chars.length === 128) {
         var asciiString = "";
-        for (var i = 0; i < 128; i++)
-          asciiString += String.fromCharCode(i);
+        for (var i2 = 0; i2 < 128; i2++)
+          asciiString += String.fromCharCode(i2);
         codecOptions.chars = asciiString + codecOptions.chars;
       }
       this.decodeBuf = Buffer2.from(codecOptions.chars, "ucs2");
       var encodeBuf = Buffer2.alloc(65536, iconv.defaultCharSingleByte.charCodeAt(0));
-      for (var i = 0; i < codecOptions.chars.length; i++)
-        encodeBuf[codecOptions.chars.charCodeAt(i)] = i;
+      for (var i2 = 0; i2 < codecOptions.chars.length; i2++)
+        encodeBuf[codecOptions.chars.charCodeAt(i2)] = i2;
       this.encodeBuf = encodeBuf;
     }
     SBCSCodec.prototype.encoder = SBCSEncoder;
@@ -14274,8 +14274,8 @@ var require_sbcs_codec = __commonJS({
     }
     SBCSEncoder.prototype.write = function(str) {
       var buf = Buffer2.alloc(str.length);
-      for (var i = 0; i < str.length; i++)
-        buf[i] = this.encodeBuf[str.charCodeAt(i)];
+      for (var i2 = 0; i2 < str.length; i2++)
+        buf[i2] = this.encodeBuf[str.charCodeAt(i2)];
       return buf;
     };
     SBCSEncoder.prototype.end = function() {
@@ -14287,9 +14287,9 @@ var require_sbcs_codec = __commonJS({
       var decodeBuf = this.decodeBuf;
       var newBuf = Buffer2.alloc(buf.length * 2);
       var idx1 = 0, idx2 = 0;
-      for (var i = 0; i < buf.length; i++) {
-        idx1 = buf[i] * 2;
-        idx2 = i * 2;
+      for (var i2 = 0; i2 < buf.length; i2++) {
+        idx1 = buf[i2] * 2;
+        idx2 = i2 * 2;
         newBuf[idx2] = decodeBuf[idx1];
         newBuf[idx2 + 1] = decodeBuf[idx1 + 1];
       }
@@ -14920,9 +14920,9 @@ var require_dbcs_codec = __commonJS({
     var NODE_START = -1e3;
     var UNASSIGNED_NODE = new Array(256);
     var DEF_CHAR = -1;
-    for (i = 0; i < 256; i++)
-      UNASSIGNED_NODE[i] = UNASSIGNED;
-    var i;
+    for (i2 = 0; i2 < 256; i2++)
+      UNASSIGNED_NODE[i2] = UNASSIGNED;
+    var i2;
     function DBCSCodec(codecOptions, iconv) {
       this.encodingName = codecOptions.encodingName;
       if (!codecOptions)
@@ -14933,8 +14933,8 @@ var require_dbcs_codec = __commonJS({
       this.decodeTables = [];
       this.decodeTables[0] = UNASSIGNED_NODE.slice(0);
       this.decodeTableSeq = [];
-      for (var i2 = 0; i2 < mappingTable.length; i2++)
-        this._addDecodeChunk(mappingTable[i2]);
+      for (var i3 = 0; i3 < mappingTable.length; i3++)
+        this._addDecodeChunk(mappingTable[i3]);
       if (typeof codecOptions.gb18030 === "function") {
         this.gb18030 = codecOptions.gb18030();
         var commonThirdByteNodeIdx = this.decodeTables.length;
@@ -14942,8 +14942,8 @@ var require_dbcs_codec = __commonJS({
         var commonFourthByteNodeIdx = this.decodeTables.length;
         this.decodeTables.push(UNASSIGNED_NODE.slice(0));
         var firstByteNode = this.decodeTables[0];
-        for (var i2 = 129; i2 <= 254; i2++) {
-          var secondByteNode = this.decodeTables[NODE_START - firstByteNode[i2]];
+        for (var i3 = 129; i3 <= 254; i3++) {
+          var secondByteNode = this.decodeTables[NODE_START - firstByteNode[i3]];
           for (var j = 48; j <= 57; j++) {
             if (secondByteNode[j] === UNASSIGNED) {
               secondByteNode[j] = NODE_START - commonThirdByteNodeIdx;
@@ -14973,8 +14973,8 @@ var require_dbcs_codec = __commonJS({
       this.encodeTableSeq = [];
       var skipEncodeChars = {};
       if (codecOptions.encodeSkipVals)
-        for (var i2 = 0; i2 < codecOptions.encodeSkipVals.length; i2++) {
-          var val = codecOptions.encodeSkipVals[i2];
+        for (var i3 = 0; i3 < codecOptions.encodeSkipVals.length; i3++) {
+          var val = codecOptions.encodeSkipVals[i3];
           if (typeof val === "number")
             skipEncodeChars[val] = true;
           else
@@ -15000,10 +15000,10 @@ var require_dbcs_codec = __commonJS({
       if (bytes.length == 0)
         bytes.push(0);
       var node = this.decodeTables[0];
-      for (var i2 = bytes.length - 1; i2 > 0; i2--) {
-        var val = node[bytes[i2]];
+      for (var i3 = bytes.length - 1; i3 > 0; i3--) {
+        var val = node[bytes[i3]];
         if (val == UNASSIGNED) {
-          node[bytes[i2]] = NODE_START - this.decodeTables.length;
+          node[bytes[i3]] = NODE_START - this.decodeTables.length;
           this.decodeTables.push(node = UNASSIGNED_NODE.slice(0));
         } else if (val <= NODE_START) {
           node = this.decodeTables[NODE_START - val];
@@ -15091,9 +15091,9 @@ var require_dbcs_codec = __commonJS({
       var node = this.decodeTables[nodeIdx];
       var hasValues = false;
       var subNodeEmpty = {};
-      for (var i2 = 0; i2 < 256; i2++) {
-        var uCode = node[i2];
-        var mbCode = prefix + i2;
+      for (var i3 = 0; i3 < 256; i3++) {
+        var uCode = node[i3];
+        var mbCode = prefix + i3;
         if (skipEncodeChars[mbCode])
           continue;
         if (uCode >= 0) {
@@ -15124,11 +15124,11 @@ var require_dbcs_codec = __commonJS({
       this.gb18030 = codec.gb18030;
     }
     DBCSEncoder.prototype.write = function(str) {
-      var newBuf = Buffer2.alloc(str.length * (this.gb18030 ? 4 : 3)), leadSurrogate = this.leadSurrogate, seqObj = this.seqObj, nextChar = -1, i2 = 0, j = 0;
+      var newBuf = Buffer2.alloc(str.length * (this.gb18030 ? 4 : 3)), leadSurrogate = this.leadSurrogate, seqObj = this.seqObj, nextChar = -1, i3 = 0, j = 0;
       while (true) {
         if (nextChar === -1) {
-          if (i2 == str.length) break;
-          var uCode = str.charCodeAt(i2++);
+          if (i3 == str.length) break;
+          var uCode = str.charCodeAt(i3++);
         } else {
           var uCode = nextChar;
           nextChar = -1;
@@ -15251,18 +15251,18 @@ var require_dbcs_codec = __commonJS({
     }
     DBCSDecoder.prototype.write = function(buf) {
       var newBuf = Buffer2.alloc(buf.length * 2), nodeIdx = this.nodeIdx, prevBytes = this.prevBytes, prevOffset = this.prevBytes.length, seqStart = -this.prevBytes.length, uCode;
-      for (var i2 = 0, j = 0; i2 < buf.length; i2++) {
-        var curByte = i2 >= 0 ? buf[i2] : prevBytes[i2 + prevOffset];
+      for (var i3 = 0, j = 0; i3 < buf.length; i3++) {
+        var curByte = i3 >= 0 ? buf[i3] : prevBytes[i3 + prevOffset];
         var uCode = this.decodeTables[nodeIdx][curByte];
         if (uCode >= 0) {
         } else if (uCode === UNASSIGNED) {
           uCode = this.defaultCharUnicode.charCodeAt(0);
-          i2 = seqStart;
+          i3 = seqStart;
         } else if (uCode === GB18030_CODE) {
-          if (i2 >= 3) {
-            var ptr = (buf[i2 - 3] - 129) * 12600 + (buf[i2 - 2] - 48) * 1260 + (buf[i2 - 1] - 129) * 10 + (curByte - 48);
+          if (i3 >= 3) {
+            var ptr = (buf[i3 - 3] - 129) * 12600 + (buf[i3 - 2] - 48) * 1260 + (buf[i3 - 1] - 129) * 10 + (curByte - 48);
           } else {
-            var ptr = (prevBytes[i2 - 3 + prevOffset] - 129) * 12600 + ((i2 - 2 >= 0 ? buf[i2 - 2] : prevBytes[i2 - 2 + prevOffset]) - 48) * 1260 + ((i2 - 1 >= 0 ? buf[i2 - 1] : prevBytes[i2 - 1 + prevOffset]) - 129) * 10 + (curByte - 48);
+            var ptr = (prevBytes[i3 - 3 + prevOffset] - 129) * 12600 + ((i3 - 2 >= 0 ? buf[i3 - 2] : prevBytes[i3 - 2 + prevOffset]) - 48) * 1260 + ((i3 - 1 >= 0 ? buf[i3 - 1] : prevBytes[i3 - 1 + prevOffset]) - 129) * 10 + (curByte - 48);
           }
           var idx = findIdx(this.gb18030.gbChars, ptr);
           uCode = this.gb18030.uChars[idx] + ptr - this.gb18030.gbChars[idx];
@@ -15289,7 +15289,7 @@ var require_dbcs_codec = __commonJS({
         newBuf[j++] = uCode & 255;
         newBuf[j++] = uCode >> 8;
         nodeIdx = 0;
-        seqStart = i2 + 1;
+        seqStart = i3 + 1;
       }
       this.nodeIdx = nodeIdx;
       this.prevBytes = seqStart >= 0 ? Array.prototype.slice.call(buf, seqStart) : prevBytes.slice(seqStart + prevOffset).concat(Array.prototype.slice.call(buf));
@@ -16835,15 +16835,15 @@ var require_encodings = __commonJS({
       require_dbcs_codec(),
       require_dbcs_data()
     ];
-    for (i = 0; i < modules.length; i++) {
-      module2 = modules[i];
+    for (i2 = 0; i2 < modules.length; i2++) {
+      module2 = modules[i2];
       for (enc in module2)
         if (Object.prototype.hasOwnProperty.call(module2, enc))
           exports2[enc] = module2[enc];
     }
     var module2;
     var enc;
-    var i;
+    var i2;
   }
 });
 
@@ -17067,7 +17067,7 @@ var require_urllib = __commonJS({
   "node_modules/.pnpm/urllib@2.44.0/node_modules/urllib/lib/urllib.js"(exports2) {
     "use strict";
     var debug = require("util").debuglog("urllib");
-    var path3 = require("path");
+    var path = require("path");
     var dns = require("dns");
     var net = require("net");
     var http = require("http");
@@ -17129,9 +17129,9 @@ var require_urllib = __commonJS({
     };
     exports2.curl = exports2.request;
     function makeCallback(resolve, reject) {
-      return function(err, data, res) {
-        if (err) {
-          return reject(err);
+      return function(err2, data, res) {
+        if (err2) {
+          return reject(err2);
         }
         resolve({
           data,
@@ -17143,9 +17143,9 @@ var require_urllib = __commonJS({
     }
     exports2.requestThunk = function requestThunk(url, args) {
       return function(callback) {
-        exports2.requestWithCallback(url, args, function(err, data, res) {
-          if (err) {
-            return callback(err);
+        exports2.requestWithCallback(url, args, function(err2, data, res) {
+          if (err2) {
+            return callback(err2);
           }
           callback(null, {
             data,
@@ -17218,15 +17218,15 @@ var require_urllib = __commonJS({
       if (args.checkAddress) {
         var _lookup = lookup || dns.lookup;
         lookup = function(host, dnsopts, callback2) {
-          _lookup(host, dnsopts, function emitLookup(err2, ip, family2) {
-            if (!err2 && !args.checkAddress(ip, family2, host)) {
-              err2 = new Error("illegal address");
-              err2.name = "IllegalAddressError";
-              err2.hostname = host;
-              err2.ip = ip;
-              err2.family = family2;
+          _lookup(host, dnsopts, function emitLookup(err3, ip, family2) {
+            if (!err3 && !args.checkAddress(ip, family2, host)) {
+              err3 = new Error("illegal address");
+              err3.name = "IllegalAddressError";
+              err3.hostname = host;
+              err3.ip = ip;
+              err3.family = family2;
             }
-            callback2(err2, ip, family2);
+            callback2(err3, ip, family2);
           });
         };
       }
@@ -17247,8 +17247,8 @@ var require_urllib = __commonJS({
       var originHeaderKeys = {};
       if (args.headers) {
         var names = utility.getOwnEnumerables(args.headers, true);
-        for (var i = 0; i < names.length; i++) {
-          var name = names[i];
+        for (var i2 = 0; i2 < names.length; i2++) {
+          var name = names[i2];
           var key = name.toLowerCase();
           if (key !== name) {
             originHeaderKeys[key] = name;
@@ -17270,8 +17270,8 @@ var require_urllib = __commonJS({
         "secureProtocol",
         "secureOptions"
       ];
-      for (var i = 0; i < sslNames.length; i++) {
-        var name = sslNames[i];
+      for (var i2 = 0; i2 < sslNames.length; i2++) {
+        var name = sslNames[i2];
         if (args.hasOwnProperty(name)) {
           options[name] = args[name];
         }
@@ -17294,9 +17294,9 @@ var require_urllib = __commonJS({
         var files = args.files;
         var uploadFiles = [];
         if (Array.isArray(files)) {
-          for (var i = 0; i < files.length; i++) {
-            var field = "file" + (i === 0 ? "" : i);
-            uploadFiles.push([field, files[i]]);
+          for (var i2 = 0; i2 < files.length; i2++) {
+            var field = "file" + (i2 === 0 ? "" : i2);
+            uploadFiles.push([field, files[i2]]);
           }
         } else {
           if (Buffer.isBuffer(files) || typeof files.pipe === "function" || typeof files === "string") {
@@ -17313,13 +17313,13 @@ var require_urllib = __commonJS({
             form.field(fieldName, args.data[fieldName]);
           }
         }
-        for (var i = 0; i < uploadFiles.length; i++) {
-          var item = uploadFiles[i];
+        for (var i2 = 0; i2 < uploadFiles.length; i2++) {
+          var item = uploadFiles[i2];
           if (Buffer.isBuffer(item[1])) {
-            form.buffer(item[0], item[1], "bufferfile" + i);
+            form.buffer(item[0], item[1], "bufferfile" + i2);
           } else if (typeof item[1].pipe === "function") {
-            var filename = item[1].path || "streamfile" + i;
-            filename = path3.basename(filename);
+            var filename = item[1].path || "streamfile" + i2;
+            filename = path.basename(filename);
             form.stream(item[0], item[1], filename);
           } else {
             form.file(item[0], item[1]);
@@ -17327,8 +17327,8 @@ var require_urllib = __commonJS({
         }
         var formHeaders = form.headers();
         var formHeaderNames = utility.getOwnEnumerables(formHeaders, true);
-        for (var i = 0; i < formHeaderNames.length; i++) {
-          var name = formHeaderNames[i];
+        for (var i2 = 0; i2 < formHeaderNames.length; i2++) {
+          var name = formHeaderNames[i2];
           options.headers[name.toLowerCase()] = formHeaders[name];
         }
         debug("set multipart headers: %j, method: %s", formHeaders, options.method);
@@ -17424,7 +17424,7 @@ var require_urllib = __commonJS({
           debug("Request#%d response timer canceled", reqId);
         }
       }
-      function done(err2, data, res) {
+      function done(err3, data, res) {
         cancelConnectTimer();
         cancelResponseTimer();
         if (!callback) {
@@ -17436,15 +17436,15 @@ var require_urllib = __commonJS({
             options.method,
             url
           );
-          if (err2) {
+          if (err3) {
             console.warn(
               "[urllib:warn] [%s] [%s] [worker:%s] %s: %s\nstack: %s",
               Date(),
               reqId,
               process.pid,
-              err2.name,
-              err2.message,
-              err2.stack
+              err3.name,
+              err3.message,
+              err3.stack
             );
           }
           return;
@@ -17474,18 +17474,18 @@ var require_urllib = __commonJS({
           socketHandledRequests,
           socketHandledResponses
         );
-        if (err2) {
+        if (err3) {
           var agentStatus = "";
           if (agent && typeof agent.getCurrentStatus === "function") {
             agentStatus = ", agent status: " + JSON.stringify(agent.getCurrentStatus());
           }
-          err2.message += ", " + options.method + " " + url + " " + statusCode + " (connected: " + connected + ", keepalive socket: " + keepAliveSocket + agentStatus + ", socketHandledRequests: " + socketHandledRequests + ", socketHandledResponses: " + socketHandledResponses + ")\nheaders: " + JSON.stringify(headers);
-          err2.data = data;
-          err2.path = options.path;
-          err2.status = statusCode;
-          err2.headers = headers;
-          err2.res = response;
-          addLongStackTrace(err2, req);
+          err3.message += ", " + options.method + " " + url + " " + statusCode + " (connected: " + connected + ", keepalive socket: " + keepAliveSocket + agentStatus + ", socketHandledRequests: " + socketHandledRequests + ", socketHandledResponses: " + socketHandledResponses + ")\nheaders: " + JSON.stringify(headers);
+          err3.data = data;
+          err3.path = options.path;
+          err3.status = statusCode;
+          err3.headers = headers;
+          err3.res = response;
+          addLongStackTrace(err3, req);
         }
         var freeSocketTimeout = agent && (agent.options && agent.options.freeSocketTimeout || agent.freeSocketKeepAliveTimeout);
         if (agent && agent.keepAlive && freeSocketTimeout > 0 && statusCode >= 200 && headers.connection === "keep-alive" && headers["keep-alive"]) {
@@ -17505,8 +17505,8 @@ var require_urllib = __commonJS({
             }
           }
         }
-        cb(err2, data, args.streaming ? res : response);
-        emitResponseEvent(err2, response);
+        cb(err3, data, args.streaming ? res : response);
+        emitResponseEvent(err3, response);
       }
       function createAndEmitResponseEvent(data, res) {
         var response = createCallbackResponse(data, res);
@@ -17538,7 +17538,7 @@ var require_urllib = __commonJS({
           socketHandledResponses
         };
       }
-      function emitResponseEvent(err2, response) {
+      function emitResponseEvent(err3, response) {
         if (args.emitter) {
           reqMeta.url = parsedUrl.href;
           reqMeta.socket = req && req.connection;
@@ -17546,7 +17546,7 @@ var require_urllib = __commonJS({
           reqMeta.size = requestSize;
           args.emitter.emit("response", {
             requestId: reqId,
-            error: err2,
+            error: err3,
             ctx: args.ctx,
             req: reqMeta,
             res: response
@@ -17575,16 +17575,16 @@ var require_urllib = __commonJS({
         return false;
       }
       function handleRedirect(res) {
-        var err2 = null;
+        var err3 = null;
         if (args.followRedirect && statuses.redirect[res.statusCode]) {
           args._followRedirectCount = (args._followRedirectCount || 0) + 1;
           var location = res.headers.location;
           if (!location) {
-            err2 = new Error("Got statusCode " + res.statusCode + " but cannot resolve next location from headers");
-            err2.name = "FollowRedirectError";
+            err3 = new Error("Got statusCode " + res.statusCode + " but cannot resolve next location from headers");
+            err3.name = "FollowRedirectError";
           } else if (args._followRedirectCount > args.maxRedirects) {
-            err2 = new Error("Exceeded maxRedirects. Probably stuck in a redirect loop " + url);
-            err2.name = "MaxRedirectError";
+            err3 = new Error("Exceeded maxRedirects. Probably stuck in a redirect loop " + url);
+            err3.name = "MaxRedirectError";
           } else {
             var newUrl = args.formatRedirectUrl ? args.formatRedirectUrl(url, location) : urlutil.resolve(url, location);
             debug("Request#%d %s: `redirected` from %s to %s", reqId, options.path, url, newUrl);
@@ -17604,7 +17604,7 @@ var require_urllib = __commonJS({
         }
         return {
           redirect: false,
-          error: err2
+          error: err3
         };
       }
       if (args.headers && (args.headers["User-Agent"] === null || args.headers["user-agent"] === null)) {
@@ -17629,8 +17629,8 @@ var require_urllib = __commonJS({
       function decodeContent(res, body2, cb) {
         if (responseAborted) {
           debug("Request#%d %s: Remote socket was terminated before `response.end()` was called", reqId, url);
-          var err2 = responseError || new Error("Remote socket was terminated before `response.end()` was called");
-          return cb(err2);
+          var err3 = responseError || new Error("Remote socket was terminated before `response.end()` was called");
+          return cb(err3);
         }
         var encoding = res.headers["content-encoding"];
         if (body2.length === 0 || !encoding) {
@@ -17641,11 +17641,11 @@ var require_urllib = __commonJS({
           case "gzip":
           case "deflate":
             debug("unzip %d length body", body2.length);
-            zlib2.unzip(body2, function(err3, data) {
-              if (err3 && err3.name === "Error") {
-                err3.name = "UnzipError";
+            zlib2.unzip(body2, function(err4, data) {
+              if (err4 && err4.name === "Error") {
+                err4.name = "UnzipError";
               }
-              cb(err3, data);
+              cb(err4, data);
             });
             break;
           default:
@@ -17691,8 +17691,8 @@ var require_urllib = __commonJS({
           }
           return done(null, null, res);
         }
-        res.on("error", function(err2) {
-          responseError = err2;
+        res.on("error", function(err3) {
+          responseError = err3;
           debug(
             "Request#%d %s: `res error` event emit, total size %d, socket handled %s requests and %s responses",
             reqId,
@@ -17726,12 +17726,12 @@ var require_urllib = __commonJS({
           }
           if (args.consumeWriteStream === false) {
             res.on("end", done.bind(null, null, null, res));
-            pump(res, writeStream, function(err2) {
+            pump(res, writeStream, function(err3) {
               if (isWriteStreamClose) {
                 return;
               }
               isWriteStreamClose = true;
-              debug("Request#%d %s: writeStream close, error: %s", reqId, url, err2);
+              debug("Request#%d %s: writeStream close, error: %s", reqId, url, err3);
             });
             return;
           }
@@ -17747,19 +17747,19 @@ var require_urllib = __commonJS({
             return;
           }
           debug("Request#%d %s: pump res to writeStream", reqId, url);
-          pump(res, writeStream, function(err2) {
+          pump(res, writeStream, function(err3) {
             debug(
               "Request#%d %s: writeStream close event emitted, error: %s, isWriteStreamClose: %s",
               reqId,
               url,
-              err2,
+              err3,
               isWriteStreamClose
             );
             if (isWriteStreamClose) {
               return;
             }
             isWriteStreamClose = true;
-            done(__err || err2, null, res);
+            done(__err || err3, null, res);
           });
           return;
         }
@@ -17802,9 +17802,9 @@ var require_urllib = __commonJS({
             createAndEmitResponseEvent(null, res);
             return;
           }
-          decodeContent(res, body2, function(err2, data, encoding) {
-            if (err2) {
-              return done(err2, body2, res);
+          decodeContent(res, body2, function(err3, data, encoding) {
+            if (err3) {
+              return done(err3, body2, res);
             }
             if (!encoding && TEXT_DATA_TYPES.indexOf(args.dataType) >= 0) {
               try {
@@ -17819,14 +17819,14 @@ var require_urllib = __commonJS({
                 } else {
                   var r = parseJSON(data, fixJSONCtlChars);
                   if (r.error) {
-                    err2 = r.error;
+                    err3 = r.error;
                   } else {
                     data = r.data;
                   }
                 }
               }
             }
-            done(err2, data, res);
+            done(err3, data, res);
           });
         }
         res.on("close", function() {
@@ -17887,12 +17887,12 @@ var require_urllib = __commonJS({
         }
         if (family) {
           if (!args.checkAddress(hostname, family, hostname)) {
-            var err = new Error("illegal address");
-            err.name = "IllegalAddressError";
-            err.hostname = hostname;
-            err.ip = hostname;
-            err.family = family;
-            return done(err);
+            var err2 = new Error("illegal address");
+            err2.name = "IllegalAddressError";
+            err2.hostname = hostname;
+            err2.ip = hostname;
+            err2.family = family;
+            return done(err2);
           }
         }
       }
@@ -17903,8 +17903,8 @@ var require_urllib = __commonJS({
           if (originKeys.length) {
             var finalHeaders = {};
             var names = utility.getOwnEnumerables(options.headers, true);
-            for (var i = 0; i < names.length; i++) {
-              var name = names[i];
+            for (var i2 = 0; i2 < names.length; i2++) {
+              var name = names[i2];
               finalHeaders[originHeaderKeys[name] || name] = options.headers[name];
             }
             finalOptions = Object.assign({}, options);
@@ -17916,8 +17916,8 @@ var require_urllib = __commonJS({
           req._callSite = {};
           Error.captureStackTrace(req._callSite, requestWithCallback);
         }
-      } catch (err2) {
-        return done(err2);
+      } catch (err3) {
+        return done(err3);
       }
       if (typeof window === "undefined") {
         startConnectTimer();
@@ -17965,8 +17965,8 @@ var require_urllib = __commonJS({
         }
         var readyState = socket.readyState;
         if (readyState === "opening") {
-          socket.once("lookup", function(err2, ip, addressType) {
-            debug("Request#%d %s lookup: %s, %s, %s", reqId, url, err2, ip, addressType);
+          socket.once("lookup", function(err3, ip, addressType) {
+            debug("Request#%d %s lookup: %s, %s, %s", reqId, url, err3, ip, addressType);
             if (timing) {
               timing.dnslookup = Date.now() - requestStartTime;
             }
@@ -18000,27 +18000,27 @@ var require_urllib = __commonJS({
         startResposneTimer();
       });
       if (writeStream) {
-        writeStream.once("error", function(err2) {
-          err2.message += ' (writeStream "error")';
-          __err = err2;
-          debug("Request#%d %s `writeStream error` event emit, %s: %s", reqId, url, err2.name, err2.message);
+        writeStream.once("error", function(err3) {
+          err3.message += ' (writeStream "error")';
+          __err = err3;
+          debug("Request#%d %s `writeStream error` event emit, %s: %s", reqId, url, err3.name, err3.message);
           abortRequest();
         });
       }
       var isRequestDone = false;
-      function handleRequestError(err2) {
-        if (!err2) {
+      function handleRequestError(err3) {
+        if (!err3) {
           return;
         }
         if (isRequestDone && hasResponse) {
           return;
         }
         isRequestDone = true;
-        if (err2.name === "Error") {
-          err2.name = connected ? "ResponseError" : "RequestError";
+        if (err3.name === "Error") {
+          err3.name = connected ? "ResponseError" : "RequestError";
         }
-        debug("Request#%d %s `req error` event emit, %s: %s", reqId, url, err2.name, err2.message);
-        done(__err || err2);
+        debug("Request#%d %s `req error` event emit, %s: %s", reqId, url, err3.name, err3.message);
+        done(__err || err3);
       }
       if (args.stream) {
         debug("Request#%d pump args.stream to req", reqId);
@@ -18072,16 +18072,16 @@ var require_urllib = __commonJS({
       }
       try {
         result.data = JSON.parse(data);
-      } catch (err) {
-        if (err.name === "SyntaxError") {
-          err.name = "JSONResponseFormatError";
+      } catch (err2) {
+        if (err2.name === "SyntaxError") {
+          err2.name = "JSONResponseFormatError";
         }
         if (data.length > 1024) {
-          err.message += " (data json format: " + JSON.stringify(data.slice(0, 512)) + " ...skip... " + JSON.stringify(data.slice(data.length - 512)) + ")";
+          err2.message += " (data json format: " + JSON.stringify(data.slice(0, 512)) + " ...skip... " + JSON.stringify(data.slice(data.length - 512)) + ")";
         } else {
-          err.message += " (data json format: " + JSON.stringify(data) + ")";
+          err2.message += " (data json format: " + JSON.stringify(data) + ")";
         }
-        result.error = err;
+        result.error = err2;
       }
       return result;
     }
@@ -18106,11 +18106,11 @@ var require_urllib = __commonJS({
     function parseContentType(str) {
       try {
         return contentTypeParser.parse(str);
-      } catch (err) {
+      } catch (err2) {
         return { parameters: {} };
       }
     }
-    function addLongStackTrace(err, req) {
+    function addLongStackTrace(err2, req) {
       if (!req) {
         return;
       }
@@ -18118,13 +18118,13 @@ var require_urllib = __commonJS({
       if (!callSiteStack || typeof callSiteStack !== "string") {
         return;
       }
-      if (err._longStack) {
+      if (err2._longStack) {
         return;
       }
       var index = callSiteStack.indexOf("\n");
       if (index !== -1) {
-        err._longStack = true;
-        err.stack += LONG_STACK_DELIMITER + callSiteStack.substr(index + 1);
+        err2._longStack = true;
+        err2.stack += LONG_STACK_DELIMITER + callSiteStack.substr(index + 1);
       }
     }
     function getSocketTimeout(socket) {
@@ -18229,10 +18229,10 @@ var require_httpclient2 = __commonJS({
           return self2.request(url, args);
         }
         return res;
-      }).catch(function(err) {
+      }).catch(function(err2) {
         if (args.retry > 0) {
           args.retry--;
-          debug("retry request %s, remain %s, err %s", url, args.retry, err);
+          debug("retry request %s, remain %s, err %s", url, args.retry, err2);
           if (args.retryDelay) {
             debug("retry after %sms", args.retryDelay);
             return sleep2(args.retryDelay).then(function() {
@@ -18241,7 +18241,7 @@ var require_httpclient2 = __commonJS({
           }
           return self2.request(url, args);
         }
-        throw err;
+        throw err2;
       });
     };
     HttpClient2.prototype.requestThunk = function requestThunk(url, args) {
@@ -18251,11 +18251,11 @@ var require_httpclient2 = __commonJS({
           var cb = callback;
           callback = null;
           cb(null, res);
-        }).catch(function(err) {
+        }).catch(function(err2) {
           if (!callback) {
             return;
           }
-          callback(err);
+          callback(err2);
         });
       };
     };
@@ -18838,8 +18838,8 @@ var require_bowser = __commonJS({
       }
       var bowser = detect(typeof navigator !== "undefined" ? navigator.userAgent || "" : "");
       bowser.test = function(browserList) {
-        for (var i = 0; i < browserList.length; ++i) {
-          var browserItem = browserList[i];
+        for (var i2 = 0; i2 < browserList.length; ++i2) {
+          var browserItem = browserList[i2];
           if (typeof browserItem === "string") {
             if (browserItem in bowser) {
               return true;
@@ -18852,12 +18852,12 @@ var require_bowser = __commonJS({
         return version.split(".").length;
       }
       function map(arr, iterator) {
-        var result = [], i;
+        var result = [], i2;
         if (Array.prototype.map) {
           return Array.prototype.map.call(arr, iterator);
         }
-        for (i = 0; i < arr.length; i++) {
-          result.push(iterator(arr[i]));
+        for (i2 = 0; i2 < arr.length; i2++) {
+          result.push(iterator(arr[i2]));
         }
         return result;
       }
@@ -20047,7 +20047,7 @@ var require_createRequest = __commonJS({
     var mime = require_mime();
     var dateFormat = require_dateformat();
     var copy = require_copy_to();
-    var path3 = require("path");
+    var path = require("path");
     var { encoder } = require_encoder();
     var { isIP } = require_isIP();
     var { setRegion } = require_setRegion();
@@ -20090,7 +20090,7 @@ var require_createRequest = __commonJS({
         } else if (isDingTalk()) {
           headers["Content-Type"] = "application/octet-stream";
         } else {
-          headers["Content-Type"] = mime.getType(params.mime || path3.extname(params.object || ""));
+          headers["Content-Type"] = mime.getType(params.mime || path.extname(params.object || ""));
         }
       }
       if (!getHeader(headers, "Content-Type")) {
@@ -20183,8 +20183,8 @@ var require_formatObjKey = __commonJS({
       let o;
       if (Array.isArray(obj)) {
         o = [];
-        for (let i = 0; i < obj.length; i++) {
-          o.push(formatObjKey(obj[i], type, options));
+        for (let i2 = 0; i2 < obj.length; i2++) {
+          o.push(formatObjKey(obj[i2], type, options));
         }
       } else {
         o = {};
@@ -20263,15 +20263,15 @@ var require_retry = __commonJS({
           func(...arg).then((result) => {
             retryNum = 0;
             resolve(result);
-          }).catch((err) => {
-            if (retryNum < retryMax && errorHandler(err)) {
+          }).catch((err2) => {
+            if (retryNum < retryMax && errorHandler(err2)) {
               retryNum++;
               setTimeout(() => {
                 resolve(funcR(...arg));
               }, retryDelay);
             } else {
               retryNum = 0;
-              reject(err);
+              reject(err2);
             }
           });
         });
@@ -20455,8 +20455,8 @@ var require_policy2Str = __commonJS({
         if (typeof policy === "string") {
           try {
             policyStr = JSON.stringify(JSON.parse(policy));
-          } catch (err) {
-            throw new Error(`Policy string is not a valid JSON: ${err.message}`);
+          } catch (err2) {
+            throw new Error(`Policy string is not a valid JSON: ${err2.message}`);
           }
         } else {
           policyStr = JSON.stringify(policy);
@@ -20845,12 +20845,12 @@ var require_deleteMulti = __commonJS({
       if (!names || !names.length) {
         throw new Error("names is required");
       }
-      for (let i = 0; i < names.length; i++) {
+      for (let i2 = 0; i2 < names.length; i2++) {
         const object = {};
-        if (typeof names[i] === "string") {
-          object.Key = utility.escape(this._objectName(names[i]));
+        if (typeof names[i2] === "string") {
+          object.Key = utility.escape(this._objectName(names[i2]));
         } else {
-          const { key, versionId } = names[i];
+          const { key, versionId } = names[i2];
           object.Key = utility.escape(this._objectName(key));
           object.VersionId = versionId;
         }
@@ -21012,7 +21012,7 @@ var require_delete = __commonJS({
 // node_modules/.pnpm/ali-oss@6.23.0/node_modules/ali-oss/lib/common/object/get.js
 var require_get2 = __commonJS({
   "node_modules/.pnpm/ali-oss@6.23.0/node_modules/ali-oss/lib/common/object/get.js"(exports2) {
-    var fs2 = require("fs");
+    var fs = require("fs");
     var is = require_is_type_of();
     var { isObject } = require_isObject();
     var proto = exports2;
@@ -21022,7 +21022,7 @@ var require_get2 = __commonJS({
       if (is.writableStream(file)) {
         writeStream = file;
       } else if (is.string(file)) {
-        writeStream = fs2.createWriteStream(file);
+        writeStream = fs.createWriteStream(file);
         needDestroy = true;
       } else if (isObject(file)) {
         options = file;
@@ -21047,12 +21047,12 @@ var require_get2 = __commonJS({
         if (needDestroy) {
           writeStream.destroy();
         }
-      } catch (err) {
+      } catch (err2) {
         if (needDestroy) {
           writeStream.destroy();
           await this._deleteFileSafe(file);
         }
-        throw err;
+        throw err2;
       }
       return {
         res: result.res,
@@ -21429,10 +21429,10 @@ var require_isBuffer = __commonJS({
 var require_object3 = __commonJS({
   "node_modules/.pnpm/ali-oss@6.23.0/node_modules/ali-oss/lib/object.js"(exports2) {
     var debug = require_src()("ali-oss:object");
-    var fs2 = require("fs");
+    var fs = require("fs");
     var is = require_is_type_of();
     var copy = require_copy_to();
-    var path3 = require("path");
+    var path = require("path");
     var mime = require_mime();
     var callback = require_callback();
     var { Transform } = require("stream");
@@ -21461,24 +21461,24 @@ var require_object3 = __commonJS({
       if (isBuffer(file)) {
         content = file;
       } else if (is.string(file)) {
-        const stats = fs2.statSync(file);
+        const stats = fs.statSync(file);
         if (!stats.isFile()) {
           throw new Error(`${file} is not file`);
         }
-        options.mime = options.mime || mime.getType(path3.extname(file));
+        options.mime = options.mime || mime.getType(path.extname(file));
         options.contentLength = await this._getFileSize(file);
-        const getStream = () => fs2.createReadStream(file);
+        const getStream = () => fs.createReadStream(file);
         const putStreamStb = (objectName, makeStream, configOption) => {
           return this.putStream(objectName, makeStream(), configOption);
         };
         return await retry(putStreamStb, this.options.retryMax, {
-          errorHandler: (err) => {
+          errorHandler: (err2) => {
             const _errHandle = (_err) => {
               const statusErr = [-1, -2].includes(_err.status);
               const requestErrorRetryHandle = this.options.requestErrorRetryHandle || (() => true);
               return statusErr && requestErrorRetryHandle(_err);
             };
-            if (_errHandle(err)) return true;
+            if (_errHandle(err2)) return true;
             return false;
           }
         })(name, getStream, options);
@@ -21724,9 +21724,9 @@ var require_object3 = __commonJS({
     };
     proto._statFile = function(filepath) {
       return new Promise((resolve, reject) => {
-        fs2.stat(filepath, (err, stats) => {
-          if (err) {
-            reject(err);
+        fs.stat(filepath, (err2, stats) => {
+          if (err2) {
+            reject(err2);
           } else {
             resolve(stats);
           }
@@ -21743,13 +21743,13 @@ var require_object3 = __commonJS({
     };
     proto._deleteFileSafe = function(filepath) {
       return new Promise((resolve) => {
-        fs2.exists(filepath, (exists) => {
+        fs.exists(filepath, (exists) => {
           if (!exists) {
             resolve();
           } else {
-            fs2.unlink(filepath, (err) => {
-              if (err) {
-                debug("unlink %j error: %s", filepath, err);
+            fs.unlink(filepath, (err2) => {
+              if (err2) {
+                debug("unlink %j error: %s", filepath, err2);
               }
               resolve();
             });
@@ -21773,7 +21773,7 @@ var require_base64 = __commonJS({
       var b64chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
       var b64tab = (function(bin) {
         var t2 = {};
-        for (var i = 0, l = bin.length; i < l; i++) t2[bin.charAt(i)] = i;
+        for (var i2 = 0, l = bin.length; i2 < l; i2++) t2[bin.charAt(i2)] = i2;
         return t2;
       })(b64chars);
       var fromCharCode = String.fromCharCode;
@@ -21824,8 +21824,8 @@ var require_base64 = __commonJS({
       var fromUint8Array;
       if (global2.Uint8Array) fromUint8Array = function(a, urisafe) {
         var b64 = "";
-        for (var i = 0, l = a.length; i < l; i += 3) {
-          var a0 = a[i], a1 = a[i + 1], a2 = a[i + 2];
+        for (var i2 = 0, l = a.length; i2 < l; i2 += 3) {
+          var a0 = a[i2], a1 = a[i2 + 1], a2 = a[i2 + 2];
           var ord = a0 << 16 | a1 << 8 | a2;
           b64 += b64chars.charAt(ord >>> 18) + b64chars.charAt(ord >>> 12 & 63) + (typeof a1 != "undefined" ? b64chars.charAt(ord >>> 6 & 63) : "=") + (typeof a2 != "undefined" ? b64chars.charAt(ord & 63) : "=");
         }
@@ -22507,8 +22507,8 @@ var require_getStrBytesCount = __commonJS({
     exports2.getStrBytesCount = void 0;
     function getStrBytesCount(str) {
       let bytesCount = 0;
-      for (let i = 0; i < str.length; i++) {
-        const c = str.charAt(i);
+      for (let i2 = 0; i2 < str.length; i2++) {
+        const c = str.charAt(i2);
         if (/^[\u00-\uff]$/.test(c)) {
           bytesCount += 1;
         } else {
@@ -22868,7 +22868,7 @@ var require_formatInventoryConfig = __commonJS({
     exports2.formatInventoryConfig = formatInventoryConfig;
     function formatFn(_) {
       dataFix_1.dataFix(_, { bool: ["IsEnabled"] }, (conf) => {
-        var _a, _b;
+        var _a2, _b2;
         conf.prefix = conf.Filter.Prefix;
         delete conf.Filter;
         conf.OSSBucketDestination = conf.Destination.OSSBucketDestination;
@@ -22879,7 +22879,7 @@ var require_formatInventoryConfig = __commonJS({
         delete conf.Destination;
         conf.frequency = conf.Schedule.Frequency;
         delete conf.Schedule.Frequency;
-        if (((_a = conf === null || conf === void 0 ? void 0 : conf.OptionalFields) === null || _a === void 0 ? void 0 : _a.Field) && !isArray_1.isArray((_b = conf.OptionalFields) === null || _b === void 0 ? void 0 : _b.Field))
+        if (((_a2 = conf === null || conf === void 0 ? void 0 : conf.OptionalFields) === null || _a2 === void 0 ? void 0 : _a2.Field) && !isArray_1.isArray((_b2 = conf.OptionalFields) === null || _b2 === void 0 ? void 0 : _b2.Field))
           conf.OptionalFields.Field = [conf.OptionalFields.Field];
       });
       _ = formatObjKey_1.formatObjKey(_, "firstLowerCase", { exclude: ["OSSBucketDestination", "SSE-OSS", "SSE-KMS"] });
@@ -23401,8 +23401,8 @@ var require_bucket2 = __commonJS({
       const parseExposeHeader = (val) => {
         xml += `<ExposeHeader>${val}</ExposeHeader>`;
       };
-      for (let i = 0, l = rules.length; i < l; i++) {
-        const rule = rules[i];
+      for (let i2 = 0, l = rules.length; i2 < l; i2++) {
+        const rule = rules[i2];
         xml += "<CORSRule>";
         toArray(rule.allowedOrigin).forEach(parseOrigin);
         toArray(rule.allowedMethod).forEach(parseMethod);
@@ -23462,8 +23462,8 @@ var require_bucket2 = __commonJS({
 `;
       if (referers && referers.length > 0) {
         xml += "  <RefererList>\n";
-        for (let i = 0; i < referers.length; i++) {
-          xml += `    <Referer>${referers[i]}</Referer>
+        for (let i2 = 0; i2 < referers.length; i2++) {
+          xml += `    <Referer>${referers[i2]}</Referer>
 `;
         }
         xml += "  </RefererList>\n";
@@ -23530,10 +23530,10 @@ var require_isFile = __commonJS({
 // node_modules/.pnpm/ali-oss@6.23.0/node_modules/ali-oss/lib/managed-upload.js
 var require_managed_upload = __commonJS({
   "node_modules/.pnpm/ali-oss@6.23.0/node_modules/ali-oss/lib/managed-upload.js"(exports2) {
-    var fs2 = require("fs");
+    var fs = require("fs");
     var is = require_is_type_of();
     var util = require("util");
-    var path3 = require("path");
+    var path = require("path");
     var mime = require_mime();
     var { isFile } = require_isFile();
     var { isArray } = require_isArray2();
@@ -23549,11 +23549,11 @@ var require_managed_upload = __commonJS({
       const minPartSize = 100 * 1024;
       if (!options.mime) {
         if (isFile(file)) {
-          options.mime = mime.getType(path3.extname(file.name));
+          options.mime = mime.getType(path.extname(file.name));
         } else if (isBuffer(file)) {
           options.mime = "";
         } else {
-          options.mime = mime.getType(path3.extname(file));
+          options.mime = mime.getType(path.extname(file));
         }
       }
       options.headers = options.headers || {};
@@ -23655,35 +23655,35 @@ var require_managed_upload = __commonJS({
                 }
               }
               resolve();
-            } catch (err) {
-              err.partNum = partNo;
-              reject(err);
+            } catch (err2) {
+              err2.partNum = partNo;
+              reject(err2);
             }
           });
         },
         this.options.retryMax,
         {
-          errorHandler: (err) => {
+          errorHandler: (err2) => {
             const _errHandle = (_err) => {
               const statusErr = [-1, -2].includes(_err.status);
               const requestErrorRetryHandle = this.options.requestErrorRetryHandle || (() => true);
               return statusErr && requestErrorRetryHandle(_err);
             };
-            return !!_errHandle(err);
+            return !!_errHandle(err2);
           }
         }
       );
-      const all = Array.from(new Array(numParts), (x, i) => i + 1);
+      const all = Array.from(new Array(numParts), (x2, i2) => i2 + 1);
       const done = doneParts.map((p) => p.number);
       const todo = all.filter((p) => done.indexOf(p) < 0);
       const defaultParallel = 5;
       const parallel = options.parallel || defaultParallel;
       if (this.checkBrowserAndVersion("Internet Explorer", "10") || parallel === 1) {
-        for (let i = 0; i < todo.length; i++) {
+        for (let i2 = 0; i2 < todo.length; i2++) {
           if (this.isCancel()) {
             throw this._makeCancelEvent();
           }
-          await uploadPartJob(this, todo[i]);
+          await uploadPartJob(this, todo[i2]);
         }
       } else {
         const jobErr = await this._parallel(todo, parallel, (value) => {
@@ -23693,7 +23693,7 @@ var require_managed_upload = __commonJS({
             }).catch(reject);
           });
         });
-        const abortEvent = jobErr.find((err) => err.name === "abort");
+        const abortEvent = jobErr.find((err2) => err2.name === "abort");
         if (abortEvent) throw abortEvent;
         if (this.isCancel()) {
           uploadPartJob = null;
@@ -23786,7 +23786,7 @@ var require_managed_upload = __commonJS({
           }
         });
       } else if (is.string(file)) {
-        return fs2.createReadStream(file, {
+        return fs.createReadStream(file, {
           start,
           end: end - 1
         });
@@ -23809,8 +23809,8 @@ var require_managed_upload = __commonJS({
     proto._divideParts = function _divideParts(fileSize, partSize) {
       const numParts = Math.ceil(fileSize / partSize);
       const partOffs = [];
-      for (let i = 0; i < numParts; i++) {
-        const start = partSize * i;
+      for (let i2 = 0; i2 < numParts; i2++) {
+        const start = partSize * i2;
         const end = Math.min(start + partSize, fileSize);
         partOffs.push({
           start,
@@ -23865,8 +23865,8 @@ var require_jstoxml = __commonJS({
       }
       function _arrayLikeToArray(arr, len) {
         if (len == null || len > arr.length) len = arr.length;
-        for (var i = 0, arr2 = new Array(len); i < len; i++) {
-          arr2[i] = arr[i];
+        for (var i2 = 0, arr2 = new Array(len); i2 < len; i2++) {
+          arr2[i2] = arr[i2];
         }
         return arr2;
       }
@@ -23881,9 +23881,9 @@ var require_jstoxml = __commonJS({
         return keys;
       }
       function _objectSpread(target) {
-        for (var i = 1; i < arguments.length; i++) {
-          var source = null != arguments[i] ? arguments[i] : {};
-          i % 2 ? ownKeys(Object(source), true).forEach(function(key) {
+        for (var i2 = 1; i2 < arguments.length; i2++) {
+          var source = null != arguments[i2] ? arguments[i2] : {};
+          i2 % 2 ? ownKeys(Object(source), true).forEach(function(key) {
             _defineProperty(target, key, source[key]);
           }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function(key) {
             Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
@@ -24225,16 +24225,16 @@ var require_rtmp = __commonJS({
       if (!Array.isArray(channels)) {
         channels = [channels];
       }
-      channels = channels.map((x) => {
-        x.PublishUrls = x.PublishUrls.Url;
-        if (!Array.isArray(x.PublishUrls)) {
-          x.PublishUrls = [x.PublishUrls];
+      channels = channels.map((x2) => {
+        x2.PublishUrls = x2.PublishUrls.Url;
+        if (!Array.isArray(x2.PublishUrls)) {
+          x2.PublishUrls = [x2.PublishUrls];
         }
-        x.PlayUrls = x.PlayUrls.Url;
-        if (!Array.isArray(x.PlayUrls)) {
-          x.PlayUrls = [x.PlayUrls];
+        x2.PlayUrls = x2.PlayUrls.Url;
+        if (!Array.isArray(x2.PlayUrls)) {
+          x2.PlayUrls = [x2.PlayUrls];
         }
-        return x;
+        return x2;
       });
       return {
         channels,
@@ -24285,7 +24285,7 @@ var require_rtmp = __commonJS({
       };
       const resource = `/${res.bucket}/${channelId}`;
       options.params = options.params || {};
-      const query = Object.keys(options.params).sort().map((x) => `${x}:${options.params[x]}
+      const query = Object.keys(options.params).sort().map((x2) => `${x2}:${options.params[x2]}
 `).join("");
       const stringToSign = `${expires}
 ${query}${resource}`;
@@ -24420,35 +24420,35 @@ var require_multipart_copy = __commonJS({
               }
             }
             resolve();
-          } catch (err) {
-            err.partNum = partNo;
-            reject(err);
+          } catch (err2) {
+            err2.partNum = partNo;
+            reject(err2);
           }
         });
       };
-      const all = Array.from(new Array(numParts), (x, i) => i + 1);
+      const all = Array.from(new Array(numParts), (x2, i2) => i2 + 1);
       const done = doneParts.map((p) => p.number);
       const todo = all.filter((p) => done.indexOf(p) < 0);
       const defaultParallel = 5;
       const parallel = options.parallel || defaultParallel;
       if (this.checkBrowserAndVersion("Internet Explorer", "10") || parallel === 1) {
-        for (let i = 0; i < todo.length; i++) {
+        for (let i2 = 0; i2 < todo.length; i2++) {
           if (this.isCancel()) {
             throw this._makeCancelEvent();
           }
-          await uploadPartJob(this, todo[i], sourceData);
+          await uploadPartJob(this, todo[i2], sourceData);
         }
       } else {
         const errors = await this._parallelNode(todo, parallel, uploadPartJob, sourceData);
-        const abortEvent = errors.find((err) => err.name === "abort");
+        const abortEvent = errors.find((err2) => err2.name === "abort");
         if (abortEvent) throw abortEvent;
         if (this.isCancel()) {
           throw this._makeCancelEvent();
         }
         if (errors && errors.length > 0) {
-          const err = errors[0];
-          err.message = `Failed to copy some parts with error: ${err.toString()} part_num: ${err.partNum}`;
-          throw err;
+          const err2 = errors[0];
+          err2.message = `Failed to copy some parts with error: ${err2.toString()} part_num: ${err2.partNum}`;
+          throw err2;
         }
       }
       return await this.completeMultipartUpload(name, uploadId, doneParts, options);
@@ -24456,8 +24456,8 @@ var require_multipart_copy = __commonJS({
     proto._divideMultipartCopyParts = function _divideMultipartCopyParts(fileSize, partSize, startOffset) {
       const numParts = Math.ceil(fileSize / partSize);
       const partOffs = [];
-      for (let i = 0; i < numParts; i++) {
-        const start = partSize * i + startOffset;
+      for (let i2 = 0; i2 < numParts; i2++) {
+        const start = partSize * i2 + startOffset;
         const end = Math.min(start + partSize, fileSize + startOffset);
         partOffs.push({
           start,
@@ -24489,21 +24489,21 @@ var require_parallel = __commonJS({
       const remainder = todo.length % parallel;
       const batch = remainder === 0 ? tempBatch : (todo.length - remainder) / parallel + 1;
       let taskIndex = 1;
-      for (let i = 0; i < todo.length; i++) {
+      for (let i2 = 0; i2 < todo.length; i2++) {
         if (that.isCancel()) {
           break;
         }
         if (sourceData) {
-          jobs.push(fn(that, todo[i], sourceData));
+          jobs.push(fn(that, todo[i2], sourceData));
         } else {
-          jobs.push(fn(that, todo[i]));
+          jobs.push(fn(that, todo[i2]));
         }
-        if (jobs.length === parallel || taskIndex === batch && i === todo.length - 1) {
+        if (jobs.length === parallel || taskIndex === batch && i2 === todo.length - 1) {
           try {
             taskIndex += 1;
             await Promise.all(jobs);
-          } catch (err) {
-            jobErr.push(err);
+          } catch (err2) {
+            jobErr.push(err2);
           }
           jobs = [];
         }
@@ -24527,21 +24527,21 @@ var require_parallel = __commonJS({
           };
         }
         function createArrayIterator(coll) {
-          let i = -1;
+          let i2 = -1;
           const len = coll.length;
           return function next() {
-            return ++i < len && !that.isCancel() ? { value: coll[i], key: i } : null;
+            return ++i2 < len && !that.isCancel() ? { value: coll[i2], key: i2 } : null;
           };
         }
         const nextElem = createArrayIterator(todo);
         let done = false;
         let running = 0;
         let looping = false;
-        function iterateeCallback(err) {
+        function iterateeCallback(err2) {
           running -= 1;
-          if (err) {
+          if (err2) {
             done = true;
-            _jobErr.push(err);
+            _jobErr.push(err2);
             resolve(_jobErr);
           } else if (done && running <= 0) {
             done = true;
@@ -24557,8 +24557,8 @@ var require_parallel = __commonJS({
         function iteratee(value, callback) {
           jobPromise(value).then((result) => {
             callback(null, result);
-          }).catch((err) => {
-            callback(err);
+          }).catch((err2) => {
+            callback(err2);
           });
         }
         function replenish() {
@@ -24585,11 +24585,11 @@ var require_parallel = __commonJS({
       if (isArray(this.multipartUploadStreams)) {
         this.multipartUploadStreams.forEach((_) => {
           if (_.destroyed === false) {
-            const err = {
+            const err2 = {
               name: "cancel",
               message: "cancel"
             };
-            _.destroy(err);
+            _.destroy(err2);
           }
         });
       }
@@ -24633,8 +24633,8 @@ var require_omit = __commonJS({
     exports2.omit = void 0;
     function omit(originalObject, keysToOmit) {
       const cloneObject = Object.assign({}, originalObject);
-      for (const path3 of keysToOmit) {
-        delete cloneObject[path3];
+      for (const path of keysToOmit) {
+        delete cloneObject[path];
       }
       return cloneObject;
     }
@@ -24746,8 +24746,8 @@ var require_multipart = __commonJS({
     proto.completeMultipartUpload = async function completeMultipartUpload(name, uploadId, parts, options) {
       const completeParts = parts.concat().sort((a, b) => a.number - b.number).filter((item, index, arr) => !index || item.number !== arr[index - 1].number);
       let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<CompleteMultipartUpload>\n';
-      for (let i = 0; i < completeParts.length; i++) {
-        const p = completeParts[i];
+      for (let i2 = 0; i2 < completeParts.length; i2++) {
+        const p = completeParts[i2];
         xml += "<Part>\n";
         xml += `<PartNumber>${p.number}</PartNumber>
 `;
@@ -24976,7 +24976,7 @@ var require_sdk_base = __commonJS({
     }
     util.inherits(Base, EventEmitter);
     ready.mixin(Base.prototype);
-    Base.prototype.defaultErrorHandler = function(err) {
+    Base.prototype.defaultErrorHandler = function(err2) {
       if (this.listeners("error").length > 1) {
         return;
       }
@@ -24986,16 +24986,16 @@ var require_sdk_base = __commonJS({
         process.pid,
         this.constructor.name,
         __filename,
-        err.name,
-        err.message,
-        err.stack
+        err2.name,
+        err2.message,
+        err2.stack
       );
       var additions = [];
-      for (var key in err) {
+      for (var key in err2) {
         if (key === "name" || key === "message") {
           continue;
         }
-        additions.push(util.format("  %s: %j", key, err[key]));
+        additions.push(util.format("  %s: %j", key, err2[key]));
       }
       if (additions.length) {
         console.error("Error Additions:\n%s", additions.join("\n"));
@@ -25009,12 +25009,12 @@ var require_sdk_base = __commonJS({
 var require_address = __commonJS({
   "src/stubs/address.js"(exports2, module2) {
     "use strict";
-    var os2 = require("os");
+    var os = require("os");
     function localIP() {
-      var ifaces = os2.networkInterfaces();
+      var ifaces = os.networkInterfaces();
       var names = Object.keys(ifaces);
-      for (var i = 0; i < names.length; i++) {
-        var addrs = ifaces[names[i]];
+      for (var i2 = 0; i2 < names.length; i2++) {
+        var addrs = ifaces[names[i2]];
         for (var j = 0; j < addrs.length; j++) {
           if (addrs[j].family === "IPv4" && !addrs[j].internal) {
             return addrs[j].address;
@@ -25067,11 +25067,11 @@ var require_cluster = __commonJS({
         Base.call(this);
         this.clients = [];
         this.availables = {};
-        for (let i = 0; i < options.cluster.length; i++) {
-          const opt = options.cluster[i];
+        for (let i2 = 0; i2 < options.cluster.length; i2++) {
+          const opt = options.cluster[i2];
           copy(options).pick("timeout", "agent", "urllib").to(opt);
           this.clients.push(new OssClient(opt));
-          this.availables[i] = true;
+          this.availables[i2] = true;
         }
         this.schedule = options.schedule || RR;
         this.masterOnly = !!options.masterOnly;
@@ -25093,22 +25093,22 @@ var require_cluster = __commonJS({
           let lastError;
           try {
             return await client[method](...args);
-          } catch (err) {
-            if (err.status && err.status >= 200 && err.status < 500) {
-              throw err;
+          } catch (err2) {
+            if (err2.status && err2.status >= 200 && err2.status < 500) {
+              throw err2;
             }
-            lastError = err;
+            lastError = err2;
           }
-          for (let i = 0; i < this.clients.length; i++) {
-            const c = this.clients[i];
+          for (let i2 = 0; i2 < this.clients.length; i2++) {
+            const c = this.clients[i2];
             if (c !== client) {
               try {
                 return await c[method].apply(client, args);
-              } catch (err) {
-                if (err.status && err.status >= 200 && err.status < 500) {
-                  throw err;
+              } catch (err2) {
+                if (err2.status && err2.status >= 200 && err2.status < 500) {
+                  throw err2;
                 }
-                lastError = err;
+                lastError = err2;
               }
             }
           }
@@ -25135,8 +25135,8 @@ var require_cluster = __commonJS({
         (async () => {
           await that._checkAvailable(that._ignoreStatusFile);
           that.ready(true);
-        })().catch((err) => {
-          that.emit("error", err);
+        })().catch((err2) => {
+          that.emit("error", err2);
         });
       };
       proto._checkAvailable = async function _checkAvailable(ignoreStatusFile) {
@@ -25149,8 +25149,8 @@ var require_cluster = __commonJS({
         }
         this._checkAvailableLock = true;
         const downStatusFiles = [];
-        for (let i = 0; i < this.clients.length; i++) {
-          const client = this.clients[i];
+        for (let i2 = 0; i2 < this.clients.length; i2++) {
+          const client = this.clients[i2];
           let available = await this._checkStatus(client, name);
           if (!available) {
             available = await this._checkStatus(client, name);
@@ -25161,23 +25161,23 @@ var require_cluster = __commonJS({
               downStatusFiles.push(client._objectUrl(name));
             }
           }
-          this.availables[i] = available;
+          this.availables[i2] = available;
         }
         this._checkAvailableLock = false;
         if (downStatusFiles.length > 0) {
-          const err = new Error(
+          const err2 = new Error(
             `${downStatusFiles.length} data node down, please check status file: ${downStatusFiles.join(", ")}`
           );
-          err.name = "CheckAvailableError";
-          this.emit("error", err);
+          err2.name = "CheckAvailableError";
+          this.emit("error", err2);
         }
       };
       proto._checkStatus = async function _checkStatus(client, name) {
         let available = true;
         try {
           await client.head(name);
-        } catch (err) {
-          if (!err.status || err.status >= 500 || err.status < 200) {
+        } catch (err2) {
+          if (!err2.status || err2.status >= 500 || err2.status < 200) {
             available = false;
           }
         }
@@ -25188,18 +25188,18 @@ var require_cluster = __commonJS({
           if (this.masterOnly) {
             return this.clients[0];
           }
-          for (let i = 0; i < this.clients.length; i++) {
-            if (this.availables[i]) {
-              return this.clients[i];
+          for (let i2 = 0; i2 < this.clients.length; i2++) {
+            if (this.availables[i2]) {
+              return this.clients[i2];
             }
           }
           return this.clients[0];
         }
         let n = this.clients.length;
         while (n > 0) {
-          const i = this._nextRRIndex();
-          if (this.availables[i]) {
-            return this.clients[i];
+          const i2 = this._nextRRIndex();
+          if (this.availables[i2]) {
+            return this.clients[i2];
           }
           n--;
         }
@@ -25212,8 +25212,8 @@ var require_cluster = __commonJS({
         }
         return index;
       };
-      proto._error = function error(err) {
-        if (err) throw err;
+      proto._error = function error(err2) {
+        if (err2) throw err2;
       };
       proto._createCallback = function _createCallback(ctx, gen, cb) {
         return () => {
@@ -25292,8 +25292,8 @@ var require_sts = __commonJS({
         if (is.string(policy)) {
           try {
             policyStr = JSON.stringify(JSON.parse(policy));
-          } catch (err) {
-            throw new Error(`Policy string is not a valid JSON: ${err.message}`);
+          } catch (err2) {
+            throw new Error(`Policy string is not a valid JSON: ${err2.message}`);
           }
         } else {
           policyStr = JSON.stringify(policy);
@@ -25316,9 +25316,9 @@ var require_sts = __commonJS({
       const result = await this.urllib.request(reqUrl, reqParams);
       debug("response %s %s, got %s, headers: %j", reqParams.method, reqUrl, result.status, result.headers);
       if (Math.floor(result.status / 100) !== 2) {
-        const err = await this._requestError(result);
-        err.params = reqParams;
-        throw err;
+        const err2 = await this._requestError(result);
+        err2.params = reqParams;
+        throw err2;
       }
       result.data = JSON.parse(result.data);
       return {
@@ -25327,17 +25327,17 @@ var require_sts = __commonJS({
       };
     };
     proto._requestError = async function _requestError(result) {
-      const err = new Error();
-      err.status = result.status;
+      const err2 = new Error();
+      err2.status = result.status;
       try {
         const resp = await JSON.parse(result.data) || {};
-        err.code = resp.Code;
-        err.message = `${resp.Code}: ${resp.Message}`;
-        err.requestId = resp.RequestId;
+        err2.code = resp.Code;
+        err2.message = `${resp.Code}: ${resp.Message}`;
+        err2.requestId = resp.RequestId;
       } catch (e) {
-        err.message = `UnknownError: ${String(result.data)}`;
+        err2.message = `UnknownError: ${String(result.data)}`;
       }
-      return err;
+      return err2;
     };
     proto._getSignature = function _getSignature(method, params, key) {
       const that = this;
@@ -25458,14 +25458,14 @@ var require_client = __commonJS({
     proto.request = async function(params) {
       if (this.options.retryMax) {
         return await retry(request.bind(this), this.options.retryMax, {
-          errorHandler: (err) => {
+          errorHandler: (err2) => {
             const _errHandle = (_err) => {
               if (params.stream) return false;
               const statusErr = [-1, -2].includes(_err.status);
               const requestErrorRetryHandle = this.options.requestErrorRetryHandle || (() => true);
               return statusErr && requestErrorRetryHandle(_err);
             };
-            if (_errHandle(err)) return true;
+            if (_errHandle(err2)) return true;
             return false;
           }
         })(params);
@@ -25483,27 +25483,27 @@ var require_client = __commonJS({
       try {
         result = await this.urllib.request(reqParams.url, reqParams.params);
         debug("response %s %s, got %s, headers: %j", params.method, reqParams.url, result.status, result.headers);
-      } catch (err2) {
-        reqErr = err2;
+      } catch (err3) {
+        reqErr = err3;
       }
-      let err;
+      let err2;
       if (result && params.successStatuses && params.successStatuses.indexOf(result.status) === -1) {
-        err = await this.requestError(result);
-        err.params = params;
+        err2 = await this.requestError(result);
+        err2.params = params;
       } else if (reqErr) {
-        err = await this.requestError(reqErr);
+        err2 = await this.requestError(reqErr);
       }
-      if (err) {
+      if (err2) {
         if (params.customResponse && result && result.res) {
           await sendToWormhole(result.res);
         }
-        if (err.name === "ResponseTimeoutError") {
-          err.message = `${err.message.split(",")[0]}, please increase the timeout, see more details at https://github.com/ali-sdk/ali-oss#responsetimeouterror`;
+        if (err2.name === "ResponseTimeoutError") {
+          err2.message = `${err2.message.split(",")[0]}, please increase the timeout, see more details at https://github.com/ali-sdk/ali-oss#responsetimeouterror`;
         }
-        if (err.name === "ConnectionTimeoutError") {
-          err.message = `${err.message.split(",")[0]}, please increase the timeout or reduce the partSize, see more details at https://github.com/ali-sdk/ali-oss#connectiontimeouterror`;
+        if (err2.name === "ConnectionTimeoutError") {
+          err2.message = `${err2.message.split(",")[0]}, please increase the timeout or reduce the partSize, see more details at https://github.com/ali-sdk/ali-oss#connectiontimeouterror`;
         }
-        throw err;
+        throw err2;
       }
       if (params.xmlResponse) {
         result.data = await this.parseXML(result.data);
@@ -25546,9 +25546,9 @@ var require_client = __commonJS({
             explicitRoot: false,
             explicitArray: false
           },
-          (err, result) => {
-            if (err) {
-              reject(err);
+          (err2, result) => {
+            if (err2) {
+              reject(err2);
             } else {
               resolve(result);
             }
@@ -25557,7 +25557,7 @@ var require_client = __commonJS({
       });
     };
     proto.requestError = async function requestError(result) {
-      let err = null;
+      let err2 = null;
       const setError = async (message) => {
         let info;
         try {
@@ -25574,56 +25574,56 @@ raw xml: ${message}`;
         if (info.Condition) {
           msg += ` (condition: ${info.Condition})`;
         }
-        err = new Error(msg);
-        err.name = info.Code ? `${info.Code}Error` : "UnknownError";
-        err.status = result.status;
-        err.code = info.Code;
-        err.requestId = info.RequestId;
-        err.ecCode = info.EC;
-        err.hostId = info.HostId;
-        return err;
+        err2 = new Error(msg);
+        err2.name = info.Code ? `${info.Code}Error` : "UnknownError";
+        err2.status = result.status;
+        err2.code = info.Code;
+        err2.requestId = info.RequestId;
+        err2.ecCode = info.EC;
+        err2.hostId = info.HostId;
+        return err2;
       };
       if (result.name === "ResponseTimeoutError") {
-        err = new Error(result.message);
-        err.name = result.name;
+        err2 = new Error(result.message);
+        err2.name = result.name;
       } else if (!result.data || !result.data.length) {
         if (result.status === -1 || result.status === -2) {
-          err = new Error(result.message);
-          err.name = result.name;
-          err.status = result.status;
-          err.code = result.name;
+          err2 = new Error(result.message);
+          err2.name = result.name;
+          err2.status = result.status;
+          err2.code = result.name;
         } else {
           if (result.status === 404) {
-            err = new Error("Object not exists");
-            err.name = "NoSuchKeyError";
-            err.status = 404;
-            err.code = "NoSuchKey";
+            err2 = new Error("Object not exists");
+            err2.name = "NoSuchKeyError";
+            err2.status = 404;
+            err2.code = "NoSuchKey";
           } else if (result.status === 412) {
-            err = new Error("Pre condition failed");
-            err.name = "PreconditionFailedError";
-            err.status = 412;
-            err.code = "PreconditionFailed";
+            err2 = new Error("Pre condition failed");
+            err2.name = "PreconditionFailedError";
+            err2.status = 412;
+            err2.code = "PreconditionFailed";
           } else {
-            err = new Error(`Unknow error, status: ${result.status}`);
-            err.name = "UnknownError";
-            err.status = result.status;
-            err.res = result;
+            err2 = new Error(`Unknow error, status: ${result.status}`);
+            err2.name = "UnknownError";
+            err2.status = result.status;
+            err2.res = result;
             const ossErr = result.headers && result.headers["x-oss-err"];
             if (ossErr) {
               const message = Buffer.from(ossErr, "base64").toString("utf8");
-              err = await setError(message);
+              err2 = await setError(message);
             }
           }
-          err.requestId = result.headers && result.headers["x-oss-request-id"];
-          err.host = "";
+          err2.requestId = result.headers && result.headers["x-oss-request-id"];
+          err2.host = "";
         }
       } else {
         const message = String(result.data);
         debug("request response error data: %s", message);
-        err = await setError(message);
+        err2 = await setError(message);
       }
-      debug("generate error %j", err);
-      return err;
+      debug("generate error %j", err2);
+      return err2;
     };
     proto.setSLDEnabled = function setSLDEnabled(enable) {
       this.options.sldEnable = !!enable;
@@ -25642,8 +25642,6 @@ var import_obsidian11 = require("obsidian");
 
 // src/settings.ts
 var import_obsidian = require("obsidian");
-var path = __toESM(require("path"));
-var os = __toESM(require("os"));
 
 // src/i18n.ts
 var zh = {
@@ -25706,7 +25704,7 @@ var zh = {
   "stats.detail.noData": "\u6682\u65E0\u6570\u636E",
   "stats.detail.unknownName": "\uFF08\u672A\u77E5\uFF09",
   "stats.detail.directReferrer": "\u76F4\u63A5\u8BBF\u95EE",
-  "cmd.exportLocal": "\u5BFC\u51FA\u5230\u672C\u5730",
+  "cmd.exportLocal": "\u5BFC\u51FA\u4E3A ZIP",
   "cmd.exportOss": "\u5BFC\u51FA\u5230 OSS",
   "statusbar.shareNote": "\u5206\u4EAB\u7B14\u8BB0",
   "statusbar.published": "\u5DF2\u53D1\u5E03 \u2014 \u70B9\u51FB\u7BA1\u7406",
@@ -25714,7 +25712,7 @@ var zh = {
   "toast.uploading": "\u4E0A\u4F20\u4E2D...",
   "toast.uploadSuccess": "\u4E0A\u4F20\u6210\u529F",
   "toast.exporting": "\u5BFC\u51FA\u4E2D...",
-  "toast.exportSuccess": "\u5BFC\u51FA\u6210\u529F",
+  "toast.exportSuccess": "\u5DF2\u4E0B\u8F7D ZIP",
   "toast.stopping": "\u505C\u6B62\u5206\u4EAB\u4E2D...",
   "toast.stopped": "\u5DF2\u505C\u6B62\u5206\u4EAB",
   "toast.stoppedWithWarn": "\u5DF2\u505C\u6B62\u5206\u4EAB\uFF0C\u4F46\u90E8\u5206\u4E8C\u7EA7\u7B14\u8BB0\u672A\u5220\u9664\uFF1A{names}",
@@ -25724,7 +25722,7 @@ var zh = {
   "toast.exportFailed": "\u5BFC\u51FA\u5931\u8D25\uFF1A{error}",
   "toast.stopFailed": "\u505C\u6B62\u5206\u4EAB\u5931\u8D25\uFF1A{error}",
   "menu.publish": "\u53D1\u5E03\u7B14\u8BB0",
-  "menu.exportLocal": "\u5BFC\u51FA\u5230\u672C\u5730",
+  "menu.exportLocal": "\u5BFC\u51FA\u4E3A ZIP",
   "menu.openLink": "\u6253\u5F00\u94FE\u63A5",
   "menu.update": "\u5185\u5BB9\u66F4\u65B0",
   "menu.unpublish": "\u505C\u6B62\u5206\u4EAB",
@@ -25815,7 +25813,7 @@ var en = {
   "stats.detail.noData": "No data",
   "stats.detail.unknownName": "(unknown)",
   "stats.detail.directReferrer": "Direct",
-  "cmd.exportLocal": "Export to local",
+  "cmd.exportLocal": "Export as ZIP",
   "cmd.exportOss": "Export to OSS",
   "statusbar.shareNote": "Share note",
   "statusbar.published": "Published \u2014 click to manage",
@@ -25823,7 +25821,7 @@ var en = {
   "toast.uploading": "Uploading...",
   "toast.uploadSuccess": "Upload successful",
   "toast.exporting": "Exporting...",
-  "toast.exportSuccess": "Export successful",
+  "toast.exportSuccess": "ZIP downloaded",
   "toast.stopping": "Stopping share...",
   "toast.stopped": "Sharing stopped",
   "toast.stoppedWithWarn": "Sharing stopped, but some sub-notes were not removed: {names}",
@@ -25833,7 +25831,7 @@ var en = {
   "toast.exportFailed": "Export failed: {error}",
   "toast.stopFailed": "Stop sharing failed: {error}",
   "menu.publish": "Publish Note",
-  "menu.exportLocal": "Export to local",
+  "menu.exportLocal": "Export as ZIP",
   "menu.openLink": "Open link",
   "menu.update": "Update content",
   "menu.unpublish": "Stop sharing",
@@ -25870,8 +25868,8 @@ function setLanguage(lang) {
   currentLanguage = lang;
 }
 function t(key, replacements) {
-  var _a, _b;
-  let str = (_b = (_a = translations[currentLanguage][key]) != null ? _a : translations.en[key]) != null ? _b : key;
+  var _a2, _b2;
+  let str = (_b2 = (_a2 = translations[currentLanguage][key]) != null ? _a2 : translations.en[key]) != null ? _b2 : key;
   if (replacements) {
     for (const [k, v] of Object.entries(replacements)) {
       str = str.replace(`{${k}}`, v);
@@ -25906,7 +25904,6 @@ function formatPageCount(count) {
 
 // src/settings.ts
 var DEFAULT_SETTINGS = {
-  exportPath: path.join(os.homedir(), "Desktop"),
   includeLinkedNotes: false,
   ossRegion: "",
   ossBucket: "",
@@ -26037,9 +26034,721 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
   }
 };
 
-// src/exporter.ts
-var fs = __toESM(require("fs"));
-var path2 = __toESM(require("path"));
+// node_modules/.pnpm/fflate@0.8.3/node_modules/fflate/esm/index.mjs
+var import_module = require("module");
+var require2 = (0, import_module.createRequire)("/");
+var _a;
+var Worker;
+var isMarkedAsUntransferable;
+try {
+  _a = require2("worker_threads"), Worker = _a.Worker, isMarkedAsUntransferable = _a.isMarkedAsUntransferable;
+} catch (e) {
+}
+var u8 = Uint8Array;
+var u16 = Uint16Array;
+var i32 = Int32Array;
+var fleb = new u8([
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  1,
+  1,
+  1,
+  1,
+  2,
+  2,
+  2,
+  2,
+  3,
+  3,
+  3,
+  3,
+  4,
+  4,
+  4,
+  4,
+  5,
+  5,
+  5,
+  5,
+  0,
+  /* unused */
+  0,
+  0,
+  /* impossible */
+  0
+]);
+var fdeb = new u8([
+  0,
+  0,
+  0,
+  0,
+  1,
+  1,
+  2,
+  2,
+  3,
+  3,
+  4,
+  4,
+  5,
+  5,
+  6,
+  6,
+  7,
+  7,
+  8,
+  8,
+  9,
+  9,
+  10,
+  10,
+  11,
+  11,
+  12,
+  12,
+  13,
+  13,
+  /* unused */
+  0,
+  0
+]);
+var clim = new u8([16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15]);
+var freb = function(eb, start) {
+  var b = new u16(31);
+  for (var i2 = 0; i2 < 31; ++i2) {
+    b[i2] = start += 1 << eb[i2 - 1];
+  }
+  var r = new i32(b[30]);
+  for (var i2 = 1; i2 < 30; ++i2) {
+    for (var j = b[i2]; j < b[i2 + 1]; ++j) {
+      r[j] = j - b[i2] << 5 | i2;
+    }
+  }
+  return { b, r };
+};
+var _a = freb(fleb, 2);
+var fl = _a.b;
+var revfl = _a.r;
+fl[28] = 258, revfl[258] = 28;
+var _b = freb(fdeb, 0);
+var fd = _b.b;
+var revfd = _b.r;
+var rev = new u16(32768);
+for (i = 0; i < 32768; ++i) {
+  x = (i & 43690) >> 1 | (i & 21845) << 1;
+  x = (x & 52428) >> 2 | (x & 13107) << 2;
+  x = (x & 61680) >> 4 | (x & 3855) << 4;
+  rev[i] = ((x & 65280) >> 8 | (x & 255) << 8) >> 1;
+}
+var x;
+var i;
+var hMap = (function(cd, mb, r) {
+  var s = cd.length;
+  var i2 = 0;
+  var l = new u16(mb);
+  for (; i2 < s; ++i2) {
+    if (cd[i2])
+      ++l[cd[i2] - 1];
+  }
+  var le = new u16(mb);
+  for (i2 = 1; i2 < mb; ++i2) {
+    le[i2] = le[i2 - 1] + l[i2 - 1] << 1;
+  }
+  var co;
+  if (r) {
+    co = new u16(1 << mb);
+    var rvb = 15 - mb;
+    for (i2 = 0; i2 < s; ++i2) {
+      if (cd[i2]) {
+        var sv = i2 << 4 | cd[i2];
+        var r_1 = mb - cd[i2];
+        var v = le[cd[i2] - 1]++ << r_1;
+        for (var m = v | (1 << r_1) - 1; v <= m; ++v) {
+          co[rev[v] >> rvb] = sv;
+        }
+      }
+    }
+  } else {
+    co = new u16(s);
+    for (i2 = 0; i2 < s; ++i2) {
+      if (cd[i2]) {
+        co[i2] = rev[le[cd[i2] - 1]++] >> 15 - cd[i2];
+      }
+    }
+  }
+  return co;
+});
+var flt = new u8(288);
+for (i = 0; i < 144; ++i)
+  flt[i] = 8;
+var i;
+for (i = 144; i < 256; ++i)
+  flt[i] = 9;
+var i;
+for (i = 256; i < 280; ++i)
+  flt[i] = 7;
+var i;
+for (i = 280; i < 288; ++i)
+  flt[i] = 8;
+var i;
+var fdt = new u8(32);
+for (i = 0; i < 32; ++i)
+  fdt[i] = 5;
+var i;
+var flm = /* @__PURE__ */ hMap(flt, 9, 0);
+var fdm = /* @__PURE__ */ hMap(fdt, 5, 0);
+var shft = function(p) {
+  return (p + 7) / 8 | 0;
+};
+var slc = function(v, s, e) {
+  if (s == null || s < 0)
+    s = 0;
+  if (e == null || e > v.length)
+    e = v.length;
+  return new u8(v.subarray(s, e));
+};
+var ec = [
+  "unexpected EOF",
+  "invalid block type",
+  "invalid length/literal",
+  "invalid distance",
+  "stream finished",
+  "no stream handler",
+  ,
+  // determined by compression function
+  "no callback",
+  "invalid UTF-8 data",
+  "extra field too long",
+  "date not in range 1980-2099",
+  "filename too long",
+  "stream finishing",
+  "invalid zip data"
+  // determined by unknown compression method
+];
+var err = function(ind, msg, nt) {
+  var e = new Error(msg || ec[ind]);
+  e.code = ind;
+  if (Error.captureStackTrace)
+    Error.captureStackTrace(e, err);
+  if (!nt)
+    throw e;
+  return e;
+};
+var wbits = function(d, p, v) {
+  v <<= p & 7;
+  var o = p / 8 | 0;
+  d[o] |= v;
+  d[o + 1] |= v >> 8;
+};
+var wbits16 = function(d, p, v) {
+  v <<= p & 7;
+  var o = p / 8 | 0;
+  d[o] |= v;
+  d[o + 1] |= v >> 8;
+  d[o + 2] |= v >> 16;
+};
+var hTree = function(d, mb) {
+  var t2 = [];
+  for (var i2 = 0; i2 < d.length; ++i2) {
+    if (d[i2])
+      t2.push({ s: i2, f: d[i2] });
+  }
+  var s = t2.length;
+  var t22 = t2.slice();
+  if (!s)
+    return { t: et, l: 0 };
+  if (s == 1) {
+    var v = new u8(t2[0].s + 1);
+    v[t2[0].s] = 1;
+    return { t: v, l: 1 };
+  }
+  t2.sort(function(a, b) {
+    return a.f - b.f;
+  });
+  t2.push({ s: -1, f: 25001 });
+  var l = t2[0], r = t2[1], i0 = 0, i1 = 1, i22 = 2;
+  t2[0] = { s: -1, f: l.f + r.f, l, r };
+  while (i1 != s - 1) {
+    l = t2[t2[i0].f < t2[i22].f ? i0++ : i22++];
+    r = t2[i0 != i1 && t2[i0].f < t2[i22].f ? i0++ : i22++];
+    t2[i1++] = { s: -1, f: l.f + r.f, l, r };
+  }
+  var maxSym = t22[0].s;
+  for (var i2 = 1; i2 < s; ++i2) {
+    if (t22[i2].s > maxSym)
+      maxSym = t22[i2].s;
+  }
+  var tr = new u16(maxSym + 1);
+  var mbt = ln(t2[i1 - 1], tr, 0);
+  if (mbt > mb) {
+    var i2 = 0, dt = 0;
+    var lft = mbt - mb, cst = 1 << lft;
+    t22.sort(function(a, b) {
+      return tr[b.s] - tr[a.s] || a.f - b.f;
+    });
+    for (; i2 < s; ++i2) {
+      var i2_1 = t22[i2].s;
+      if (tr[i2_1] > mb) {
+        dt += cst - (1 << mbt - tr[i2_1]);
+        tr[i2_1] = mb;
+      } else
+        break;
+    }
+    dt >>= lft;
+    while (dt > 0) {
+      var i2_2 = t22[i2].s;
+      if (tr[i2_2] < mb)
+        dt -= 1 << mb - tr[i2_2]++ - 1;
+      else
+        ++i2;
+    }
+    for (; i2 >= 0 && dt; --i2) {
+      var i2_3 = t22[i2].s;
+      if (tr[i2_3] == mb) {
+        --tr[i2_3];
+        ++dt;
+      }
+    }
+    mbt = mb;
+  }
+  return { t: new u8(tr), l: mbt };
+};
+var ln = function(n, l, d) {
+  return n.s == -1 ? Math.max(ln(n.l, l, d + 1), ln(n.r, l, d + 1)) : l[n.s] = d;
+};
+var lc = function(c) {
+  var s = c.length;
+  while (s && !c[--s])
+    ;
+  var cl = new u16(++s);
+  var cli = 0, cln = c[0], cls = 1;
+  var w = function(v) {
+    cl[cli++] = v;
+  };
+  for (var i2 = 1; i2 <= s; ++i2) {
+    if (c[i2] == cln && i2 != s)
+      ++cls;
+    else {
+      if (!cln && cls > 2) {
+        for (; cls > 138; cls -= 138)
+          w(32754);
+        if (cls > 2) {
+          w(cls > 10 ? cls - 11 << 5 | 28690 : cls - 3 << 5 | 12305);
+          cls = 0;
+        }
+      } else if (cls > 3) {
+        w(cln), --cls;
+        for (; cls > 6; cls -= 6)
+          w(8304);
+        if (cls > 2)
+          w(cls - 3 << 5 | 8208), cls = 0;
+      }
+      while (cls--)
+        w(cln);
+      cls = 1;
+      cln = c[i2];
+    }
+  }
+  return { c: cl.subarray(0, cli), n: s };
+};
+var clen = function(cf, cl) {
+  var l = 0;
+  for (var i2 = 0; i2 < cl.length; ++i2)
+    l += cf[i2] * cl[i2];
+  return l;
+};
+var wfblk = function(out, pos, dat) {
+  var s = dat.length;
+  var o = shft(pos + 2);
+  out[o] = s & 255;
+  out[o + 1] = s >> 8;
+  out[o + 2] = out[o] ^ 255;
+  out[o + 3] = out[o + 1] ^ 255;
+  for (var i2 = 0; i2 < s; ++i2)
+    out[o + i2 + 4] = dat[i2];
+  return (o + 4 + s) * 8;
+};
+var wblk = function(dat, out, final, syms, lf, df, eb, li, bs, bl, p) {
+  wbits(out, p++, final);
+  ++lf[256];
+  var _a2 = hTree(lf, 15), dlt = _a2.t, mlb = _a2.l;
+  var _b2 = hTree(df, 15), ddt = _b2.t, mdb = _b2.l;
+  var _c = lc(dlt), lclt = _c.c, nlc = _c.n;
+  var _d = lc(ddt), lcdt = _d.c, ndc = _d.n;
+  var lcfreq = new u16(19);
+  for (var i2 = 0; i2 < lclt.length; ++i2)
+    ++lcfreq[lclt[i2] & 31];
+  for (var i2 = 0; i2 < lcdt.length; ++i2)
+    ++lcfreq[lcdt[i2] & 31];
+  var _e = hTree(lcfreq, 7), lct = _e.t, mlcb = _e.l;
+  var nlcc = 19;
+  for (; nlcc > 4 && !lct[clim[nlcc - 1]]; --nlcc)
+    ;
+  var flen = bl + 5 << 3;
+  var ftlen = clen(lf, flt) + clen(df, fdt) + eb;
+  var dtlen = clen(lf, dlt) + clen(df, ddt) + eb + 14 + 3 * nlcc + clen(lcfreq, lct) + 2 * lcfreq[16] + 3 * lcfreq[17] + 7 * lcfreq[18];
+  if (bs >= 0 && flen <= ftlen && flen <= dtlen)
+    return wfblk(out, p, dat.subarray(bs, bs + bl));
+  var lm, ll, dm, dl;
+  wbits(out, p, 1 + (dtlen < ftlen)), p += 2;
+  if (dtlen < ftlen) {
+    lm = hMap(dlt, mlb, 0), ll = dlt, dm = hMap(ddt, mdb, 0), dl = ddt;
+    var llm = hMap(lct, mlcb, 0);
+    wbits(out, p, nlc - 257);
+    wbits(out, p + 5, ndc - 1);
+    wbits(out, p + 10, nlcc - 4);
+    p += 14;
+    for (var i2 = 0; i2 < nlcc; ++i2)
+      wbits(out, p + 3 * i2, lct[clim[i2]]);
+    p += 3 * nlcc;
+    var lcts = [lclt, lcdt];
+    for (var it = 0; it < 2; ++it) {
+      var clct = lcts[it];
+      for (var i2 = 0; i2 < clct.length; ++i2) {
+        var len = clct[i2] & 31;
+        wbits(out, p, llm[len]), p += lct[len];
+        if (len > 15)
+          wbits(out, p, clct[i2] >> 5 & 127), p += clct[i2] >> 12;
+      }
+    }
+  } else {
+    lm = flm, ll = flt, dm = fdm, dl = fdt;
+  }
+  for (var i2 = 0; i2 < li; ++i2) {
+    var sym = syms[i2];
+    if (sym > 255) {
+      var len = sym >> 18 & 31;
+      wbits16(out, p, lm[len + 257]), p += ll[len + 257];
+      if (len > 7)
+        wbits(out, p, sym >> 23 & 31), p += fleb[len];
+      var dst = sym & 31;
+      wbits16(out, p, dm[dst]), p += dl[dst];
+      if (dst > 3)
+        wbits16(out, p, sym >> 5 & 8191), p += fdeb[dst];
+    } else {
+      wbits16(out, p, lm[sym]), p += ll[sym];
+    }
+  }
+  wbits16(out, p, lm[256]);
+  return p + ll[256];
+};
+var deo = /* @__PURE__ */ new i32([65540, 131080, 131088, 131104, 262176, 1048704, 1048832, 2114560, 2117632]);
+var et = /* @__PURE__ */ new u8(0);
+var dflt = function(dat, lvl, plvl, pre, post, st) {
+  var s = st.z || dat.length;
+  var o = new u8(pre + s + 5 * (1 + Math.ceil(s / 7e3)) + post);
+  var w = o.subarray(pre, o.length - post);
+  var lst = st.l;
+  var pos = (st.r || 0) & 7;
+  if (lvl) {
+    if (pos)
+      w[0] = st.r >> 3;
+    var opt = deo[lvl - 1];
+    var n = opt >> 13, c = opt & 8191;
+    var msk_1 = (1 << plvl) - 1;
+    var prev = st.p || new u16(32768), head = st.h || new u16(msk_1 + 1);
+    var bs1_1 = Math.ceil(plvl / 3), bs2_1 = 2 * bs1_1;
+    var hsh = function(i3) {
+      return (dat[i3] ^ dat[i3 + 1] << bs1_1 ^ dat[i3 + 2] << bs2_1) & msk_1;
+    };
+    var syms = new i32(25e3);
+    var lf = new u16(288), df = new u16(32);
+    var lc_1 = 0, eb = 0, i2 = st.i || 0, li = 0, wi = st.w || 0, bs = 0;
+    for (; i2 + 2 < s; ++i2) {
+      var hv = hsh(i2);
+      var imod = i2 & 32767, pimod = head[hv];
+      prev[imod] = pimod;
+      head[hv] = imod;
+      if (wi <= i2) {
+        var rem = s - i2;
+        if ((lc_1 > 7e3 || li > 24576) && (rem > 423 || !lst)) {
+          pos = wblk(dat, w, 0, syms, lf, df, eb, li, bs, i2 - bs, pos);
+          li = lc_1 = eb = 0, bs = i2;
+          for (var j = 0; j < 286; ++j)
+            lf[j] = 0;
+          for (var j = 0; j < 30; ++j)
+            df[j] = 0;
+        }
+        var l = 2, d = 0, ch_1 = c, dif = imod - pimod & 32767;
+        if (rem > 2 && hv == hsh(i2 - dif)) {
+          var maxn = Math.min(n, rem) - 1;
+          var maxd = Math.min(32767, i2);
+          var ml = Math.min(258, rem);
+          while (dif <= maxd && --ch_1 && imod != pimod) {
+            if (dat[i2 + l] == dat[i2 + l - dif]) {
+              var nl = 0;
+              for (; nl < ml && dat[i2 + nl] == dat[i2 + nl - dif]; ++nl)
+                ;
+              if (nl > l) {
+                l = nl, d = dif;
+                if (nl > maxn)
+                  break;
+                var mmd = Math.min(dif, nl - 2);
+                var md = 0;
+                for (var j = 0; j < mmd; ++j) {
+                  var ti = i2 - dif + j & 32767;
+                  var pti = prev[ti];
+                  var cd = ti - pti & 32767;
+                  if (cd > md)
+                    md = cd, pimod = ti;
+                }
+              }
+            }
+            imod = pimod, pimod = prev[imod];
+            dif += imod - pimod & 32767;
+          }
+        }
+        if (d) {
+          syms[li++] = 268435456 | revfl[l] << 18 | revfd[d];
+          var lin = revfl[l] & 31, din = revfd[d] & 31;
+          eb += fleb[lin] + fdeb[din];
+          ++lf[257 + lin];
+          ++df[din];
+          wi = i2 + l;
+          ++lc_1;
+        } else {
+          syms[li++] = dat[i2];
+          ++lf[dat[i2]];
+        }
+      }
+    }
+    for (i2 = Math.max(i2, wi); i2 < s; ++i2) {
+      syms[li++] = dat[i2];
+      ++lf[dat[i2]];
+    }
+    pos = wblk(dat, w, lst, syms, lf, df, eb, li, bs, i2 - bs, pos);
+    if (!lst) {
+      st.r = pos & 7 | w[pos / 8 | 0] << 3;
+      pos -= 7;
+      st.h = head, st.p = prev, st.i = i2, st.w = wi;
+    }
+  } else {
+    for (var i2 = st.w || 0; i2 < s + lst; i2 += 65535) {
+      var e = i2 + 65535;
+      if (e >= s) {
+        w[pos / 8 | 0] = lst;
+        e = s;
+      }
+      pos = wfblk(w, pos + 1, dat.subarray(i2, e));
+    }
+    st.i = s;
+  }
+  return slc(o, 0, pre + shft(pos) + post);
+};
+var crct = /* @__PURE__ */ (function() {
+  var t2 = new Int32Array(256);
+  for (var i2 = 0; i2 < 256; ++i2) {
+    var c = i2, k = 9;
+    while (--k)
+      c = (c & 1 && -306674912) ^ c >>> 1;
+    t2[i2] = c;
+  }
+  return t2;
+})();
+var crc = function() {
+  var c = -1;
+  return {
+    p: function(d) {
+      var cr = c;
+      for (var i2 = 0; i2 < d.length; ++i2)
+        cr = crct[cr & 255 ^ d[i2]] ^ cr >>> 8;
+      c = cr;
+    },
+    d: function() {
+      return ~c;
+    }
+  };
+};
+var dopt = function(dat, opt, pre, post, st) {
+  if (!st) {
+    st = { l: 1 };
+    if (opt.dictionary) {
+      var dict = opt.dictionary.subarray(-32768);
+      var newDat = new u8(dict.length + dat.length);
+      newDat.set(dict);
+      newDat.set(dat, dict.length);
+      dat = newDat;
+      st.w = dict.length;
+    }
+  }
+  return dflt(dat, opt.level == null ? 6 : opt.level, opt.mem == null ? st.l ? Math.ceil(Math.max(8, Math.min(13, Math.log(dat.length))) * 1.5) : 20 : 12 + opt.mem, pre, post, st);
+};
+var mrg = function(a, b) {
+  var o = {};
+  for (var k in a)
+    o[k] = a[k];
+  for (var k in b)
+    o[k] = b[k];
+  return o;
+};
+var wbytes = function(d, b, v) {
+  for (; v; ++b)
+    d[b] = v, v >>>= 8;
+};
+function deflateSync(data, opts) {
+  return dopt(data, opts || {}, 0, 0);
+}
+var fltn = function(d, p, t2, o) {
+  for (var k in d) {
+    var val = d[k], n = p + k, op = o;
+    if (Array.isArray(val))
+      op = mrg(o, val[1]), val = val[0];
+    if (ArrayBuffer.isView(val))
+      t2[n] = [val, op];
+    else {
+      t2[n += "/"] = [new u8(0), op];
+      fltn(val, n, t2, o);
+    }
+  }
+};
+var te = typeof TextEncoder != "undefined" && /* @__PURE__ */ new TextEncoder();
+var td = typeof TextDecoder != "undefined" && /* @__PURE__ */ new TextDecoder();
+var tds = 0;
+try {
+  td.decode(et, { stream: true });
+  tds = 1;
+} catch (e) {
+}
+function strToU8(str, latin1) {
+  if (latin1) {
+    var ar_1 = new u8(str.length);
+    for (var i2 = 0; i2 < str.length; ++i2)
+      ar_1[i2] = str.charCodeAt(i2);
+    return ar_1;
+  }
+  if (te)
+    return te.encode(str);
+  var l = str.length;
+  var ar = new u8(str.length + (str.length >> 1));
+  var ai = 0;
+  var w = function(v) {
+    ar[ai++] = v;
+  };
+  for (var i2 = 0; i2 < l; ++i2) {
+    if (ai + 5 > ar.length) {
+      var n = new u8(ai + 8 + (l - i2 << 1));
+      n.set(ar);
+      ar = n;
+    }
+    var c = str.charCodeAt(i2);
+    if (c < 128 || latin1)
+      w(c);
+    else if (c < 2048)
+      w(192 | c >> 6), w(128 | c & 63);
+    else if (c > 55295 && c < 57344)
+      c = 65536 + (c & 1023 << 10) | str.charCodeAt(++i2) & 1023, w(240 | c >> 18), w(128 | c >> 12 & 63), w(128 | c >> 6 & 63), w(128 | c & 63);
+    else
+      w(224 | c >> 12), w(128 | c >> 6 & 63), w(128 | c & 63);
+  }
+  return slc(ar, 0, ai);
+}
+var exfl = function(ex) {
+  var le = 0;
+  if (ex) {
+    for (var k in ex) {
+      var l = ex[k].length;
+      if (l > 65535)
+        err(9);
+      le += l + 4;
+    }
+  }
+  return le;
+};
+var wzh = function(d, b, f, fn, u, c, ce, co) {
+  var fl2 = fn.length, ex = f.extra, col = co && co.length;
+  var exl = exfl(ex);
+  wbytes(d, b, ce != null ? 33639248 : 67324752), b += 4;
+  if (ce != null)
+    d[b++] = 20, d[b++] = f.os;
+  d[b] = 20, b += 2;
+  d[b++] = f.flag << 1 | (c < 0 && 8), d[b++] = u && 8;
+  d[b++] = f.compression & 255, d[b++] = f.compression >> 8;
+  var dt = new Date(f.mtime == null ? Date.now() : f.mtime), y = dt.getFullYear() - 1980;
+  if (y < 0 || y > 119)
+    err(10);
+  wbytes(d, b, y << 25 | dt.getMonth() + 1 << 21 | dt.getDate() << 16 | dt.getHours() << 11 | dt.getMinutes() << 5 | dt.getSeconds() >> 1), b += 4;
+  if (c != -1) {
+    wbytes(d, b, f.crc);
+    wbytes(d, b + 4, c < 0 ? -c - 2 : c);
+    wbytes(d, b + 8, f.size);
+  }
+  wbytes(d, b + 12, fl2);
+  wbytes(d, b + 14, exl), b += 16;
+  if (ce != null) {
+    wbytes(d, b, col);
+    wbytes(d, b + 6, f.attrs);
+    wbytes(d, b + 10, ce), b += 14;
+  }
+  d.set(fn, b);
+  b += fl2;
+  if (exl) {
+    for (var k in ex) {
+      var exf = ex[k], l = exf.length;
+      wbytes(d, b, +k);
+      wbytes(d, b + 2, l);
+      d.set(exf, b + 4), b += 4 + l;
+    }
+  }
+  if (col)
+    d.set(co, b), b += col;
+  return b;
+};
+var wzf = function(o, b, c, d, e) {
+  wbytes(o, b, 101010256);
+  wbytes(o, b + 8, c);
+  wbytes(o, b + 10, c);
+  wbytes(o, b + 12, d);
+  wbytes(o, b + 16, e);
+};
+function zipSync(data, opts) {
+  if (!opts)
+    opts = {};
+  var r = {};
+  var files = [];
+  fltn(data, "", r, opts);
+  var o = 0;
+  var tot = 0;
+  for (var fn in r) {
+    var _a2 = r[fn], file = _a2[0], p = _a2[1];
+    var compression = p.level == 0 ? 0 : 8;
+    var f = strToU8(fn), s = f.length;
+    var com = p.comment, m = com && strToU8(com), ms = m && m.length;
+    var exl = exfl(p.extra);
+    if (s > 65535)
+      err(11);
+    var d = compression ? deflateSync(file, p) : file, l = d.length;
+    var c = crc();
+    c.p(file);
+    files.push(mrg(p, {
+      size: file.length,
+      crc: c.d(),
+      c: d,
+      f,
+      m,
+      u: s != fn.length || m && com.length != ms,
+      o,
+      compression
+    }));
+    o += 30 + s + exl + l;
+    tot += 76 + 2 * (s + exl) + (ms || 0) + l;
+  }
+  var out = new u8(tot + 22), oe = o, cdl = tot - o;
+  for (var i2 = 0; i2 < files.length; ++i2) {
+    var f = files[i2];
+    wzh(out, f.o, f, f.f, f.u, f.c.length);
+    var badd = 30 + f.f.length + exfl(f.extra);
+    out.set(f.c, f.o + badd);
+    wzh(out, o, f, f.f, f.u, f.c.length, f.o, f.m), o += 16 + badd + (f.m ? f.m.length : 0);
+  }
+  wzf(out, o, files.length, cdl, oe);
+  return out;
+}
 
 // src/renderer.ts
 var import_obsidian4 = require("obsidian");
@@ -26057,9 +26766,9 @@ function registerImage(imgFile, images) {
   if (images.has(name)) {
     const ext = imgFile.extension ? `.${imgFile.extension}` : "";
     const base = imgFile.basename;
-    let i = 1;
-    while (images.has(`${base}_${i}${ext}`)) i++;
-    name = `${base}_${i}${ext}`;
+    let i2 = 1;
+    while (images.has(`${base}_${i2}${ext}`)) i2++;
+    name = `${base}_${i2}${ext}`;
   }
   images.set(name, imgFile);
   return name;
@@ -26092,10 +26801,10 @@ function parseImgsBlock(raw) {
 }
 function processImgsBlocks(app, sourceFile, el, images) {
   el.querySelectorAll("code.language-imgs").forEach((code) => {
-    var _a, _b, _c;
-    const pre = (_a = code.closest("pre")) != null ? _a : code.parentElement;
+    var _a2, _b2, _c;
+    const pre = (_a2 = code.closest("pre")) != null ? _a2 : code.parentElement;
     if (!pre) return;
-    const { config, paths } = parseImgsBlock((_b = code.textContent) != null ? _b : "");
+    const { config, paths } = parseImgsBlock((_b2 = code.textContent) != null ? _b2 : "");
     const gallery = createDiv({ cls: "imgs-gallery" });
     if (config.border) gallery.dataset.border = "true";
     if (config.shadow) gallery.dataset.shadow = "true";
@@ -26120,8 +26829,8 @@ function processImgsBlocks(app, sourceFile, el, images) {
 function splitTopLevelArgs(s) {
   const args = [];
   let depth = 0, cur = "", inStr = false, strChar = "";
-  for (let i = 0; i < s.length; i++) {
-    const c = s[i];
+  for (let i2 = 0; i2 < s.length; i2++) {
+    const c = s[i2];
     if (inStr) {
       cur += c;
       if (c === strChar) inStr = false;
@@ -26147,8 +26856,8 @@ function splitTopLevelArgs(s) {
 }
 function findTopLevelOp(expr, op) {
   let depth = 0, inStr = false, strChar = "";
-  for (let i = 0; i < expr.length; i++) {
-    const c = expr[i];
+  for (let i2 = 0; i2 < expr.length; i2++) {
+    const c = expr[i2];
     if (inStr) {
       if (c === strChar) inStr = false;
     } else if (c === '"' || c === "'") {
@@ -26156,7 +26865,7 @@ function findTopLevelOp(expr, op) {
       strChar = c;
     } else if (c === "(" || c === "[") depth++;
     else if (c === ")" || c === "]") depth--;
-    else if (depth === 0 && expr.startsWith(op, i)) return i;
+    else if (depth === 0 && expr.startsWith(op, i2)) return i2;
   }
   return -1;
 }
@@ -26176,21 +26885,21 @@ function evalBoolExpr(expr, ctx) {
     if (idx === -1) continue;
     const left = expr.slice(0, idx).trim();
     const right = expr.slice(idx + op.length).trim();
-    const ln = evalNumber(left, ctx), rn = evalNumber(right, ctx);
-    if (ln !== null && rn !== null) {
+    const ln2 = evalNumber(left, ctx), rn = evalNumber(right, ctx);
+    if (ln2 !== null && rn !== null) {
       switch (op) {
         case ">":
-          return ln > rn;
+          return ln2 > rn;
         case "<":
-          return ln < rn;
+          return ln2 < rn;
         case ">=":
-          return ln >= rn;
+          return ln2 >= rn;
         case "<=":
-          return ln >= rn || ln === rn;
+          return ln2 >= rn || ln2 === rn;
         case "==":
-          return ln === rn;
+          return ln2 === rn;
         case "!=":
-          return ln !== rn;
+          return ln2 !== rn;
       }
     }
     const ls = evalExpr(left, ctx), rs = evalExpr(right, ctx);
@@ -26239,8 +26948,8 @@ function evalNumber(expr, ctx) {
 }
 function findMatchingParen(s, open) {
   let depth = 0, inStr = false, strChar = "";
-  for (let i = open; i < s.length; i++) {
-    const c = s[i];
+  for (let i2 = open; i2 < s.length; i2++) {
+    const c = s[i2];
     if (inStr) {
       if (c === strChar) inStr = false;
     } else if (c === '"' || c === "'") {
@@ -26249,19 +26958,19 @@ function findMatchingParen(s, open) {
     } else if (c === "(") depth++;
     else if (c === ")") {
       depth--;
-      if (depth === 0) return i;
+      if (depth === 0) return i2;
     }
   }
   return -1;
 }
 function outgoingLinks(app, file) {
-  var _a, _b;
-  const links = (_b = (_a = app.metadataCache.resolvedLinks) == null ? void 0 : _a[file.path]) != null ? _b : {};
+  var _a2, _b2;
+  const links = (_b2 = (_a2 = app.metadataCache.resolvedLinks) == null ? void 0 : _a2[file.path]) != null ? _b2 : {};
   return Object.keys(links);
 }
 function countBacklinks(app, file) {
-  var _a;
-  const all = (_a = app.metadataCache.resolvedLinks) != null ? _a : {};
+  var _a2;
+  const all = (_a2 = app.metadataCache.resolvedLinks) != null ? _a2 : {};
   let n = 0;
   for (const src in all) if (all[src][file.path]) n++;
   return n;
@@ -26281,8 +26990,8 @@ function formatDateValue(val, fmt = "YYYY-MM-DD") {
     ss: String(d.getSeconds()).padStart(2, "0")
   };
   return fmt.replace(/YYYY|MM|DD|HH|mm|ss/g, (t2) => {
-    var _a;
-    return (_a = tokens[t2]) != null ? _a : t2;
+    var _a2;
+    return (_a2 = tokens[t2]) != null ? _a2 : t2;
   });
 }
 function escapeHtml(s) {
@@ -26320,8 +27029,8 @@ function evalExpr(expr, ctx) {
   }
   if (expr === "file.links" || expr === "file.links.unique()") {
     return outgoingLinks(ctx.app, ctx.file).map((p) => {
-      var _a;
-      return escapeHtml((_a = p.replace(/\.md$/, "").split("/").pop()) != null ? _a : p);
+      var _a2;
+      return escapeHtml((_a2 = p.replace(/\.md$/, "").split("/").pop()) != null ? _a2 : p);
     }).join(", ");
   }
   if (expr === "file.backlinks.length") return String(countBacklinks(ctx.app, ctx.file));
@@ -26362,17 +27071,18 @@ function evalExpr(expr, ctx) {
   return v !== void 0 && v !== null ? escapeHtml(fmToString(v)) : "";
 }
 function quotedArgs(s) {
-  var _a;
-  return ((_a = s.match(/["']([^"']+)["']/g)) != null ? _a : []).map((a) => a.replace(/["']/g, ""));
+  const matches = s.match(/["']([^"']+)["']/g);
+  if (!matches) return [];
+  return matches.map((a) => a.replace(/["']/g, ""));
 }
 function evalFilterAtom(expr, file, meta) {
-  var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
+  var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j;
   expr = expr.trim();
   if (expr.startsWith("!")) {
     const inner = evalFilterAtom(expr.slice(1).trim(), file, meta);
     return inner === null ? null : !inner;
   }
-  const bodyTags = (_b = (_a = meta == null ? void 0 : meta.tags) == null ? void 0 : _a.map((t2) => t2.tag.replace(/^#/, ""))) != null ? _b : [];
+  const bodyTags = (_b2 = (_a2 = meta == null ? void 0 : meta.tags) == null ? void 0 : _a2.map((t2) => t2.tag.replace(/^#/, ""))) != null ? _b2 : [];
   const fmTags = (_c = meta == null ? void 0 : meta.frontmatter) == null ? void 0 : _c["tags"];
   const fmTagList = Array.isArray(fmTags) ? fmTags : fmTags ? [String(fmTags)] : [];
   const allTags = /* @__PURE__ */ new Set([...bodyTags, ...fmTagList]);
@@ -26419,13 +27129,13 @@ function matchesFilter(expr, file, meta) {
   return evalFilterAtom(expr, file, meta) === true;
 }
 function colLabel(col, properties) {
-  var _a, _b, _c, _d, _e, _f, _g, _h;
+  var _a2, _b2, _c, _d, _e, _f, _g, _h;
   const bare = col.startsWith("formula.") ? col.slice(8) : col.startsWith("file.") ? col.slice(5) : col;
-  return (_h = (_g = (_e = (_c = (_a = properties == null ? void 0 : properties["note." + bare]) == null ? void 0 : _a.displayName) != null ? _c : (_b = properties == null ? void 0 : properties[bare]) == null ? void 0 : _b.displayName) != null ? _e : (_d = properties == null ? void 0 : properties["note." + col]) == null ? void 0 : _d.displayName) != null ? _g : (_f = properties == null ? void 0 : properties[col]) == null ? void 0 : _f.displayName) != null ? _h : bare;
+  return (_h = (_g = (_e = (_c = (_a2 = properties == null ? void 0 : properties["note." + bare]) == null ? void 0 : _a2.displayName) != null ? _c : (_b2 = properties == null ? void 0 : properties[bare]) == null ? void 0 : _b2.displayName) != null ? _e : (_d = properties == null ? void 0 : properties["note." + col]) == null ? void 0 : _d.displayName) != null ? _g : (_f = properties == null ? void 0 : properties[col]) == null ? void 0 : _f.displayName) != null ? _h : bare;
 }
 function makeCtx(app, f, vaultName) {
-  var _a, _b;
-  const fm = (_b = (_a = app.metadataCache.getFileCache(f)) == null ? void 0 : _a.frontmatter) != null ? _b : {};
+  var _a2, _b2;
+  const fm = (_b2 = (_a2 = app.metadataCache.getFileCache(f)) == null ? void 0 : _a2.frontmatter) != null ? _b2 : {};
   const stat = { mtime: f.stat.mtime, ctime: f.stat.ctime, size: f.stat.size };
   return { app, file: f, fm, stat, vaultName };
 }
@@ -26445,11 +27155,11 @@ function cellValue(col, ctx, formulas) {
   return v !== void 0 ? escapeHtml(fmToString(v)) : "";
 }
 function viewOrder(view, formulas) {
-  var _a;
-  return ((_a = view.order) == null ? void 0 : _a.length) ? view.order : Object.keys(formulas).map((k) => `formula.${k}`);
+  var _a2;
+  return ((_a2 = view.order) == null ? void 0 : _a2.length) ? view.order : Object.keys(formulas).map((k) => `formula.${k}`);
 }
 async function renderBaseAsTable(app, baseFile, images, viewName) {
-  var _a, _b, _c, _d, _e, _f, _g;
+  var _a2, _b2, _c, _d, _e, _f, _g;
   const raw = await app.vault.read(baseFile);
   let config;
   try {
@@ -26457,8 +27167,8 @@ async function renderBaseAsTable(app, baseFile, images, viewName) {
   } catch (e) {
     return `<div class="base-error">\u65E0\u6CD5\u89E3\u6790 ${baseFile.name}</div>`;
   }
-  const views = (_a = config.views) != null ? _a : [];
-  const view = (_c = (_b = viewName && views.find((v) => v.name === viewName)) != null ? _b : views[0]) != null ? _c : {};
+  const views = (_a2 = config.views) != null ? _a2 : [];
+  const view = (_c = (_b2 = viewName && views.find((v) => v.name === viewName)) != null ? _b2 : views[0]) != null ? _c : {};
   const formulas = (_d = config.formulas) != null ? _d : {};
   const properties = config.properties;
   const vaultName = app.vault.getName();
@@ -26520,20 +27230,20 @@ ${tbody}
 </div>`;
 }
 function renderCards(app, baseFile, config, view, matched, formulas, properties, vaultName, images) {
-  var _a, _b, _c, _d;
-  const cardSize = (_a = view.cardSize) != null ? _a : 200;
-  const imageAspectRatio = (_b = view.imageAspectRatio) != null ? _b : 0.5;
+  var _a2, _b2, _c, _d;
+  const cardSize = (_a2 = view.cardSize) != null ? _a2 : 200;
+  const imageAspectRatio = (_b2 = view.imageAspectRatio) != null ? _b2 : 0.5;
   const imgHeight = Math.round(cardSize * imageAspectRatio);
   const imgFmKey = ((_c = view.image) == null ? void 0 : _c.startsWith("note.")) ? view.image.slice(5) : (_d = view.image) != null ? _d : "";
   const order = viewOrder(view, formulas);
   const cards = matched.map((f) => {
-    var _a2, _b2;
+    var _a3, _b3;
     const ctx = makeCtx(app, f, vaultName);
     let bannerHtml = "";
     if (imgFmKey) {
-      const raw = String((_a2 = ctx.fm[imgFmKey]) != null ? _a2 : "").replace(/^\//, "");
+      const raw = String((_a3 = ctx.fm[imgFmKey]) != null ? _a3 : "").replace(/^\//, "");
       if (raw) {
-        const imgFile = (_b2 = app.vault.getAbstractFileByPath(raw)) != null ? _b2 : app.metadataCache.getFirstLinkpathDest(raw, baseFile.path);
+        const imgFile = (_b3 = app.vault.getAbstractFileByPath(raw)) != null ? _b3 : app.metadataCache.getFirstLinkpathDest(raw, baseFile.path);
         if (imgFile instanceof import_obsidian3.TFile) {
           const src = images ? `images/${registerImage(imgFile, images)}` : `app://local/${encodeURIComponent(imgFile.path)}`;
           bannerHtml = `<img class="base-card-banner" src="${src}" alt="${escapeHtml(imgFile.name)}" style="height:${imgHeight}px">`;
@@ -26551,8 +27261,8 @@ function renderCards(app, baseFile, config, view, matched, formulas, properties,
   return `<div class="base-cards">${cards}</div>`;
 }
 function formatListItem(values, opts = {}) {
-  var _a;
-  const sep = (_a = opts.separator) != null ? _a : " ";
+  var _a2;
+  const sep = (_a2 = opts.separator) != null ? _a2 : " ";
   const nonEmpty = values.filter((v) => v !== "");
   if (nonEmpty.length === 0) return "";
   if (opts.indentProperties && nonEmpty.length > 1) {
@@ -26563,10 +27273,10 @@ function formatListItem(values, opts = {}) {
   return `<li class="base-list-item">${nonEmpty.join(sep)}</li>`;
 }
 function renderList(app, view, matched, formulas, vaultName) {
-  var _a, _b, _c;
+  var _a2, _b2, _c;
   const order = viewOrder(view, formulas);
-  const separator = (_a = view.separator) != null ? _a : " ";
-  const markers = ((_b = view.markers) != null ? _b : "bullet").toLowerCase();
+  const separator = (_a2 = view.separator) != null ? _a2 : " ";
+  const markers = ((_b2 = view.markers) != null ? _b2 : "bullet").toLowerCase();
   const indentProperties = (_c = view.indentProperties) != null ? _c : false;
   const items = matched.map((f) => {
     const ctx = makeCtx(app, f, vaultName);
@@ -26722,21 +27432,21 @@ var COUNTRY_ZH = {
   VN: "\u8D8A\u5357"
 };
 function provinceLabel(name) {
-  var _a;
-  return (_a = CN_PROVINCE_ZH[name]) != null ? _a : name;
+  var _a2;
+  return (_a2 = CN_PROVINCE_ZH[name]) != null ? _a2 : name;
 }
 function countryLabel(code, fallbackName) {
-  var _a;
-  return (_a = COUNTRY_ZH[code]) != null ? _a : fallbackName || code;
+  var _a2;
+  return (_a2 = COUNTRY_ZH[code]) != null ? _a2 : fallbackName || code;
 }
 function buildLocationRows(countries, regionsByCode, limit) {
-  var _a, _b;
+  var _a2, _b2;
   const rows = [];
   for (const c of countries) {
-    const code = (_a = c.id) != null ? _a : "";
+    const code = (_a2 = c.id) != null ? _a2 : "";
     const countryZh = countryLabel(code, c.name);
     const regions = code ? regionsByCode[code] : void 0;
-    const named = (_b = regions == null ? void 0 : regions.filter((r) => r.name.trim() !== "")) != null ? _b : [];
+    const named = (_b2 = regions == null ? void 0 : regions.filter((r) => r.name.trim() !== "")) != null ? _b2 : [];
     if (named.length > 0) {
       for (const r of named) {
         rows.push({ name: `${countryZh}-${provinceLabel(r.name)}`, count: r.count });
@@ -26751,12 +27461,12 @@ function buildLocationRows(countries, regionsByCode, limit) {
   return rows.slice(0, limit);
 }
 function parseDailySeries(json) {
-  var _a;
+  var _a2;
   if (!json || typeof json !== "object") return null;
   const hits = json.hits;
   if (!Array.isArray(hits)) return null;
   if (hits.length === 0) return [];
-  const stats = (_a = hits[0]) == null ? void 0 : _a.stats;
+  const stats = (_a2 = hits[0]) == null ? void 0 : _a2.stats;
   if (!Array.isArray(stats)) return [];
   const out = [];
   for (const p of stats) {
@@ -26772,11 +27482,11 @@ function recentActiveDays(points, limit) {
 }
 function buildStatsRows(pages, hitsByPath) {
   return pages.map((p) => {
-    var _a;
-    return { ...p, views: (_a = hitsByPath.get(p.path)) != null ? _a : 0 };
+    var _a2;
+    return { ...p, views: (_a2 = hitsByPath.get(p.path)) != null ? _a2 : 0 };
   }).sort((a, b) => {
-    var _a, _b;
-    return b.views - a.views || ((_a = b.publishedAt) != null ? _a : 0) - ((_b = a.publishedAt) != null ? _b : 0);
+    var _a2, _b2;
+    return b.views - a.views || ((_a2 = b.publishedAt) != null ? _a2 : 0) - ((_b2 = a.publishedAt) != null ? _b2 : 0);
   });
 }
 function getAnalyticsInjectConfig(s) {
@@ -26794,8 +27504,8 @@ function stripFrontmatter(raw) {
 }
 function hashBody(body) {
   let h = 5381;
-  for (let i = 0; i < body.length; i++) {
-    h = (h << 5) + h + body.charCodeAt(i) | 0;
+  for (let i2 = 0; i2 < body.length; i2++) {
+    h = (h << 5) + h + body.charCodeAt(i2) | 0;
   }
   return (h >>> 0).toString(36);
 }
@@ -26810,27 +27520,27 @@ function extractMath(content) {
     return `\uE000C${codes.length - 1}\uE001`;
   });
   processed = processed.replace(/\$\$([\s\S]+?)\$\$/g, (_, latex) => {
-    const i = entries.length;
+    const i2 = entries.length;
     entries.push({ type: "display", latex: latex.trim() });
     return `
-<div class="math-d" data-mi="${i}"></div>
+<div class="math-d" data-mi="${i2}"></div>
 `;
   });
   processed = processed.replace(/\$([^\n$]+?)\$/g, (_, latex) => {
-    const i = entries.length;
+    const i2 = entries.length;
     entries.push({ type: "inline", latex });
-    return `<span class="math-i" data-mi="${i}"></span>`;
+    return `<span class="math-i" data-mi="${i2}"></span>`;
   });
-  processed = processed.replace(/C(\d+)/g, (_, i) => codes[+i]);
+  processed = processed.replace(/C(\d+)/g, (_, i2) => codes[+i2]);
   return { processed, entries };
 }
 function collectImages(app, sourceFile, el, images = /* @__PURE__ */ new Map()) {
   const vaultBasePath = app.vault.adapter instanceof import_obsidian4.FileSystemAdapter ? app.vault.adapter.getBasePath() : "";
   el.querySelectorAll(".internal-embed").forEach((embed) => {
-    var _a;
+    var _a2;
     const imgEl = embed.querySelector("img");
     if (!imgEl) return;
-    const src = (_a = embed.getAttribute("src")) != null ? _a : "";
+    const src = (_a2 = embed.getAttribute("src")) != null ? _a2 : "";
     const imgFile = app.metadataCache.getFirstLinkpathDest(src, sourceFile.path);
     if (!imgFile) return;
     const name = registerImage(imgFile, images);
@@ -26838,8 +27548,8 @@ function collectImages(app, sourceFile, el, images = /* @__PURE__ */ new Map()) 
     imgEl.removeAttribute("srcset");
   });
   el.querySelectorAll("img").forEach((img) => {
-    var _a;
-    const src = (_a = img.getAttribute("src")) != null ? _a : "";
+    var _a2;
+    const src = (_a2 = img.getAttribute("src")) != null ? _a2 : "";
     if (!src.startsWith("app://local") || !vaultBasePath) return;
     try {
       const absPath = decodeURIComponent(src.replace(/^app:\/\/local/, ""));
@@ -26892,7 +27602,7 @@ function restorePluginCodeLangs(el) {
   });
 }
 async function renderNote(app, file, rawContent) {
-  var _a, _b, _c, _d;
+  var _a2, _b2, _c, _d;
   let content = stripFrontmatter(rawContent);
   content = resolveBaseEmbeds(content);
   content = protectPluginCodeBlocks(content);
@@ -26917,8 +27627,8 @@ async function renderNote(app, file, rawContent) {
   });
   component.unload();
   el.querySelectorAll("[data-mi]").forEach((placeholder) => {
-    var _a2;
-    const idx = parseInt((_a2 = placeholder.getAttribute("data-mi")) != null ? _a2 : "0");
+    var _a3;
+    const idx = parseInt((_a3 = placeholder.getAttribute("data-mi")) != null ? _a3 : "0");
     const entry = entries[idx];
     if (entry) placeholder.textContent = entry.latex;
   });
@@ -26927,8 +27637,8 @@ async function renderNote(app, file, rawContent) {
   const images = /* @__PURE__ */ new Map();
   const basePlaceholders = Array.from(el.querySelectorAll("[data-base-embed]"));
   for (const placeholder of basePlaceholders) {
-    const name = (_a = placeholder.getAttribute("data-base-embed")) != null ? _a : "";
-    const viewName = (_b = placeholder.getAttribute("data-base-view")) != null ? _b : void 0;
+    const name = (_a2 = placeholder.getAttribute("data-base-embed")) != null ? _a2 : "";
+    const viewName = (_b2 = placeholder.getAttribute("data-base-view")) != null ? _b2 : void 0;
     const baseFile = app.vault.getFiles().find(
       (f) => f.path === name || f.name === name || f.name === name.split("/").pop()
     );
@@ -26964,10 +27674,10 @@ async function renderNote(app, file, rawContent) {
     }
   }
   el.querySelectorAll("table").forEach((table) => {
-    var _a2;
+    var _a3;
     if (table.closest(".table-wrapper")) return;
     const wrapper = createDiv({ cls: "table-wrapper" });
-    (_a2 = table.parentNode) == null ? void 0 : _a2.insertBefore(wrapper, table);
+    (_a3 = table.parentNode) == null ? void 0 : _a3.insertBefore(wrapper, table);
     wrapper.appendChild(table);
   });
   processImgsBlocks(app, file, el, images);
@@ -28001,8 +28711,8 @@ function generateUniqueName(usedNames, pageLinkLength) {
   return name;
 }
 function collectLinkedNotes(app, file) {
-  var _a, _b;
-  const links = (_b = (_a = app.metadataCache.getFileCache(file)) == null ? void 0 : _a.links) != null ? _b : [];
+  var _a2, _b2;
+  const links = (_b2 = (_a2 = app.metadataCache.getFileCache(file)) == null ? void 0 : _a2.links) != null ? _b2 : [];
   const seen = /* @__PURE__ */ new Set();
   const result = [];
   for (const link of links) {
@@ -28015,8 +28725,8 @@ function collectLinkedNotes(app, file) {
   return result;
 }
 function collectLinkedNotesWithStatus(app, file) {
-  var _a, _b, _c, _d, _e;
-  const links = (_b = (_a = app.metadataCache.getFileCache(file)) == null ? void 0 : _a.links) != null ? _b : [];
+  var _a2, _b2, _c, _d, _e;
+  const links = (_b2 = (_a2 = app.metadataCache.getFileCache(file)) == null ? void 0 : _a2.links) != null ? _b2 : [];
   const seen = /* @__PURE__ */ new Set();
   const result = [];
   for (const link of links) {
@@ -28031,11 +28741,11 @@ function collectLinkedNotesWithStatus(app, file) {
 }
 function rewriteInternalLinks(html, subFolderMap, addExtension = true) {
   return html.replace(/<a([^>]*?)>/g, (match, attrs) => {
-    var _a, _b;
+    var _a2, _b2;
     const dataHrefMatch = attrs.match(/data-href="([^"]*)"/);
     if (!dataHrefMatch) return match;
     const dataHref = dataHrefMatch[1].split("#")[0].replace(/\.md$/i, "");
-    const subFolder = (_b = subFolderMap.get(dataHref)) != null ? _b : subFolderMap.get((_a = dataHref.split("/").pop()) != null ? _a : "");
+    const subFolder = (_b2 = subFolderMap.get(dataHref)) != null ? _b2 : subFolderMap.get((_a2 = dataHref.split("/").pop()) != null ? _a2 : "");
     if (!subFolder) {
       let newAttrs2 = attrs.replace(/(?<![a-zA-Z-])href="[^"]*"/, 'href="#"');
       if (!/(?<![a-zA-Z-])href="/.test(newAttrs2)) {
@@ -28057,9 +28767,15 @@ async function prepareExport(app, vault, file, noteName, katexBase, analytics) {
   const html = buildHtml(file.basename, htmlBody, css, katexBase, analytics).replace(/src="images\//g, `src="${noteName}/images/`);
   return { noteName, html, css, images, hasMath };
 }
-async function exportToLocal(app, vault, file, exportRoot, includeLinkedNotes = false, pageLinkLength = 3, analytics) {
+async function exportToZip(app, vault, file, includeLinkedNotes = false, pageLinkLength = 3, analytics) {
   const usedNames = /* @__PURE__ */ new Set();
   const result = await prepareExport(app, vault, file, generateUniqueName(usedNames, pageLinkLength), void 0, analytics);
+  const files = {};
+  const addImages = async (noteName, images) => {
+    for (const [exportName, imgFile] of images) {
+      files[`${noteName}/images/${exportName}`] = new Uint8Array(await vault.readBinary(imgFile));
+    }
+  };
   const subFolderMap = /* @__PURE__ */ new Map();
   let mainHtml = result.html;
   if (includeLinkedNotes) {
@@ -28069,32 +28785,18 @@ async function exportToLocal(app, vault, file, exportRoot, includeLinkedNotes = 
       const subResult = await prepareExport(app, vault, linkedFile, generateUniqueName(usedNames, pageLinkLength), void 0, analytics);
       subFolderMap.set(linkedFile.basename, subResult.noteName);
       subFolderMap.set(linkedFile.path.replace(/\.md$/i, ""), subResult.noteName);
-      subResults.push({ subResult });
+      subResults.push(subResult);
     }
-    for (const { subResult } of subResults) {
-      const rewrittenSubHtml = rewriteInternalLinks(subResult.html, subFolderMap);
-      fs.writeFileSync(path2.join(exportRoot, `${subResult.noteName}.html`), rewrittenSubHtml, "utf8");
-      if (subResult.images.size > 0) {
-        const subImagesDir = path2.join(exportRoot, subResult.noteName, "images");
-        fs.mkdirSync(subImagesDir, { recursive: true });
-        for (const [exportName, imgFile] of subResult.images) {
-          const data = await vault.readBinary(imgFile);
-          fs.writeFileSync(path2.join(subImagesDir, exportName), Buffer.from(data));
-        }
-      }
+    for (const subResult of subResults) {
+      files[`${subResult.noteName}.html`] = strToU8(rewriteInternalLinks(subResult.html, subFolderMap));
+      await addImages(subResult.noteName, subResult.images);
     }
   }
   mainHtml = rewriteInternalLinks(mainHtml, subFolderMap);
-  fs.writeFileSync(path2.join(exportRoot, `${result.noteName}.html`), mainHtml, "utf8");
-  if (result.images.size > 0) {
-    const imagesDir = path2.join(exportRoot, result.noteName, "images");
-    fs.mkdirSync(imagesDir, { recursive: true });
-    for (const [exportName, imgFile] of result.images) {
-      const data = await vault.readBinary(imgFile);
-      fs.writeFileSync(path2.join(imagesDir, exportName), Buffer.from(data));
-    }
-  }
-  return result;
+  files[`${result.noteName}.html`] = strToU8(mainHtml);
+  await addImages(result.noteName, result.images);
+  const zip = zipSync(files, { level: 6 });
+  return { result, zip };
 }
 
 // src/share-modal.ts
@@ -28103,7 +28805,7 @@ var import_obsidian6 = require("obsidian");
 // src/analytics-client.ts
 var import_obsidian5 = require("obsidian");
 var STATS_START = "2020-01-01T00:00:00Z";
-var sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+var sleep = (ms) => new Promise((r) => window.setTimeout(r, ms));
 var STATS_HEADERS = { accept: "application/json" };
 async function fetchPageViews(settings, shareLink) {
   if (!canReadAnalytics(settings)) return null;
@@ -28221,7 +28923,7 @@ async function fetchPageDetail(settings, shareLink, onPart) {
     return Number.isFinite(ms) ? Math.ceil(ms) + 50 : 500;
   };
   const get = async (query, parse, fallback) => {
-    var _a;
+    var _a2;
     for (let attempt = 0; attempt < 4; attempt++) {
       try {
         const res = await (0, import_obsidian5.requestUrl)({
@@ -28235,7 +28937,7 @@ async function fetchPageDetail(settings, shareLink, onPart) {
           continue;
         }
         if (res.status < 200 || res.status >= 300) return fallback;
-        return (_a = parse(res.json)) != null ? _a : fallback;
+        return (_a2 = parse(res.json)) != null ? _a2 : fallback;
       } catch (e) {
         return fallback;
       }
@@ -28452,7 +29154,7 @@ async function ensureKatexAssets(settings) {
   });
 }
 function getMimeType(ext) {
-  var _a;
+  var _a2;
   const map = {
     png: "image/png",
     jpg: "image/jpeg",
@@ -28463,7 +29165,7 @@ function getMimeType(ext) {
     bmp: "image/bmp",
     avif: "image/avif"
   };
-  return (_a = map[ext.toLowerCase()]) != null ? _a : "application/octet-stream";
+  return (_a2 = map[ext.toLowerCase()]) != null ? _a2 : "application/octet-stream";
 }
 function makeClient(settings) {
   const { ossRegion, ossBucket, ossAccessKeyId, ossAccessKeySecret } = settings;
@@ -28476,7 +29178,7 @@ function makeClient(settings) {
   });
 }
 async function listPublishedNames(settings) {
-  var _a, _b;
+  var _a2, _b2;
   const { ossRegion, ossBucket, ossAccessKeyId, ossAccessKeySecret, ossPrefix } = settings;
   const names = /* @__PURE__ */ new Set();
   if (!ossRegion || !ossBucket || !ossAccessKeyId || !ossAccessKeySecret) return names;
@@ -28489,19 +29191,19 @@ async function listPublishedNames(settings) {
         { prefix, delimiter: "/", "max-keys": 1e3, marker },
         {}
       );
-      for (const o of (_a = res.objects) != null ? _a : []) {
+      for (const o of (_a2 = res.objects) != null ? _a2 : []) {
         const n = o.name.slice(prefix.length).replace(/\/.*$/, "");
         if (n) names.add(n);
       }
-      for (const p of (_b = res.prefixes) != null ? _b : []) {
+      for (const p of (_b2 = res.prefixes) != null ? _b2 : []) {
         const n = p.slice(prefix.length).replace(/\/$/, "");
         if (n) names.add(n);
       }
       marker = res.nextMarker;
       if (!res.isTruncated) break;
     } while (marker);
-  } catch (err) {
-    console.warn("[publish-as-link] \u8BFB\u53D6 OSS \u5DF2\u6709\u9875\u9762\u5217\u8868\u5931\u8D25\uFF0C\u672C\u6B21\u4EC5\u5728\u53D1\u5E03\u8303\u56F4\u5185\u53BB\u91CD", err);
+  } catch (err2) {
+    console.warn("[publish-as-link] \u8BFB\u53D6 OSS \u5DF2\u6709\u9875\u9762\u5217\u8868\u5931\u8D25\uFF0C\u672C\u6B21\u4EC5\u5728\u53D1\u5E03\u8303\u56F4\u5185\u53BB\u91CD", err2);
   }
   return names;
 }
@@ -28551,7 +29253,7 @@ async function uploadSubNoteToOss(settings, vault, subFolderName, html, images) 
   return `${base}/${prefix}/${subFolderName}`;
 }
 async function deleteFromOss(settings, noteName) {
-  var _a;
+  var _a2;
   const { ossRegion, ossBucket, ossAccessKeyId, ossAccessKeySecret, ossPrefix } = settings;
   if (!ossRegion || !ossBucket || !ossAccessKeyId || !ossAccessKeySecret) {
     throw new Error("\u8BF7\u5148\u5728\u8BBE\u7F6E\u4E2D\u586B\u5199 OSS \u914D\u7F6E\u4FE1\u606F");
@@ -28563,7 +29265,7 @@ async function deleteFromOss(settings, noteName) {
   });
   try {
     const listResult = await client.list({ prefix: folderPrefix, "max-keys": 1e3 });
-    const keys = ((_a = listResult.objects) != null ? _a : []).map((o) => o.name);
+    const keys = ((_a2 = listResult.objects) != null ? _a2 : []).map((o) => o.name);
     if (keys.length > 0) {
       await client.deleteMulti(keys, { quiet: true });
     }
@@ -28710,8 +29412,8 @@ var SharePopover = class {
     }, 0);
   }
   readPublishedAt(file) {
-    var _a, _b;
-    const shareTime = (_b = (_a = this.plugin.app.metadataCache.getFileCache(file)) == null ? void 0 : _a.frontmatter) == null ? void 0 : _b["share_time"];
+    var _a2, _b2;
+    const shareTime = (_b2 = (_a2 = this.plugin.app.metadataCache.getFileCache(file)) == null ? void 0 : _a2.frontmatter) == null ? void 0 : _b2["share_time"];
     if (!shareTime) return null;
     const d = new Date(shareTime);
     return isNaN(d.getTime()) ? null : d;
@@ -29077,7 +29779,7 @@ var StatsDetailModal = class extends import_obsidian9.Modal {
       parent.createDiv({ cls: "opal-detail-empty", text: t("stats.detail.noData") });
       return;
     }
-    const max = Math.max(1, ...items.map((i) => i.count));
+    const max = Math.max(1, ...items.map((i2) => i2.count));
     const list = parent.createDiv({ cls: "opal-detail-list" });
     for (const item of items) {
       const rowEl = list.createDiv({ cls: "opal-detail-row" });
@@ -29100,18 +29802,18 @@ function formatDate(ms) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 function collectPublishedPages(app) {
-  var _a;
+  var _a2;
   const pages = [];
   for (const file of app.vault.getMarkdownFiles()) {
-    const fm = (_a = app.metadataCache.getFileCache(file)) == null ? void 0 : _a.frontmatter;
+    const fm = (_a2 = app.metadataCache.getFileCache(file)) == null ? void 0 : _a2.frontmatter;
     const shareLink = fm == null ? void 0 : fm["share_link"];
     if (typeof shareLink !== "string" || !shareLink) continue;
-    const path3 = extractPathname(shareLink);
-    if (!path3) continue;
+    const path = extractPathname(shareLink);
+    if (!path) continue;
     const shareTime = fm["share_time"];
     const parsed = typeof shareTime === "string" ? Date.parse(shareTime) : NaN;
     pages.push({
-      path: path3,
+      path,
       title: file.basename,
       shareLink,
       publishedAt: isNaN(parsed) ? null : parsed,
@@ -29180,10 +29882,10 @@ var ShareStatsView = class extends import_obsidian10.ItemView {
         return;
       }
       this.renderTable(body, rows, countsAvailable);
-    } catch (err) {
+    } catch (err2) {
       body.empty();
       body.createDiv({ cls: "opal-stats-notice", text: t("stats.fetchFailed") });
-      console.error(err);
+      console.error(err2);
     } finally {
       this.loading = false;
     }
@@ -29326,8 +30028,8 @@ var ShareOnlinePlugin = class extends import_obsidian11.Plugin {
   }
   // ── Frontmatter helpers ───────────────────────────────────────────────
   getShareLink(file) {
-    var _a, _b, _c;
-    return (_c = (_b = (_a = this.app.metadataCache.getFileCache(file)) == null ? void 0 : _a.frontmatter) == null ? void 0 : _b["share_link"]) != null ? _c : "";
+    var _a2, _b2, _c;
+    return (_c = (_b2 = (_a2 = this.app.metadataCache.getFileCache(file)) == null ? void 0 : _a2.frontmatter) == null ? void 0 : _b2["share_link"]) != null ? _c : "";
   }
   async setShareMeta(file, url) {
     const raw = await this.app.vault.read(file);
@@ -29353,7 +30055,7 @@ var ShareOnlinePlugin = class extends import_obsidian11.Plugin {
   }
   // ── Status bar ───────────────────────────────────────────────────────
   async updateStatusBar() {
-    var _a;
+    var _a2;
     const file = this.app.workspace.getActiveFile();
     if (!this.isMarkdown(file)) {
       this.statusBarEl.hide();
@@ -29362,7 +30064,7 @@ var ShareOnlinePlugin = class extends import_obsidian11.Plugin {
     this.statusBarEl.show();
     const published = !!this.getShareLink(file);
     const stale = published ? await this.isStale(file) : false;
-    if (((_a = this.app.workspace.getActiveFile()) == null ? void 0 : _a.path) !== file.path) return;
+    if (((_a2 = this.app.workspace.getActiveFile()) == null ? void 0 : _a2.path) !== file.path) return;
     this.statusBarEl.toggleClass("opal-status-published", published && !stale);
     this.statusBarEl.toggleClass("opal-status-stale", published && stale);
     (0, import_obsidian11.setTooltip)(
@@ -29376,8 +30078,8 @@ var ShareOnlinePlugin = class extends import_obsidian11.Plugin {
   }
   /** True when the note's current body differs from the published snapshot. */
   async isStale(file) {
-    var _a, _b, _c, _d;
-    const shareHash = (_c = (_b = (_a = this.app.metadataCache.getFileCache(file)) == null ? void 0 : _a.frontmatter) == null ? void 0 : _b["share_hash"]) != null ? _c : "";
+    var _a2, _b2, _c, _d;
+    const shareHash = (_c = (_b2 = (_a2 = this.app.metadataCache.getFileCache(file)) == null ? void 0 : _a2.frontmatter) == null ? void 0 : _b2["share_hash"]) != null ? _c : "";
     if (!shareHash) return true;
     const view = this.app.workspace.getActiveViewOfType(import_obsidian11.MarkdownView);
     const raw = ((_d = view == null ? void 0 : view.file) == null ? void 0 : _d.path) === file.path && view.editor ? view.editor.getValue() : await this.app.vault.cachedRead(file);
@@ -29456,9 +30158,9 @@ var ShareOnlinePlugin = class extends import_obsidian11.Plugin {
         await navigator.clipboard.writeText(url);
       }
       await this.sharePopover.showResult(this.statusBarEl, file, successText, url);
-    } catch (err) {
-      this.sharePopover.showError(this.statusBarEl, t("toast.publishFailed", { error: err.message }));
-      console.error(err);
+    } catch (err2) {
+      this.sharePopover.showError(this.statusBarEl, t("toast.publishFailed", { error: err2.message }));
+      console.error(err2);
     }
   }
   async doUnpublish(file, subNotesToDelete) {
@@ -29470,8 +30172,8 @@ var ShareOnlinePlugin = class extends import_obsidian11.Plugin {
         try {
           await deleteFromOss(this.settings, snName);
           await this.removeShareMeta(sn.file);
-        } catch (err) {
-          console.error(`\u5220\u9664\u4E8C\u7EA7\u7B14\u8BB0\u5931\u8D25 (${sn.file.basename}):`, err);
+        } catch (err2) {
+          console.error(`\u5220\u9664\u4E8C\u7EA7\u7B14\u8BB0\u5931\u8D25 (${sn.file.basename}):`, err2);
           failedSubs.push(sn.file.basename);
         }
       }
@@ -29484,16 +30186,16 @@ var ShareOnlinePlugin = class extends import_obsidian11.Plugin {
       void this.updateStatusBar();
       const successText = failedSubs.length > 0 ? t("toast.stoppedWithWarn", { names: failedSubs.join("\u3001") }) : t("toast.stopped");
       await this.sharePopover.showResult(this.statusBarEl, file, successText, null);
-    } catch (err) {
-      this.sharePopover.showError(this.statusBarEl, t("toast.stopFailed", { error: err.message }));
-      console.error(err);
+    } catch (err2) {
+      this.sharePopover.showError(this.statusBarEl, t("toast.stopFailed", { error: err2.message }));
+      console.error(err2);
     }
   }
   extractNoteName(url) {
-    var _a;
+    var _a2;
     const parts = url.split("/");
     const last = parts[parts.length - 1];
-    return last === "index.html" ? (_a = parts[parts.length - 2]) != null ? _a : "" : last.replace(/\.html$/i, "");
+    return last === "index.html" ? (_a2 = parts[parts.length - 2]) != null ? _a2 : "" : last.replace(/\.html$/i, "");
   }
   async updateNote(file) {
     const existingUrl = this.getShareLink(file);
@@ -29518,45 +30220,40 @@ var ShareOnlinePlugin = class extends import_obsidian11.Plugin {
     }
   }
   /**
-   * 打开 Electron 原生文件夹选择框（desktop-only），默认定位到上次导出目录。
-   * 取消返回 null。
+   * Hand the user a ZIP of the rendered page(s) via a browser download, so they
+   * decide where it lands — no Node `fs` / native dialog, just a Blob anchor.
    */
-  async pickExportDir() {
-    var _a, _b, _c;
-    const electron = require("electron");
-    const dialog = (_b = (_a = electron == null ? void 0 : electron.remote) == null ? void 0 : _a.dialog) != null ? _b : require("@electron/remote").dialog;
-    const result = await dialog.showOpenDialog({
-      properties: ["openDirectory", "createDirectory"],
-      defaultPath: this.settings.exportPath || DEFAULT_SETTINGS.exportPath
-    });
-    if (result.canceled || !((_c = result.filePaths) == null ? void 0 : _c.length)) return null;
-    return result.filePaths[0];
+  triggerDownload(zip, fileName) {
+    const blob = new Blob([zip], { type: "application/zip" });
+    const url = URL.createObjectURL(blob);
+    const a = createEl("a", { href: url, attr: { download: fileName } });
+    a.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1e3);
   }
   async exportFile(file) {
-    const dir = await this.pickExportDir();
-    if (!dir) return;
-    this.settings.exportPath = dir;
-    await this.saveSettings();
     this.sharePopover.showBusy(this.statusBarEl, t("toast.exporting"));
+    await new Promise(
+      (resolve) => window.requestAnimationFrame(() => window.requestAnimationFrame(() => resolve()))
+    );
     try {
-      await exportToLocal(
+      const { zip } = await exportToZip(
         this.app,
         this.app.vault,
         file,
-        dir,
         this.settings.includeLinkedNotes,
         this.settings.pageLinkLength,
         getAnalyticsInjectConfig(this.settings)
       );
+      this.triggerDownload(zip, `${file.basename}.zip`);
       await this.sharePopover.showResult(this.statusBarEl, file, t("toast.exportSuccess"));
-    } catch (err) {
-      this.sharePopover.showError(this.statusBarEl, t("toast.exportFailed", { error: err.message }));
-      console.error(err);
+    } catch (err2) {
+      this.sharePopover.showError(this.statusBarEl, t("toast.exportFailed", { error: err2.message }));
+      console.error(err2);
     }
   }
   onunload() {
-    var _a;
-    (_a = this.sharePopover) == null ? void 0 : _a.close();
+    var _a2;
+    (_a2 = this.sharePopover) == null ? void 0 : _a2.close();
   }
 };
 /*! Bundled license information:

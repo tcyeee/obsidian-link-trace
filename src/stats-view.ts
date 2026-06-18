@@ -32,11 +32,11 @@ export function collectPublishedPages(app: App): PublishedPage[] {
 	const pages: PublishedPage[] = [];
 	for (const file of app.vault.getMarkdownFiles()) {
 		const fm = app.metadataCache.getFileCache(file)?.frontmatter;
-		const shareLink = fm?.["share_link"];
+		const shareLink = fm?.["share_link"] as unknown;
 		if (typeof shareLink !== "string" || !shareLink) continue;
 		const path = extractPathname(shareLink);
 		if (!path) continue;
-		const shareTime = fm["share_time"];
+		const shareTime = fm["share_time"] as unknown;
 		const parsed = typeof shareTime === "string" ? Date.parse(shareTime) : NaN;
 		pages.push({
 			path,
@@ -112,7 +112,7 @@ export class ShareStatsView extends ItemView {
 			const configured = canReadAnalytics(this.plugin.settings);
 			const hits = configured ? await fetchAllPathHits(this.plugin.settings) : null;
 			const countsAvailable = hits !== null;
-			const rows = buildStatsRows(pages, hits ?? new Map());
+			const rows = buildStatsRows(pages, hits ?? new Map<string, number>());
 			const totalViews = countsAvailable
 				? rows.reduce((sum, r) => sum + r.views, 0)
 				: null;

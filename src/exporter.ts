@@ -1,8 +1,5 @@
 import { App, Vault, TFile } from "obsidian";
-// fs/path are required for local export: exportRoot is a user-configured absolute path
-// outside the vault; app.vault.adapter only resolves vault-relative paths.
-import * as fs from "fs";
-import * as path from "path";
+import { zipSync, strToU8 } from "fflate";
 import { renderNote, buildHtml, containsMath } from "./renderer";
 import type { GoatCounterInjectConfig } from "./analytics";
 
@@ -143,62 +140,60 @@ export async function prepareExport(
 	return { noteName, html, css, images, hasMath };
 }
 
-export async function exportToLocal(
+/**
+ * Render `file` (and optionally its linked sub-notes) into an in-memory ZIP and
+ * return the bytes. Nothing is written to disk — the caller triggers a browser
+ * download so the user picks where the archive lands (no Node `fs` access).
+ *
+ * ZIP layout mirrors the old flat folder export: `{name}.html` at the root and
+ * `{name}/images/*` for each page's assets, so internal links resolve unchanged.
+ */
+export async function exportToZip(
 	app: App,
 	vault: Vault,
 	file: TFile,
-	exportRoot: string,
 	includeLinkedNotes = false,
 	pageLinkLength = 3,
 	analytics?: GoatCounterInjectConfig
-): Promise<ExportResult> {
+): Promise<{ result: ExportResult; zip: Uint8Array }> {
 	// All names generated in this export share one set so they never collide.
 	const usedNames = new Set<string>();
 	const result = await prepareExport(app, vault, file, generateUniqueName(usedNames, pageLinkLength), undefined, analytics);
+
+	// ZIP entries keyed by archive-relative path (always `/`-separated per the spec).
+	const files: Record<string, Uint8Array> = {};
+	const addImages = async (noteName: string, images: ExportResult["images"]) => {
+		for (const [exportName, imgFile] of images) {
+			files[`${noteName}/images/${exportName}`] = new Uint8Array(await vault.readBinary(imgFile));
+		}
+	};
 
 	const subFolderMap = new Map<string, string>();
 	let mainHtml = result.html;
 
 	if (includeLinkedNotes) {
 		const linkedFiles = collectLinkedNotes(app, file);
-		const subResults: { subResult: ExportResult }[] = [];
+		const subResults: ExportResult[] = [];
 
-		// First pass: render all sub-notes and build the full map before writing anything.
+		// First pass: render all sub-notes and build the full map before emitting anything.
 		for (const linkedFile of linkedFiles) {
 			const subResult = await prepareExport(app, vault, linkedFile, generateUniqueName(usedNames, pageLinkLength), undefined, analytics);
 			subFolderMap.set(linkedFile.basename, subResult.noteName);
 			subFolderMap.set(linkedFile.path.replace(/\.md$/i, ""), subResult.noteName);
-			subResults.push({ subResult });
+			subResults.push(subResult);
 		}
 
-		// All notes (main and sub) are flat at exportRoot, so links use the same map.
-		for (const { subResult } of subResults) {
-			const rewrittenSubHtml = rewriteInternalLinks(subResult.html, subFolderMap);
-			fs.writeFileSync(path.join(exportRoot, `${subResult.noteName}.html`), rewrittenSubHtml, "utf8");
-
-			if (subResult.images.size > 0) {
-				const subImagesDir = path.join(exportRoot, subResult.noteName, "images");
-				fs.mkdirSync(subImagesDir, { recursive: true });
-				for (const [exportName, imgFile] of subResult.images) {
-					const data = await vault.readBinary(imgFile);
-					fs.writeFileSync(path.join(subImagesDir, exportName), Buffer.from(data));
-				}
-			}
+		// All notes (main and sub) are flat at the archive root, so links share the map.
+		for (const subResult of subResults) {
+			files[`${subResult.noteName}.html`] = strToU8(rewriteInternalLinks(subResult.html, subFolderMap));
+			await addImages(subResult.noteName, subResult.images);
 		}
 	}
 
 	mainHtml = rewriteInternalLinks(mainHtml, subFolderMap);
+	files[`${result.noteName}.html`] = strToU8(mainHtml);
+	await addImages(result.noteName, result.images);
 
-	fs.writeFileSync(path.join(exportRoot, `${result.noteName}.html`), mainHtml, "utf8");
-
-	if (result.images.size > 0) {
-		const imagesDir = path.join(exportRoot, result.noteName, "images");
-		fs.mkdirSync(imagesDir, { recursive: true });
-		for (const [exportName, imgFile] of result.images) {
-			const data = await vault.readBinary(imgFile);
-			fs.writeFileSync(path.join(imagesDir, exportName), Buffer.from(data));
-		}
-	}
-
-	return result;
+	const zip = zipSync(files, { level: 6 });
+	return { result, zip };
 }

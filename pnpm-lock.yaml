@@ -11,6 +11,9 @@ importers:
       ali-oss:
         specifier: ^6.23.0
         version: 6.23.0
+      fflate:
+        specifier: ^0.8.3
+        version: 0.8.3
     devDependencies:
       '@types/node':
         specifier: ^16.11.6
@@ -507,6 +510,9 @@ packages:
     peerDependenciesMeta:
       picomatch:
         optional: true
+
+  fflate@0.8.3:
+    resolution: {integrity: sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==}
 
   formstream@1.5.2:
     resolution: {integrity: sha512-NASf0lgxC1AyKNXQIrXTEYkiX99LhCEXTkiGObXAkpBui86a4u8FjH1o2bGb3PpqI3kafC+yw4zWeK6l6VHTgg==}
@@ -1379,6 +1385,8 @@ snapshots:
   fdir@6.5.0(picomatch@4.0.4):
     optionalDependencies:
       picomatch: 4.0.4
+
+  fflate@0.8.3: {}
 
   formstream@1.5.2:
     dependencies:

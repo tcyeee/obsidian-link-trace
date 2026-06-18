@@ -256,7 +256,7 @@ export function buildLocationRows(
 			for (const r of named) {
 				rows.push({ name: `${countryZh}-${provinceLabel(r.name)}`, count: r.count });
 			}
-			const unknown = regions!
+			const unknown = regions
 				.filter((r) => r.name.trim() === "")
 				.reduce((sum, r) => sum + r.count, 0);
 			if (unknown > 0) rows.push({ name: countryZh, count: unknown });

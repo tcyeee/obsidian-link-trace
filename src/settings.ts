@@ -1,12 +1,8 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
-import * as path from "path";
-import * as os from "os";
 import type ShareOnlinePlugin from "../main";
 import { Language, t, setLanguage, formatPageCount } from "./i18n";
 
 export interface ShareOnlineSettings {
-	/** 上次本地导出选择的目录（静默记忆，无设置项；首次默认桌面）。 */
-	exportPath: string;
 	includeLinkedNotes: boolean;
 	ossRegion: string;
 	ossBucket: string;
@@ -20,7 +16,6 @@ export interface ShareOnlineSettings {
 }
 
 export const DEFAULT_SETTINGS: ShareOnlineSettings = {
-	exportPath: path.join(os.homedir(), "Desktop"),
 	includeLinkedNotes: false,
 	ossRegion: "",
 	ossBucket: "",

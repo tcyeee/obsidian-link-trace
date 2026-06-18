@@ -2,7 +2,9 @@
   "name": "link-trace",
   "packageManager": "pnpm@11.2.2",
   "version": "0.1.5",
-  "engines": { "node": ">=20.19.0" },
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "description": "Publish notes as short links and track who's viewed them.",
   "main": "main.js",
   "scripts": {
@@ -20,6 +22,7 @@
     "vitest": "^4.1.8"
   },
   "dependencies": {
-    "ali-oss": "^6.23.0"
+    "ali-oss": "^6.23.0",
+    "fflate": "^0.8.3"
   }
 }

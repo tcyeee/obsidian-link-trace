@@ -20,7 +20,7 @@ import {
 const STATS_START = "2020-01-01T00:00:00Z";
 
 /** 简单延时，用于 429 限流退避。 */
-const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
+const sleep = (ms: number): Promise<void> => new Promise((r) => window.setTimeout(r, ms));
 
 /**
  * 统计读取请求头。客户端不持有任何 token——默认的 stats.viii.me 端点由服务端

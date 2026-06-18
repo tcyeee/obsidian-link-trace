@@ -69,7 +69,7 @@ const zh: Translations = {
 	"stats.detail.unknownName": "（未知）",
 	"stats.detail.directReferrer": "直接访问",
 
-	"cmd.exportLocal": "导出到本地",
+	"cmd.exportLocal": "导出为 ZIP",
 	"cmd.exportOss": "导出到 OSS",
 
 	"statusbar.shareNote": "分享笔记",
@@ -79,7 +79,7 @@ const zh: Translations = {
 	"toast.uploading": "上传中...",
 	"toast.uploadSuccess": "上传成功",
 	"toast.exporting": "导出中...",
-	"toast.exportSuccess": "导出成功",
+	"toast.exportSuccess": "已下载 ZIP",
 	"toast.stopping": "停止分享中...",
 	"toast.stopped": "已停止分享",
 	"toast.stoppedWithWarn": "已停止分享，但部分二级笔记未删除：{names}",
@@ -90,7 +90,7 @@ const zh: Translations = {
 	"toast.stopFailed": "停止分享失败：{error}",
 
 	"menu.publish": "发布笔记",
-	"menu.exportLocal": "导出到本地",
+	"menu.exportLocal": "导出为 ZIP",
 	"menu.openLink": "打开链接",
 	"menu.update": "内容更新",
 	"menu.unpublish": "停止分享",
@@ -192,7 +192,7 @@ const en: Translations = {
 	"stats.detail.unknownName": "(unknown)",
 	"stats.detail.directReferrer": "Direct",
 
-	"cmd.exportLocal": "Export to local",
+	"cmd.exportLocal": "Export as ZIP",
 	"cmd.exportOss": "Export to OSS",
 
 	"statusbar.shareNote": "Share note",
@@ -202,7 +202,7 @@ const en: Translations = {
 	"toast.uploading": "Uploading...",
 	"toast.uploadSuccess": "Upload successful",
 	"toast.exporting": "Exporting...",
-	"toast.exportSuccess": "Export successful",
+	"toast.exportSuccess": "ZIP downloaded",
 	"toast.stopping": "Stopping share...",
 	"toast.stopped": "Sharing stopped",
 	"toast.stoppedWithWarn": "Sharing stopped, but some sub-notes were not removed: {names}",
@@ -213,7 +213,7 @@ const en: Translations = {
 	"toast.stopFailed": "Stop sharing failed: {error}",
 
 	"menu.publish": "Publish Note",
-	"menu.exportLocal": "Export to local",
+	"menu.exportLocal": "Export as ZIP",
 	"menu.openLink": "Open link",
 	"menu.update": "Update content",
 	"menu.unpublish": "Stop sharing",

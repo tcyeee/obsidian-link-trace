@@ -356,7 +356,9 @@ export function evalExpr(expr: string, ctx: EvalCtx): string {
 
 /** Pull the quoted string arguments out of a `fn("a", "b")` call. */
 function quotedArgs(s: string): string[] {
-  return (s.match(/["']([^"']+)["']/g) ?? []).map(a => a.replace(/["']/g, ""));
+  const matches: RegExpMatchArray | null = s.match(/["']([^"']+)["']/g);
+  if (!matches) return [];
+  return matches.map((a: string): string => a.replace(/["']/g, ""));
 }
 
 /**

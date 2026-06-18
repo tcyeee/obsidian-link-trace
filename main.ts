@@ -1,6 +1,6 @@
 import { MarkdownView, Notice, Plugin, TFile, debounce, setIcon, setTooltip } from "obsidian";
 import { ShareOnlineSettings, DEFAULT_SETTINGS, ShareOnlineSettingTab } from "./src/settings";
-import { exportToLocal, prepareExport, generateUniqueName, collectLinkedNotesWithStatus, rewriteInternalLinks } from "./src/exporter";
+import { exportToZip, prepareExport, generateUniqueName, collectLinkedNotesWithStatus, rewriteInternalLinks } from "./src/exporter";
 import { ShareModal } from "./src/share-modal";
 import { uploadToOss, uploadSubNoteToOss, deleteFromOss, listPublishedNames, ensureKatexAssets, katexBaseUrl } from "./src/oss";
 import { t, setLanguage } from "./src/i18n";
@@ -352,38 +352,35 @@ export default class ShareOnlinePlugin extends Plugin {
 	}
 
 	/**
-	 * 打开 Electron 原生文件夹选择框（desktop-only），默认定位到上次导出目录。
-	 * 取消返回 null。
+	 * Hand the user a ZIP of the rendered page(s) via a browser download, so they
+	 * decide where it lands — no Node `fs` / native dialog, just a Blob anchor.
 	 */
-	private async pickExportDir(): Promise<string | null> {
-		// eslint-disable-next-line @typescript-eslint/no-var-requires
-		const electron = require("electron");
-		const dialog = electron?.remote?.dialog ?? require("@electron/remote").dialog;
-		const result = await dialog.showOpenDialog({
-			properties: ["openDirectory", "createDirectory"],
-			defaultPath: this.settings.exportPath || DEFAULT_SETTINGS.exportPath,
-		});
-		if (result.canceled || !result.filePaths?.length) return null;
-		return result.filePaths[0] as string;
+	private triggerDownload(zip: Uint8Array, fileName: string): void {
+		const blob = new Blob([zip], { type: "application/zip" });
+		const url = URL.createObjectURL(blob);
+		const a = createEl("a", { href: url, attr: { download: fileName } });
+		a.click();
+		// Defer revoke so the download has grabbed the URL first.
+		window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 	}
 
 	private async exportFile(file: TFile): Promise<void> {
-		const dir = await this.pickExportDir();
-		if (!dir) return; // 用户取消
-		this.settings.exportPath = dir;
-		await this.saveSettings();
-
 		this.sharePopover.showBusy(this.statusBarEl, t("toast.exporting"));
+		// Let the browser paint the loading spinner before the heavy, mostly-
+		// synchronous render work in exportToZip hogs the main thread.
+		await new Promise<void>((resolve) =>
+			window.requestAnimationFrame(() => window.requestAnimationFrame(() => resolve()))
+		);
 		try {
-			await exportToLocal(
+			const { zip } = await exportToZip(
 				this.app,
 				this.app.vault,
 				file,
-				dir,
 				this.settings.includeLinkedNotes,
 				this.settings.pageLinkLength,
 				getAnalyticsInjectConfig(this.settings)
 			);
+			this.triggerDownload(zip, `${file.basename}.zip`);
 			// A local export changes no publish state — re-derive the card's current state.
 			await this.sharePopover.showResult(this.statusBarEl, file, t("toast.exportSuccess"));
 		} catch (err: unknown) {
