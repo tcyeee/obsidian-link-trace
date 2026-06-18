@@ -4,12 +4,19 @@ import { Language, t, setLanguage, formatPageCount } from "../core/i18n";
 
 export interface ShareOnlineSettings {
 	includeLinkedNotes: boolean;
+	storageProvider: "aliyun" | "tencent";
 	ossRegion: string;
 	ossBucket: string;
 	ossAccessKeyId: string;
 	ossAccessKeySecret: string;
 	ossPrefix: string;
 	ossDomain: string;
+	cosRegion: string;
+	cosBucket: string;
+	cosSecretId: string;
+	cosSecretKey: string;
+	cosPrefix: string;
+	cosDomain: string;
 	pageLinkLength: number;
 	goatcounterEndpoint: string;
 	language: Language;
@@ -17,12 +24,19 @@ export interface ShareOnlineSettings {
 
 export const DEFAULT_SETTINGS: ShareOnlineSettings = {
 	includeLinkedNotes: false,
+	storageProvider: "aliyun",
 	ossRegion: "",
 	ossBucket: "",
 	ossAccessKeyId: "",
 	ossAccessKeySecret: "",
 	ossPrefix: "notes",
 	ossDomain: "",
+	cosRegion: "",
+	cosBucket: "",
+	cosSecretId: "",
+	cosSecretKey: "",
+	cosPrefix: "notes",
+	cosDomain: "",
 	pageLinkLength: 3,
 	goatcounterEndpoint: "https://stats.viii.me/count",
 	language: "zh",
