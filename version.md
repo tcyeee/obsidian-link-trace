@@ -5,6 +5,14 @@
 
 ---
 
+## Version 0.1.8
+
+- Changed local export to download a self-contained ZIP archive instead of writing files to a folder you pick — no more native folder dialog, and the export-path setting has been removed
+- Changed the minimum required Obsidian version to 1.7.2
+
+- 本地导出改为下载自包含的 ZIP 压缩包，不再写入手动选择的文件夹——移除了原生文件夹选择框与导出路径设置项
+- 最低 Obsidian 版本要求改为 1.7.2
+
 ## Version 0.1.7
 
 - Added a dedicated Share Stats page (ribbon icon + "Open share stats" command) listing every published page and its cumulative view count
