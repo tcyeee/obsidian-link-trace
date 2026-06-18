@@ -1,7 +1,7 @@
 import { MarkdownView, Notice, Plugin, TFile, debounce, setIcon, setTooltip } from "obsidian";
 import { ShareOnlineSettings, DEFAULT_SETTINGS, ShareOnlineSettingTab } from "./src/ui/settings";
 import { exportToZip, prepareExport, generateUniqueName, collectLinkedNotesWithStatus, rewriteInternalLinks } from "./src/publish/exporter";
-import { uploadToOss, uploadSubNoteToOss, deleteFromOss, listPublishedNames, ensureKatexAssets, katexBaseUrl } from "./src/publish/oss";
+import { uploadPage, deletePage, listPublishedNames, ensureKatexAssets, katexBaseUrl } from "./src/publish/storage";
 import { t, setLanguage } from "./src/core/i18n";
 import { getAnalyticsInjectConfig } from "./src/analytics/analytics";
 import { hashBody, stripFrontmatter } from "./src/core/note-hash";
@@ -254,7 +254,7 @@ export default class ShareOnlinePlugin extends Plugin {
 					subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), subResult.noteName);
 					if (subResult.hasMath) await ensureKatex();
 					progress(t("toast.progress.subPage", { done: String(done + 1), total: String(total) }));
-					const subUrl = await uploadSubNoteToOss(
+					const subUrl = await uploadPage(
 						this.settings,
 						this.app.vault,
 						subResult.noteName,
@@ -270,7 +270,7 @@ export default class ShareOnlinePlugin extends Plugin {
 			mainHtml = rewriteInternalLinks(mainHtml, subFolderMap, false);
 			if (result.hasMath) await ensureKatex();
 			progress(t("toast.progress.mainPage"));
-			const url = await uploadToOss(
+			const url = await uploadPage(
 				this.settings,
 				this.app.vault,
 				result.noteName,
@@ -310,7 +310,7 @@ export default class ShareOnlinePlugin extends Plugin {
 				const snName = this.extractNoteName(sn.shareLink);
 				progress(t("toast.progress.deleteSub", { done: String(done + 1), total: String(total) }));
 				try {
-					await deleteFromOss(this.settings, snName);
+					await deletePage(this.settings, snName);
 					await this.removeShareMeta(sn.file);
 				} catch (err: unknown) {
 					console.error(`删除二级笔记失败 (${sn.file.basename}):`, err);
@@ -325,7 +325,7 @@ export default class ShareOnlinePlugin extends Plugin {
 			if (existingUrl) {
 				progress(t("toast.progress.deleteMain"));
 				const existingName = this.extractNoteName(existingUrl);
-				await deleteFromOss(this.settings, existingName);
+				await deletePage(this.settings, existingName);
 			}
 			await this.removeShareMeta(file);
 			void this.updateStatusBar();
