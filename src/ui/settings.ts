@@ -51,14 +51,25 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 	}
 
 	private buildPreviewUrl(): string {
-		const { ossDomain, ossRegion, ossBucket, ossPrefix, pageLinkLength } = this.plugin.settings;
-		const base = ossDomain
-			? ossDomain
-			: ossRegion && ossBucket
-			? `https://${ossBucket}.${ossRegion}.aliyuncs.com`
-			: `https://<bucket>.<region>.aliyuncs.com`;
-		const prefix = (ossPrefix || DEFAULT_SETTINGS.ossPrefix).replace(/\/$/, "");
-		const sample = "ab3c5d7e9f2x".slice(0, Math.max(1, pageLinkLength));
+		const s = this.plugin.settings;
+		let base: string;
+		let prefix: string;
+		if (s.storageProvider === "tencent") {
+			base = s.cosDomain
+				? s.cosDomain
+				: s.cosRegion && s.cosBucket
+				? `https://${s.cosBucket}.cos.${s.cosRegion}.myqcloud.com`
+				: `https://<bucket>.cos.<region>.myqcloud.com`;
+			prefix = (s.cosPrefix || DEFAULT_SETTINGS.cosPrefix).replace(/\/$/, "");
+		} else {
+			base = s.ossDomain
+				? s.ossDomain
+				: s.ossRegion && s.ossBucket
+				? `https://${s.ossBucket}.${s.ossRegion}.aliyuncs.com`
+				: `https://<bucket>.<region>.aliyuncs.com`;
+			prefix = (s.ossPrefix || DEFAULT_SETTINGS.ossPrefix).replace(/\/$/, "");
+		}
+		const sample = "ab3c5d7e9f2x".slice(0, Math.max(1, s.pageLinkLength));
 		return `${base}/${prefix}/${sample}`;
 	}
 
@@ -95,6 +106,25 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 						this.buildUI();
 					})
 			);
+
+		new Setting(generalDetails)
+			.setName(t("settings.provider.name"))
+			.setDesc(t("settings.provider.desc"))
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("aliyun", "阿里云 OSS")
+					.addOption("tencent", "腾讯云 COS")
+					.setValue(this.plugin.settings.storageProvider)
+					.onChange(async (value) => {
+						this.plugin.settings.storageProvider = value as "aliyun" | "tencent";
+						await this.plugin.saveSettings();
+						this.buildUI();
+					})
+			);
+
+		const previewWrap = generalDetails.createDiv({ cls: "opal-url-preview" });
+		previewWrap.createSpan({ cls: "opal-url-preview-label", text: t("settings.urlPreview.label") });
+		previewEl = previewWrap.createSpan({ cls: "opal-url-preview-url", text: this.buildPreviewUrl() });
 
 		// ── 导出设置 / Export Settings ────────────
 		const exportDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
@@ -150,10 +180,6 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 		const ossCalloutList = ossCallout.createEl("ul");
 		ossCalloutList.createEl("li", { text: t("settings.oss.callout.item1") });
 		ossCalloutList.createEl("li", { text: t("settings.oss.callout.item2") });
-
-		const previewWrap = ossCallout.createDiv({ cls: "opal-url-preview" });
-		previewWrap.createSpan({ cls: "opal-url-preview-label", text: t("settings.urlPreview.label") });
-		previewEl = previewWrap.createSpan({ cls: "opal-url-preview-url", text: this.buildPreviewUrl() });
 
 		new Setting(ossDetails)
 			.setName(t("settings.ossRegion.name"))
@@ -231,6 +257,100 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.ossDomain)
 					.onChange(async (value) => {
 						this.plugin.settings.ossDomain = value.trim().replace(/\/$/, "");
+						await this.plugin.saveSettings();
+						previewEl?.setText(this.buildPreviewUrl());
+					})
+			);
+
+		// ── 腾讯云 COS / Tencent COS ─ collapsible ──
+		const cosDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
+		cosDetails.createEl("summary", {
+			cls: "opal-collapsible-heading",
+			text: t("settings.cos.heading"),
+		});
+
+		const cosCallout = cosDetails.createDiv({ cls: "opal-oss-callout" });
+		const cosCalloutList = cosCallout.createEl("ul");
+		cosCalloutList.createEl("li", { text: t("settings.cos.callout.item1") });
+		cosCalloutList.createEl("li", { text: t("settings.cos.callout.item2") });
+
+		new Setting(cosDetails)
+			.setName(t("settings.cosRegion.name"))
+			.setDesc(t("settings.cosRegion.desc"))
+			.addText((text) =>
+				text
+					.setPlaceholder("ap-guangzhou")
+					.setValue(this.plugin.settings.cosRegion)
+					.onChange(async (value) => {
+						this.plugin.settings.cosRegion = value.trim();
+						await this.plugin.saveSettings();
+						previewEl?.setText(this.buildPreviewUrl());
+					})
+			);
+
+		new Setting(cosDetails)
+			.setName(t("settings.cosBucket.name"))
+			.setDesc(t("settings.cosBucket.desc"))
+			.addText((text) =>
+				text
+					.setPlaceholder("my-bucket-1250000000")
+					.setValue(this.plugin.settings.cosBucket)
+					.onChange(async (value) => {
+						this.plugin.settings.cosBucket = value.trim();
+						await this.plugin.saveSettings();
+						previewEl?.setText(this.buildPreviewUrl());
+					})
+			);
+
+		new Setting(cosDetails)
+			.setName(t("settings.cosSecretId.name"))
+			.addText((text) => {
+				text
+					.setPlaceholder("SecretId")
+					.setValue(this.plugin.settings.cosSecretId)
+					.onChange(async (value) => {
+						this.plugin.settings.cosSecretId = value.trim();
+						await this.plugin.saveSettings();
+					});
+				text.inputEl.type = "password";
+			});
+
+		new Setting(cosDetails)
+			.setName(t("settings.cosSecretKey.name"))
+			.addText((text) => {
+				text
+					.setPlaceholder("SecretKey")
+					.setValue(this.plugin.settings.cosSecretKey)
+					.onChange(async (value) => {
+						this.plugin.settings.cosSecretKey = value.trim();
+						await this.plugin.saveSettings();
+					});
+				text.inputEl.type = "password";
+			});
+
+		new Setting(cosDetails)
+			.setName(t("settings.cosPrefix.name"))
+			.setDesc(t("settings.cosPrefix.desc"))
+			.addText((text) =>
+				text
+					.setPlaceholder("notes")
+					.setValue(this.plugin.settings.cosPrefix)
+					.onChange(async (value) => {
+						this.plugin.settings.cosPrefix = value.trim() || DEFAULT_SETTINGS.cosPrefix;
+						await this.plugin.saveSettings();
+						previewEl?.setText(this.buildPreviewUrl());
+					})
+			);
+
+		new Setting(cosDetails)
+			.setName(t("settings.cosDomain.name"))
+			.setDesc(t("settings.cosDomain.desc"))
+			.addText((text) =>
+				text
+					.setPlaceholder("https://cdn.example.com")
+					.setValue(this.plugin.settings.cosDomain)
+					.onChange(async (value) => {
+						this.plugin.settings.cosDomain = value.trim().replace(/\/$/, "");
 						await this.plugin.saveSettings();
 						previewEl?.setText(this.buildPreviewUrl());
 					})
