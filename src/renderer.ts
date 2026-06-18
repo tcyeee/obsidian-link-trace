@@ -873,7 +873,7 @@ pre code {
 }
 
 /* ── pre wrapper (allows label to escape overflow:auto clipping) ── */
-.pre-wrapper { position: relative; }
+.pre-wrapper { position: relative; min-width: 0; max-width: 100%; }
 
 /* ── Code language label ── */
 .code-lang {
@@ -957,6 +957,12 @@ blockquote p { color: #81888D; font-size: 14px; margin: 0; }
    whole block onto a new flex line (which would strand the checkbox alone). */
 .task-list-item > p { flex: 1 1 0; min-width: 0; }
 .task-list-item > ul, .task-list-item > ol { flex: 0 0 100%; padding-left: 1.5em; margin: 0.2em 0 0; }
+/* A code block nested in a task item is wrapped in .pre-wrapper (a flex item).
+   Without min-width:0 its non-wrapping min-content (longest code line) becomes the
+   flex floor and bumps the whole row wider than the viewport — horizontal page
+   scroll on narrow screens. Pin it to its own full-width line and let it shrink so
+   the inner pre's overflow:auto handles long lines. */
+.task-list-item > .pre-wrapper, .task-list-item > pre { flex: 0 0 100%; min-width: 0; }
 .task-list-item-checkbox {
   -webkit-appearance: none;
   appearance: none;
