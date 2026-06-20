@@ -4,7 +4,7 @@ import { Language, t, setLanguage, formatPageCount } from "../core/i18n";
 
 export interface ShareOnlineSettings {
 	includeLinkedNotes: boolean;
-	storageProvider: "aliyun" | "tencent";
+	storageProvider: "none" | "aliyun" | "tencent";
 	ossRegion: string;
 	ossBucket: string;
 	ossAccessKeyId: string;
@@ -24,7 +24,7 @@ export interface ShareOnlineSettings {
 
 export const DEFAULT_SETTINGS: ShareOnlineSettings = {
 	includeLinkedNotes: false,
-	storageProvider: "aliyun",
+	storageProvider: "none",
 	ossRegion: "",
 	ossBucket: "",
 	ossAccessKeyId: "",
@@ -81,6 +81,9 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
+		// previewEl is created inside the selected route's config block (if any),
+		// so it stays undefined when no route is chosen. Captured by closure here
+		// so the page-length dropdown below can refresh it too.
 		let previewEl: HTMLElement | undefined;
 
 		// ── 通用 / General ────────────────────────
@@ -106,25 +109,6 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 						this.buildUI();
 					})
 			);
-
-		new Setting(generalDetails)
-			.setName(t("settings.provider.name"))
-			.setDesc(t("settings.provider.desc"))
-			.addDropdown((dropdown) =>
-				dropdown
-					.addOption("aliyun", "阿里云 OSS")
-					.addOption("tencent", "腾讯云 COS")
-					.setValue(this.plugin.settings.storageProvider)
-					.onChange(async (value) => {
-						this.plugin.settings.storageProvider = value as "aliyun" | "tencent";
-						await this.plugin.saveSettings();
-						this.buildUI();
-					})
-			);
-
-		const previewWrap = generalDetails.createDiv({ cls: "opal-url-preview" });
-		previewWrap.createSpan({ cls: "opal-url-preview-label", text: t("settings.urlPreview.label") });
-		previewEl = previewWrap.createSpan({ cls: "opal-url-preview-url", text: this.buildPreviewUrl() });
 
 		// ── 导出设置 / Export Settings ────────────
 		const exportDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
@@ -169,19 +153,51 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 					});
 			});
 
-		// ── 阿里云 OSS / Aliyun OSS ─ collapsible ──
-		const ossDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
-		ossDetails.createEl("summary", {
+		// ── 发布路线配置 / Publish Route ──────────
+		// One route, two choices (Aliyun OSS / Tencent COS). The matching credential
+		// block only appears once a route is picked; "none" shows just the selector.
+		const routeDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
+		routeDetails.setAttribute("open", "");
+		routeDetails.createEl("summary", {
 			cls: "opal-collapsible-heading",
-			text: t("settings.oss.heading"),
+			text: t("settings.route.heading"),
 		});
 
-		const ossCallout = ossDetails.createDiv({ cls: "opal-oss-callout" });
-		const ossCalloutList = ossCallout.createEl("ul");
-		ossCalloutList.createEl("li", { text: t("settings.oss.callout.item1") });
-		ossCalloutList.createEl("li", { text: t("settings.oss.callout.item2") });
+		new Setting(routeDetails)
+			.setName(t("settings.route.name"))
+			.setDesc(t("settings.route.desc"))
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("none", t("settings.route.option.none"))
+					.addOption("aliyun", "阿里云 OSS")
+					.addOption("tencent", "腾讯云 COS")
+					.setValue(this.plugin.settings.storageProvider)
+					.onChange(async (value) => {
+						this.plugin.settings.storageProvider = value as ShareOnlineSettings["storageProvider"];
+						await this.plugin.saveSettings();
+						this.buildUI();
+					})
+			);
 
-		new Setting(ossDetails)
+		if (this.plugin.settings.storageProvider === "aliyun") {
+			previewEl = this.renderAliyunConfig(routeDetails);
+		} else if (this.plugin.settings.storageProvider === "tencent") {
+			previewEl = this.renderTencentConfig(routeDetails);
+		}
+	}
+
+	/** Render the Aliyun OSS credential block; returns the live URL-preview span. */
+	private renderAliyunConfig(parent: HTMLElement): HTMLElement {
+		const callout = parent.createDiv({ cls: "opal-oss-callout" });
+		const calloutList = callout.createEl("ul");
+		calloutList.createEl("li", { text: t("settings.oss.callout.item1") });
+		calloutList.createEl("li", { text: t("settings.oss.callout.item2") });
+
+		const previewWrap = parent.createDiv({ cls: "opal-url-preview" });
+		previewWrap.createSpan({ cls: "opal-url-preview-label", text: t("settings.urlPreview.label") });
+		const preview = previewWrap.createSpan({ cls: "opal-url-preview-url", text: this.buildPreviewUrl() });
+
+		new Setting(parent)
 			.setName(t("settings.ossRegion.name"))
 			.setDesc(t("settings.ossRegion.desc"))
 			.addText((text) =>
@@ -191,11 +207,11 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.ossRegion = value.trim();
 						await this.plugin.saveSettings();
-						previewEl?.setText(this.buildPreviewUrl());
+						preview.setText(this.buildPreviewUrl());
 					})
 			);
 
-		new Setting(ossDetails)
+		new Setting(parent)
 			.setName(t("settings.ossBucket.name"))
 			.addText((text) =>
 				text
@@ -204,11 +220,11 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.ossBucket = value.trim();
 						await this.plugin.saveSettings();
-						previewEl?.setText(this.buildPreviewUrl());
+						preview.setText(this.buildPreviewUrl());
 					})
 			);
 
-		new Setting(ossDetails)
+		new Setting(parent)
 			.setName(t("settings.ossKeyId.name"))
 			.addText((text) => {
 				text
@@ -221,7 +237,7 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 				text.inputEl.type = "password";
 			});
 
-		new Setting(ossDetails)
+		new Setting(parent)
 			.setName(t("settings.ossKeySecret.name"))
 			.addText((text) => {
 				text
@@ -234,7 +250,7 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 				text.inputEl.type = "password";
 			});
 
-		new Setting(ossDetails)
+		new Setting(parent)
 			.setName(t("settings.ossPrefix.name"))
 			.setDesc(t("settings.ossPrefix.desc"))
 			.addText((text) =>
@@ -244,11 +260,11 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.ossPrefix = value.trim() || DEFAULT_SETTINGS.ossPrefix;
 						await this.plugin.saveSettings();
-						previewEl?.setText(this.buildPreviewUrl());
+						preview.setText(this.buildPreviewUrl());
 					})
 			);
 
-		new Setting(ossDetails)
+		new Setting(parent)
 			.setName(t("settings.ossDomain.name"))
 			.setDesc(t("settings.ossDomain.desc"))
 			.addText((text) =>
@@ -258,23 +274,25 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.ossDomain = value.trim().replace(/\/$/, "");
 						await this.plugin.saveSettings();
-						previewEl?.setText(this.buildPreviewUrl());
+						preview.setText(this.buildPreviewUrl());
 					})
 			);
 
-		// ── 腾讯云 COS / Tencent COS ─ collapsible ──
-		const cosDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
-		cosDetails.createEl("summary", {
-			cls: "opal-collapsible-heading",
-			text: t("settings.cos.heading"),
-		});
+		return preview;
+	}
 
-		const cosCallout = cosDetails.createDiv({ cls: "opal-oss-callout" });
-		const cosCalloutList = cosCallout.createEl("ul");
-		cosCalloutList.createEl("li", { text: t("settings.cos.callout.item1") });
-		cosCalloutList.createEl("li", { text: t("settings.cos.callout.item2") });
+	/** Render the Tencent COS credential block; returns the live URL-preview span. */
+	private renderTencentConfig(parent: HTMLElement): HTMLElement {
+		const callout = parent.createDiv({ cls: "opal-oss-callout" });
+		const calloutList = callout.createEl("ul");
+		calloutList.createEl("li", { text: t("settings.cos.callout.item1") });
+		calloutList.createEl("li", { text: t("settings.cos.callout.item2") });
 
-		new Setting(cosDetails)
+		const previewWrap = parent.createDiv({ cls: "opal-url-preview" });
+		previewWrap.createSpan({ cls: "opal-url-preview-label", text: t("settings.urlPreview.label") });
+		const preview = previewWrap.createSpan({ cls: "opal-url-preview-url", text: this.buildPreviewUrl() });
+
+		new Setting(parent)
 			.setName(t("settings.cosRegion.name"))
 			.setDesc(t("settings.cosRegion.desc"))
 			.addText((text) =>
@@ -284,11 +302,11 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.cosRegion = value.trim();
 						await this.plugin.saveSettings();
-						previewEl?.setText(this.buildPreviewUrl());
+						preview.setText(this.buildPreviewUrl());
 					})
 			);
 
-		new Setting(cosDetails)
+		new Setting(parent)
 			.setName(t("settings.cosBucket.name"))
 			.setDesc(t("settings.cosBucket.desc"))
 			.addText((text) =>
@@ -298,11 +316,11 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.cosBucket = value.trim();
 						await this.plugin.saveSettings();
-						previewEl?.setText(this.buildPreviewUrl());
+						preview.setText(this.buildPreviewUrl());
 					})
 			);
 
-		new Setting(cosDetails)
+		new Setting(parent)
 			.setName(t("settings.cosSecretId.name"))
 			.addText((text) => {
 				text
@@ -315,7 +333,7 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 				text.inputEl.type = "password";
 			});
 
-		new Setting(cosDetails)
+		new Setting(parent)
 			.setName(t("settings.cosSecretKey.name"))
 			.addText((text) => {
 				text
@@ -328,7 +346,7 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 				text.inputEl.type = "password";
 			});
 
-		new Setting(cosDetails)
+		new Setting(parent)
 			.setName(t("settings.cosPrefix.name"))
 			.setDesc(t("settings.cosPrefix.desc"))
 			.addText((text) =>
@@ -338,11 +356,11 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.cosPrefix = value.trim() || DEFAULT_SETTINGS.cosPrefix;
 						await this.plugin.saveSettings();
-						previewEl?.setText(this.buildPreviewUrl());
+						preview.setText(this.buildPreviewUrl());
 					})
 			);
 
-		new Setting(cosDetails)
+		new Setting(parent)
 			.setName(t("settings.cosDomain.name"))
 			.setDesc(t("settings.cosDomain.desc"))
 			.addText((text) =>
@@ -352,8 +370,10 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.cosDomain = value.trim().replace(/\/$/, "");
 						await this.plugin.saveSettings();
-						previewEl?.setText(this.buildPreviewUrl());
+						preview.setText(this.buildPreviewUrl());
 					})
 			);
+
+		return preview;
 	}
 }

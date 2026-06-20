@@ -25666,8 +25666,10 @@ var zh = {
   "settings.ossDomain.name": "\u81EA\u5B9A\u4E49\u57DF\u540D",
   "settings.ossDomain.desc": "\u66FF\u6362\u9ED8\u8BA4\u7684 OSS \u57DF\u540D\uFF0C\u7559\u7A7A\u5219\u4F7F\u7528\u9ED8\u8BA4\u3002\u4F8B\u5982 https://cdn.example.com",
   "settings.urlPreview.label": "\u9884\u89C8\uFF1A",
-  "settings.provider.name": "\u5B58\u50A8\u670D\u52A1",
-  "settings.provider.desc": "\u9009\u62E9\u53D1\u5E03\u5230\u54EA\u4E2A\u4E91\u5B58\u50A8",
+  "settings.route.heading": "\u53D1\u5E03\u8DEF\u7EBF\u914D\u7F6E",
+  "settings.route.name": "\u53D1\u5E03\u8DEF\u7EBF",
+  "settings.route.desc": "\u9009\u62E9\u4E00\u6761\u53D1\u5E03\u8DEF\u7EBF\uFF08\u4E8C\u9009\u4E00\uFF09\uFF0C\u9009\u62E9\u540E\u4E0B\u65B9\u4F1A\u663E\u793A\u5BF9\u5E94\u914D\u7F6E",
+  "settings.route.option.none": "\u2014 \u8BF7\u9009\u62E9 \u2014",
   "settings.cos.heading": "\u901A\u8FC7\u817E\u8BAF\u4E91COS\u53D1\u5E03",
   "settings.cos.callout.item1": "\u8BF7\u786E\u4FDD COS \u5B58\u50A8\u6876\u8BBF\u95EE\u6743\u9650\u4E3A\u300C\u516C\u6709\u8BFB\u79C1\u6709\u5199\u300D",
   "settings.cos.callout.item2": "COS \u5FC5\u987B\u914D\u7F6E\u81EA\u5B9A\u4E49\u57DF\u540D\uFF0C\u5426\u5219\u94FE\u63A5\u6253\u5F00\u53EA\u4F1A\u89E6\u53D1\u4E0B\u8F7D",
@@ -25748,6 +25750,8 @@ var zh = {
   "menu.unpublish": "\u505C\u6B62\u5206\u4EAB",
   "notice.onlyMarkdown.share": "\u53EA\u80FD\u5206\u4EAB Markdown \u7B14\u8BB0",
   "notice.onlyMarkdown.publish": "\u53EA\u80FD\u53D1\u5E03 Markdown \u7B14\u8BB0",
+  "notice.noRoute": "\u8BF7\u5148\u5728\u63D2\u4EF6\u8BBE\u7F6E\u4E2D\u9009\u62E9\u53D1\u5E03\u8DEF\u7EBF\uFF08\u963F\u91CC\u4E91 OSS \u6216 \u817E\u8BAF\u4E91 COS\uFF09",
+  "notice.routeNotConfigured": "\u8BF7\u5148\u5728\u63D2\u4EF6\u8BBE\u7F6E\u4E2D\u586B\u5199\u6240\u9009\u53D1\u5E03\u8DEF\u7EBF\u7684\u914D\u7F6E\u4FE1\u606F",
   "modal.publish.title": "\u53D1\u5E03\u7B14\u8BB0",
   "modal.unpublish.title": "\u505C\u6B62\u5206\u4EAB",
   "modal.mainNote": "\u4E3B\u7B14\u8BB0",
@@ -25797,8 +25801,10 @@ var en = {
   "settings.ossDomain.name": "Custom Domain",
   "settings.ossDomain.desc": "Replace the default OSS domain. Leave empty for default. e.g. https://cdn.example.com",
   "settings.urlPreview.label": "Preview: ",
-  "settings.provider.name": "Storage provider",
-  "settings.provider.desc": "Choose which cloud to publish to",
+  "settings.route.heading": "Publish Route",
+  "settings.route.name": "Publish route",
+  "settings.route.desc": "Pick one publish route; its configuration appears below once selected",
+  "settings.route.option.none": "\u2014 Select \u2014",
   "settings.cos.heading": "Publish via Tencent COS",
   "settings.cos.callout.item1": 'Ensure your COS bucket permission is "Public Read / Private Write"',
   "settings.cos.callout.item2": "COS must have a custom domain configured; otherwise links will trigger a download instead of opening",
@@ -25879,6 +25885,8 @@ var en = {
   "menu.unpublish": "Stop sharing",
   "notice.onlyMarkdown.share": "Only Markdown notes can be shared",
   "notice.onlyMarkdown.publish": "Only Markdown notes can be published",
+  "notice.noRoute": "Please choose a publish route (Aliyun OSS or Tencent COS) in the plugin settings first",
+  "notice.routeNotConfigured": "Please fill in the configuration for the selected publish route in the plugin settings first",
   "modal.publish.title": "Publish Note",
   "modal.unpublish.title": "Stop Sharing",
   "modal.mainNote": "Main Note",
@@ -25949,7 +25957,7 @@ function formatPageCount(count) {
 // src/ui/settings.ts
 var DEFAULT_SETTINGS = {
   includeLinkedNotes: false,
-  storageProvider: "aliyun",
+  storageProvider: "none",
   ossRegion: "",
   ossBucket: "",
   ossAccessKeyId: "",
@@ -26006,16 +26014,6 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
         this.buildUI();
       })
     );
-    new import_obsidian.Setting(generalDetails).setName(t("settings.provider.name")).setDesc(t("settings.provider.desc")).addDropdown(
-      (dropdown) => dropdown.addOption("aliyun", "\u963F\u91CC\u4E91 OSS").addOption("tencent", "\u817E\u8BAF\u4E91 COS").setValue(this.plugin.settings.storageProvider).onChange(async (value) => {
-        this.plugin.settings.storageProvider = value;
-        await this.plugin.saveSettings();
-        this.buildUI();
-      })
-    );
-    const previewWrap = generalDetails.createDiv({ cls: "opal-url-preview" });
-    previewWrap.createSpan({ cls: "opal-url-preview-label", text: t("settings.urlPreview.label") });
-    previewEl = previewWrap.createSpan({ cls: "opal-url-preview-url", text: this.buildPreviewUrl() });
     const exportDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
     exportDetails.setAttribute("open", "");
     exportDetails.createEl("summary", {
@@ -26045,108 +26043,130 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
         previewEl == null ? void 0 : previewEl.setText(this.buildPreviewUrl());
       });
     });
-    const ossDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
-    ossDetails.createEl("summary", {
+    const routeDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
+    routeDetails.setAttribute("open", "");
+    routeDetails.createEl("summary", {
       cls: "opal-collapsible-heading",
-      text: t("settings.oss.heading")
+      text: t("settings.route.heading")
     });
-    const ossCallout = ossDetails.createDiv({ cls: "opal-oss-callout" });
-    const ossCalloutList = ossCallout.createEl("ul");
-    ossCalloutList.createEl("li", { text: t("settings.oss.callout.item1") });
-    ossCalloutList.createEl("li", { text: t("settings.oss.callout.item2") });
-    new import_obsidian.Setting(ossDetails).setName(t("settings.ossRegion.name")).setDesc(t("settings.ossRegion.desc")).addText(
+    new import_obsidian.Setting(routeDetails).setName(t("settings.route.name")).setDesc(t("settings.route.desc")).addDropdown(
+      (dropdown) => dropdown.addOption("none", t("settings.route.option.none")).addOption("aliyun", "\u963F\u91CC\u4E91 OSS").addOption("tencent", "\u817E\u8BAF\u4E91 COS").setValue(this.plugin.settings.storageProvider).onChange(async (value) => {
+        this.plugin.settings.storageProvider = value;
+        await this.plugin.saveSettings();
+        this.buildUI();
+      })
+    );
+    if (this.plugin.settings.storageProvider === "aliyun") {
+      previewEl = this.renderAliyunConfig(routeDetails);
+    } else if (this.plugin.settings.storageProvider === "tencent") {
+      previewEl = this.renderTencentConfig(routeDetails);
+    }
+  }
+  /** Render the Aliyun OSS credential block; returns the live URL-preview span. */
+  renderAliyunConfig(parent) {
+    const callout = parent.createDiv({ cls: "opal-oss-callout" });
+    const calloutList = callout.createEl("ul");
+    calloutList.createEl("li", { text: t("settings.oss.callout.item1") });
+    calloutList.createEl("li", { text: t("settings.oss.callout.item2") });
+    const previewWrap = parent.createDiv({ cls: "opal-url-preview" });
+    previewWrap.createSpan({ cls: "opal-url-preview-label", text: t("settings.urlPreview.label") });
+    const preview = previewWrap.createSpan({ cls: "opal-url-preview-url", text: this.buildPreviewUrl() });
+    new import_obsidian.Setting(parent).setName(t("settings.ossRegion.name")).setDesc(t("settings.ossRegion.desc")).addText(
       (text) => text.setPlaceholder("oss-cn-hangzhou").setValue(this.plugin.settings.ossRegion).onChange(async (value) => {
         this.plugin.settings.ossRegion = value.trim();
         await this.plugin.saveSettings();
-        previewEl == null ? void 0 : previewEl.setText(this.buildPreviewUrl());
+        preview.setText(this.buildPreviewUrl());
       })
     );
-    new import_obsidian.Setting(ossDetails).setName(t("settings.ossBucket.name")).addText(
+    new import_obsidian.Setting(parent).setName(t("settings.ossBucket.name")).addText(
       (text) => text.setPlaceholder("my-bucket").setValue(this.plugin.settings.ossBucket).onChange(async (value) => {
         this.plugin.settings.ossBucket = value.trim();
         await this.plugin.saveSettings();
-        previewEl == null ? void 0 : previewEl.setText(this.buildPreviewUrl());
+        preview.setText(this.buildPreviewUrl());
       })
     );
-    new import_obsidian.Setting(ossDetails).setName(t("settings.ossKeyId.name")).addText((text) => {
+    new import_obsidian.Setting(parent).setName(t("settings.ossKeyId.name")).addText((text) => {
       text.setPlaceholder("AccessKey ID").setValue(this.plugin.settings.ossAccessKeyId).onChange(async (value) => {
         this.plugin.settings.ossAccessKeyId = value.trim();
         await this.plugin.saveSettings();
       });
       text.inputEl.type = "password";
     });
-    new import_obsidian.Setting(ossDetails).setName(t("settings.ossKeySecret.name")).addText((text) => {
+    new import_obsidian.Setting(parent).setName(t("settings.ossKeySecret.name")).addText((text) => {
       text.setPlaceholder("AccessKey Secret").setValue(this.plugin.settings.ossAccessKeySecret).onChange(async (value) => {
         this.plugin.settings.ossAccessKeySecret = value.trim();
         await this.plugin.saveSettings();
       });
       text.inputEl.type = "password";
     });
-    new import_obsidian.Setting(ossDetails).setName(t("settings.ossPrefix.name")).setDesc(t("settings.ossPrefix.desc")).addText(
+    new import_obsidian.Setting(parent).setName(t("settings.ossPrefix.name")).setDesc(t("settings.ossPrefix.desc")).addText(
       (text) => text.setPlaceholder("notes").setValue(this.plugin.settings.ossPrefix).onChange(async (value) => {
         this.plugin.settings.ossPrefix = value.trim() || DEFAULT_SETTINGS.ossPrefix;
         await this.plugin.saveSettings();
-        previewEl == null ? void 0 : previewEl.setText(this.buildPreviewUrl());
+        preview.setText(this.buildPreviewUrl());
       })
     );
-    new import_obsidian.Setting(ossDetails).setName(t("settings.ossDomain.name")).setDesc(t("settings.ossDomain.desc")).addText(
+    new import_obsidian.Setting(parent).setName(t("settings.ossDomain.name")).setDesc(t("settings.ossDomain.desc")).addText(
       (text) => text.setPlaceholder("https://cdn.example.com").setValue(this.plugin.settings.ossDomain).onChange(async (value) => {
         this.plugin.settings.ossDomain = value.trim().replace(/\/$/, "");
         await this.plugin.saveSettings();
-        previewEl == null ? void 0 : previewEl.setText(this.buildPreviewUrl());
+        preview.setText(this.buildPreviewUrl());
       })
     );
-    const cosDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
-    cosDetails.createEl("summary", {
-      cls: "opal-collapsible-heading",
-      text: t("settings.cos.heading")
-    });
-    const cosCallout = cosDetails.createDiv({ cls: "opal-oss-callout" });
-    const cosCalloutList = cosCallout.createEl("ul");
-    cosCalloutList.createEl("li", { text: t("settings.cos.callout.item1") });
-    cosCalloutList.createEl("li", { text: t("settings.cos.callout.item2") });
-    new import_obsidian.Setting(cosDetails).setName(t("settings.cosRegion.name")).setDesc(t("settings.cosRegion.desc")).addText(
+    return preview;
+  }
+  /** Render the Tencent COS credential block; returns the live URL-preview span. */
+  renderTencentConfig(parent) {
+    const callout = parent.createDiv({ cls: "opal-oss-callout" });
+    const calloutList = callout.createEl("ul");
+    calloutList.createEl("li", { text: t("settings.cos.callout.item1") });
+    calloutList.createEl("li", { text: t("settings.cos.callout.item2") });
+    const previewWrap = parent.createDiv({ cls: "opal-url-preview" });
+    previewWrap.createSpan({ cls: "opal-url-preview-label", text: t("settings.urlPreview.label") });
+    const preview = previewWrap.createSpan({ cls: "opal-url-preview-url", text: this.buildPreviewUrl() });
+    new import_obsidian.Setting(parent).setName(t("settings.cosRegion.name")).setDesc(t("settings.cosRegion.desc")).addText(
       (text) => text.setPlaceholder("ap-guangzhou").setValue(this.plugin.settings.cosRegion).onChange(async (value) => {
         this.plugin.settings.cosRegion = value.trim();
         await this.plugin.saveSettings();
-        previewEl == null ? void 0 : previewEl.setText(this.buildPreviewUrl());
+        preview.setText(this.buildPreviewUrl());
       })
     );
-    new import_obsidian.Setting(cosDetails).setName(t("settings.cosBucket.name")).setDesc(t("settings.cosBucket.desc")).addText(
+    new import_obsidian.Setting(parent).setName(t("settings.cosBucket.name")).setDesc(t("settings.cosBucket.desc")).addText(
       (text) => text.setPlaceholder("my-bucket-1250000000").setValue(this.plugin.settings.cosBucket).onChange(async (value) => {
         this.plugin.settings.cosBucket = value.trim();
         await this.plugin.saveSettings();
-        previewEl == null ? void 0 : previewEl.setText(this.buildPreviewUrl());
+        preview.setText(this.buildPreviewUrl());
       })
     );
-    new import_obsidian.Setting(cosDetails).setName(t("settings.cosSecretId.name")).addText((text) => {
+    new import_obsidian.Setting(parent).setName(t("settings.cosSecretId.name")).addText((text) => {
       text.setPlaceholder("SecretId").setValue(this.plugin.settings.cosSecretId).onChange(async (value) => {
         this.plugin.settings.cosSecretId = value.trim();
         await this.plugin.saveSettings();
       });
       text.inputEl.type = "password";
     });
-    new import_obsidian.Setting(cosDetails).setName(t("settings.cosSecretKey.name")).addText((text) => {
+    new import_obsidian.Setting(parent).setName(t("settings.cosSecretKey.name")).addText((text) => {
       text.setPlaceholder("SecretKey").setValue(this.plugin.settings.cosSecretKey).onChange(async (value) => {
         this.plugin.settings.cosSecretKey = value.trim();
         await this.plugin.saveSettings();
       });
       text.inputEl.type = "password";
     });
-    new import_obsidian.Setting(cosDetails).setName(t("settings.cosPrefix.name")).setDesc(t("settings.cosPrefix.desc")).addText(
+    new import_obsidian.Setting(parent).setName(t("settings.cosPrefix.name")).setDesc(t("settings.cosPrefix.desc")).addText(
       (text) => text.setPlaceholder("notes").setValue(this.plugin.settings.cosPrefix).onChange(async (value) => {
         this.plugin.settings.cosPrefix = value.trim() || DEFAULT_SETTINGS.cosPrefix;
         await this.plugin.saveSettings();
-        previewEl == null ? void 0 : previewEl.setText(this.buildPreviewUrl());
+        preview.setText(this.buildPreviewUrl());
       })
     );
-    new import_obsidian.Setting(cosDetails).setName(t("settings.cosDomain.name")).setDesc(t("settings.cosDomain.desc")).addText(
+    new import_obsidian.Setting(parent).setName(t("settings.cosDomain.name")).setDesc(t("settings.cosDomain.desc")).addText(
       (text) => text.setPlaceholder("https://cdn.example.com").setValue(this.plugin.settings.cosDomain).onChange(async (value) => {
         this.plugin.settings.cosDomain = value.trim().replace(/\/$/, "");
         await this.plugin.saveSettings();
-        previewEl == null ? void 0 : previewEl.setText(this.buildPreviewUrl());
+        preview.setText(this.buildPreviewUrl());
       })
     );
+    return preview;
   }
 };
 
@@ -30082,14 +30102,19 @@ var SharePopover = class {
     const actions = card.createDiv({
       cls: "opal-share-popover-actions opal-share-popover-actions--text"
     });
-    const ossReady = this.plugin.isOssReady();
     const publishBtn = actions.createEl("button", {
       cls: "opal-share-popover-textbtn mod-cta",
       text: t("menu.publish")
     });
-    publishBtn.disabled = !ossReady;
     publishBtn.addEventListener("click", () => {
-      if (!ossReady) return;
+      if (this.plugin.settings.storageProvider === "none") {
+        new import_obsidian9.Notice(t("notice.noRoute"));
+        return;
+      }
+      if (!this.plugin.isPublishReady()) {
+        new import_obsidian9.Notice(t("notice.routeNotConfigured"));
+        return;
+      }
       this.showConfirm(file, "publish");
     });
     const exportBtn = actions.createEl("button", {
@@ -30707,9 +30732,10 @@ var ShareOnlinePlugin = class extends import_obsidian11.Plugin {
       !published ? t("statusbar.shareNote") : stale ? t("statusbar.stale") : t("statusbar.published")
     );
   }
-  /** True when the OSS credentials needed to publish are all present. */
-  isOssReady() {
-    return !!(this.settings.ossRegion && this.settings.ossBucket && this.settings.ossAccessKeyId && this.settings.ossAccessKeySecret);
+  /** True when a publish route is selected and its credentials are all present. */
+  isPublishReady() {
+    if (this.settings.storageProvider === "none") return false;
+    return getStore(this.settings).isConfigured;
   }
   /** True when the note's current body differs from the published snapshot. */
   async isStale(file) {
@@ -30731,7 +30757,14 @@ var ShareOnlinePlugin = class extends import_obsidian11.Plugin {
    * the publish — progress/result are shown back in the popover by `doPublish`.
    */
   publishFromUi(file, subNotes) {
-    if (!this.isOssReady()) return;
+    if (this.settings.storageProvider === "none") {
+      new import_obsidian11.Notice(t("notice.noRoute"));
+      return;
+    }
+    if (!this.isPublishReady()) {
+      new import_obsidian11.Notice(t("notice.routeNotConfigured"));
+      return;
+    }
     void this.doPublish(file, subNotes);
   }
   /** Unpublish the note plus the sub-notes the user ticked in the popover's confirm panel. */
@@ -30742,8 +30775,8 @@ var ShareOnlinePlugin = class extends import_obsidian11.Plugin {
     await this.exportFile(file);
   }
   // ── Actions ──────────────────────────────────────────────────────────
-  async doPublish(file, subNotes, existingName, successText = t("toast.publishSuccess"), copyToClipboard = true) {
-    const total = subNotes.filter((sn) => !sn.shareLink).length + 1;
+  async doPublish(file, subNotes, existingName, successText = t("toast.publishSuccess"), copyToClipboard = true, updateExisting = false) {
+    const total = (updateExisting ? subNotes.length : subNotes.filter((sn) => !sn.shareLink).length) + 1;
     let done = 0;
     const progress = (label) => this.sharePopover.showProgress(this.statusBarEl, label, done, total);
     progress(t("toast.progress.rendering"));
@@ -30763,13 +30796,15 @@ var ShareOnlinePlugin = class extends import_obsidian11.Plugin {
       const subFolderMap = /* @__PURE__ */ new Map();
       let mainHtml = result.html;
       for (const sn of subNotes) {
-        if (sn.shareLink) {
-          const noteName = this.extractNoteName(sn.shareLink);
-          usedNames.add(noteName);
-          subFolderMap.set(sn.file.basename, noteName);
-          subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), noteName);
+        const reuseName = sn.shareLink ? this.extractNoteName(sn.shareLink) : void 0;
+        if (reuseName && !updateExisting) {
+          usedNames.add(reuseName);
+          subFolderMap.set(sn.file.basename, reuseName);
+          subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), reuseName);
         } else {
-          const subResult = await prepareExport(this.app, this.app.vault, sn.file, generateUniqueName(usedNames, this.settings.pageLinkLength), katexBase, analytics);
+          const noteName = reuseName != null ? reuseName : generateUniqueName(usedNames, this.settings.pageLinkLength);
+          if (reuseName) usedNames.add(reuseName);
+          const subResult = await prepareExport(this.app, this.app.vault, sn.file, noteName, katexBase, analytics);
           subFolderMap.set(sn.file.basename, subResult.noteName);
           subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), subResult.noteName);
           if (subResult.hasMath) await ensureKatex();
@@ -30852,7 +30887,7 @@ var ShareOnlinePlugin = class extends import_obsidian11.Plugin {
     const existingUrl = this.getShareLink(file);
     const existingName = existingUrl ? this.extractNoteName(existingUrl) : void 0;
     const subNotes = this.settings.includeLinkedNotes ? collectLinkedNotesWithStatus(this.app, file) : [];
-    await this.doPublish(file, subNotes, existingName, t("toast.updateSuccess"), false);
+    await this.doPublish(file, subNotes, existingName, t("toast.updateSuccess"), false, true);
   }
   async updateFromUi(file) {
     await this.updateNote(file);

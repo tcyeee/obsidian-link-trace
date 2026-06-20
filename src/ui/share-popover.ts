@@ -1,4 +1,4 @@
-import { TFile, setIcon, setTooltip } from "obsidian";
+import { Notice, TFile, setIcon, setTooltip } from "obsidian";
 import type ShareOnlinePlugin from "../../main";
 import { t } from "../core/i18n";
 import { canReadAnalytics, type DailyPoint, type DimensionItem } from "../analytics/analytics";
@@ -531,14 +531,19 @@ export class SharePopover {
 		const actions = card.createDiv({
 			cls: "opal-share-popover-actions opal-share-popover-actions--text",
 		});
-		const ossReady = this.plugin.isOssReady();
 		const publishBtn = actions.createEl("button", {
 			cls: "opal-share-popover-textbtn mod-cta",
 			text: t("menu.publish"),
 		});
-		publishBtn.disabled = !ossReady;
 		publishBtn.addEventListener("click", () => {
-			if (!ossReady) return;
+			if (this.plugin.settings.storageProvider === "none") {
+				new Notice(t("notice.noRoute"));
+				return;
+			}
+			if (!this.plugin.isPublishReady()) {
+				new Notice(t("notice.routeNotConfigured"));
+				return;
+			}
 			this.showConfirm(file, "publish");
 		});
 		const exportBtn = actions.createEl("button", {

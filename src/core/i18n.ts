@@ -29,8 +29,10 @@ const zh: Translations = {
 	"settings.ossDomain.desc": "替换默认的 OSS 域名，留空则使用默认。例如 https://cdn.example.com",
 	"settings.urlPreview.label": "预览：",
 
-	"settings.provider.name": "存储服务",
-	"settings.provider.desc": "选择发布到哪个云存储",
+	"settings.route.heading": "发布路线配置",
+	"settings.route.name": "发布路线",
+	"settings.route.desc": "选择一条发布路线（二选一），选择后下方会显示对应配置",
+	"settings.route.option.none": "— 请选择 —",
 	"settings.cos.heading": "通过腾讯云COS发布",
 	"settings.cos.callout.item1": "请确保 COS 存储桶访问权限为「公有读私有写」",
 	"settings.cos.callout.item2": "COS 必须配置自定义域名，否则链接打开只会触发下载",
@@ -118,6 +120,8 @@ const zh: Translations = {
 
 	"notice.onlyMarkdown.share": "只能分享 Markdown 笔记",
 	"notice.onlyMarkdown.publish": "只能发布 Markdown 笔记",
+	"notice.noRoute": "请先在插件设置中选择发布路线（阿里云 OSS 或 腾讯云 COS）",
+	"notice.routeNotConfigured": "请先在插件设置中填写所选发布路线的配置信息",
 
 	"modal.publish.title": "发布笔记",
 	"modal.unpublish.title": "停止分享",
@@ -175,8 +179,10 @@ const en: Translations = {
 	"settings.ossDomain.desc": "Replace the default OSS domain. Leave empty for default. e.g. https://cdn.example.com",
 	"settings.urlPreview.label": "Preview: ",
 
-	"settings.provider.name": "Storage provider",
-	"settings.provider.desc": "Choose which cloud to publish to",
+	"settings.route.heading": "Publish Route",
+	"settings.route.name": "Publish route",
+	"settings.route.desc": "Pick one publish route; its configuration appears below once selected",
+	"settings.route.option.none": "— Select —",
 	"settings.cos.heading": "Publish via Tencent COS",
 	"settings.cos.callout.item1": "Ensure your COS bucket permission is \"Public Read / Private Write\"",
 	"settings.cos.callout.item2": "COS must have a custom domain configured; otherwise links will trigger a download instead of opening",
@@ -264,6 +270,8 @@ const en: Translations = {
 
 	"notice.onlyMarkdown.share": "Only Markdown notes can be shared",
 	"notice.onlyMarkdown.publish": "Only Markdown notes can be published",
+	"notice.noRoute": "Please choose a publish route (Aliyun OSS or Tencent COS) in the plugin settings first",
+	"notice.routeNotConfigured": "Please fill in the configuration for the selected publish route in the plugin settings first",
 
 	"modal.publish.title": "Publish Note",
 	"modal.unpublish.title": "Stop Sharing",

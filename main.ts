@@ -1,7 +1,7 @@
 import { MarkdownView, Notice, Plugin, TFile, debounce, setIcon, setTooltip } from "obsidian";
 import { ShareOnlineSettings, DEFAULT_SETTINGS, ShareOnlineSettingTab } from "./src/ui/settings";
 import { exportToZip, prepareExport, generateUniqueName, collectLinkedNotesWithStatus, rewriteInternalLinks } from "./src/publish/exporter";
-import { uploadPage, deletePage, listPublishedNames, ensureKatexAssets, katexBaseUrl } from "./src/publish/storage";
+import { uploadPage, deletePage, listPublishedNames, ensureKatexAssets, katexBaseUrl, getStore } from "./src/publish/storage";
 import { t, setLanguage } from "./src/core/i18n";
 import { getAnalyticsInjectConfig } from "./src/analytics/analytics";
 import { hashBody, stripFrontmatter } from "./src/core/note-hash";
@@ -151,14 +151,10 @@ export default class ShareOnlinePlugin extends Plugin {
 		);
 	}
 
-	/** True when the OSS credentials needed to publish are all present. */
-	isOssReady(): boolean {
-		return !!(
-			this.settings.ossRegion &&
-			this.settings.ossBucket &&
-			this.settings.ossAccessKeyId &&
-			this.settings.ossAccessKeySecret
-		);
+	/** True when a publish route is selected and its credentials are all present. */
+	isPublishReady(): boolean {
+		if (this.settings.storageProvider === "none") return false;
+		return getStore(this.settings).isConfigured;
 	}
 
 	/** True when the note's current body differs from the published snapshot. */
@@ -188,7 +184,14 @@ export default class ShareOnlinePlugin extends Plugin {
 	 * the publish — progress/result are shown back in the popover by `doPublish`.
 	 */
 	publishFromUi(file: TFile, subNotes: { file: TFile; shareLink: string }[]): void {
-		if (!this.isOssReady()) return;
+		if (this.settings.storageProvider === "none") {
+			new Notice(t("notice.noRoute"));
+			return;
+		}
+		if (!this.isPublishReady()) {
+			new Notice(t("notice.routeNotConfigured"));
+			return;
+		}
 		void this.doPublish(file, subNotes);
 	}
 
@@ -208,15 +211,19 @@ export default class ShareOnlinePlugin extends Plugin {
 		subNotes: { file: TFile; shareLink: string }[],
 		existingName?: string,
 		successText = t("toast.publishSuccess"),
-		copyToClipboard = true
+		copyToClipboard = true,
+		updateExisting = false
 	): Promise<void> {
 		// Progress + success are shown inside the share popover (anchored to the
 		// status-bar icon) rather than as a separate toast. The popover's bar starts
 		// climbing on a fake ramp the moment publishing begins; the real step count
-		// reported here (one step per uploaded page: each freshly-published sub-note
-		// plus the main page — already-published sub-notes are reused and do no upload
-		// work) only raises a floor that can push the bar ahead of the ramp.
-		const total = subNotes.filter((sn) => !sn.shareLink).length + 1;
+		// reported here (one step per uploaded page: each uploaded sub-note plus the
+		// main page) only raises a floor that can push the bar ahead of the ramp.
+		// On a fresh publish, already-published sub-notes are reused and do no upload
+		// work; on an update (`updateExisting`), they are re-rendered and re-uploaded
+		// in place so linked pages reflect the latest content too.
+		const total =
+			(updateExisting ? subNotes.length : subNotes.filter((sn) => !sn.shareLink).length) + 1;
 		let done = 0;
 		const progress = (label: string) =>
 			this.sharePopover.showProgress(this.statusBarEl, label, done, total);
@@ -242,14 +249,20 @@ export default class ShareOnlinePlugin extends Plugin {
 			let mainHtml = result.html;
 
 			for (const sn of subNotes) {
-				if (sn.shareLink) {
-					// Already published — reuse existing noteName for link rewriting
-					const noteName = this.extractNoteName(sn.shareLink);
-					usedNames.add(noteName);
-					subFolderMap.set(sn.file.basename, noteName);
-					subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), noteName);
+				const reuseName = sn.shareLink ? this.extractNoteName(sn.shareLink) : undefined;
+				if (reuseName && !updateExisting) {
+					// Fresh publish: reuse the already-published page as-is, only
+					// register its name so the main note's links resolve to it.
+					usedNames.add(reuseName);
+					subFolderMap.set(sn.file.basename, reuseName);
+					subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), reuseName);
 				} else {
-					const subResult = await prepareExport(this.app, this.app.vault, sn.file, generateUniqueName(usedNames, this.settings.pageLinkLength), katexBase, analytics);
+					// A newly-linked sub-note (new name), or — on an update — an
+					// already-published one re-rendered and re-uploaded to its own name.
+					const noteName =
+						reuseName ?? generateUniqueName(usedNames, this.settings.pageLinkLength);
+					if (reuseName) usedNames.add(reuseName);
+					const subResult = await prepareExport(this.app, this.app.vault, sn.file, noteName, katexBase, analytics);
 					subFolderMap.set(sn.file.basename, subResult.noteName);
 					subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), subResult.noteName);
 					if (subResult.hasMath) await ensureKatex();
@@ -353,7 +366,10 @@ export default class ShareOnlinePlugin extends Plugin {
 		const subNotes = this.settings.includeLinkedNotes
 			? collectLinkedNotesWithStatus(this.app, file)
 			: [];
-		await this.doPublish(file, subNotes, existingName, t("toast.updateSuccess"), false);
+		// Update re-uploads every linked sub-note too (updateExisting=true): already-
+		// published ones are re-rendered in place, newly-linked ones are uploaded fresh.
+		// Sub-notes dropped from the note simply aren't in `subNotes`, so they're left as-is.
+		await this.doPublish(file, subNotes, existingName, t("toast.updateSuccess"), false, true);
 	}
 
 	async updateFromUi(file: TFile): Promise<void> {
