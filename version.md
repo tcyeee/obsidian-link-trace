@@ -5,6 +5,16 @@
 
 ---
 
+## Version 0.1.11
+
+- Added Tencent Cloud COS as a storage provider you can publish to, alongside Alibaba Cloud OSS, selectable in settings
+- Added a publish destination selector so you can choose where each note is published
+- Changed updating a published note to also re-upload its linked sub-notes, keeping them in sync
+
+- 新增腾讯云 COS 作为可发布的存储服务，与阿里云 OSS 并列，可在设置中选择
+- 新增发布目标选择器，可为每篇笔记选择发布到哪个存储
+- 更新已发布笔记时改为同时重新上传其关联子笔记，保持同步
+
 ## Version 0.1.10
 
 - Added a redesigned share popover card (replacing the old share modal) with a live progress bar that shows rendering and per-page upload/delete steps while publishing, updating, or unpublishing
