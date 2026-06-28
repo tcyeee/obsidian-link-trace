@@ -9,7 +9,13 @@ import {
 	type PopoverDimensionKey,
 } from "../analytics/analytics-client";
 import { sizeLabel } from "../analytics/stats-detail-modal";
-import { collectLinkedNotesWithStatus } from "../publish/exporter";
+import {
+	collectSubNoteTree,
+	flattenSubTree,
+	makeUniquePrefixStripper,
+	MAX_SUB_PAGES,
+	type SubNoteNode,
+} from "../publish/exporter";
 
 /** A linked note plus its current share link (empty when not yet published). */
 type SubNoteStatus = { file: TFile; shareLink: string };
@@ -535,17 +541,7 @@ export class SharePopover {
 			cls: "opal-share-popover-textbtn mod-cta",
 			text: t("menu.publish"),
 		});
-		publishBtn.addEventListener("click", () => {
-			if (this.plugin.settings.storageProvider === "none") {
-				new Notice(t("notice.noRoute"));
-				return;
-			}
-			if (!this.plugin.isPublishReady()) {
-				new Notice(t("notice.routeNotConfigured"));
-				return;
-			}
-			this.showConfirm(file, "publish");
-		});
+		publishBtn.addEventListener("click", () => this.openPublishConfirm(this.anchor as HTMLElement));
 		const exportBtn = actions.createEl("button", {
 			cls: "opal-share-popover-textbtn",
 			text: t("menu.exportLocal"),
@@ -558,14 +554,39 @@ export class SharePopover {
 
 	// ── Inline publish/unpublish confirmation (replaces the old ShareModal) ──
 
+	/**
+	 * Open the popover at `anchor` and jump straight to the publish-confirm panel,
+	 * running the same route checks as the in-popover Publish button. Shared by that
+	 * button and the "export to OSS" command so both take one publish path (with the
+	 * sub-page hierarchy, checkboxes and the 50-page cap).
+	 */
+	openPublishConfirm(anchor: HTMLElement): void {
+		const file = this.plugin.app.workspace.getActiveFile();
+		if (!file || file.extension !== "md") {
+			new Notice(t("notice.onlyMarkdown.publish"));
+			return;
+		}
+		if (this.plugin.settings.storageProvider === "none") {
+			new Notice(t("notice.noRoute"));
+			return;
+		}
+		if (!this.plugin.isPublishReady()) {
+			new Notice(t("notice.routeNotConfigured"));
+			return;
+		}
+		this.ensureCard(anchor); // sets this.anchor so showConfirm can position the panel
+		this.showConfirm(file, "publish");
+	}
+
 	/** Swap the card to the inline confirm panel for a publish/unpublish action. */
 	private showConfirm(file: TFile, mode: ConfirmMode): void {
 		const anchor = this.anchor;
 		if (!anchor) return;
 		const card = this.ensureCard(anchor);
-		this.renderConfirm(card, file, mode);
-		this.position(card, anchor);
-		this.registerDismiss(card, anchor);
+		void this.renderConfirm(card, file, mode).then(() => {
+			this.position(card, anchor);
+			this.registerDismiss(card, anchor);
+		});
 	}
 
 	/**
@@ -577,13 +598,35 @@ export class SharePopover {
 	 * shows no view counts. Cancel restores the normal card; Confirm hands the
 	 * selection to the plugin, whose progress + result render back into this card.
 	 */
-	private renderConfirm(card: HTMLElement, file: TFile, mode: ConfirmMode): void {
+	private async renderConfirm(card: HTMLElement, file: TFile, mode: ConfirmMode): Promise<void> {
 		card.addClass(`${POPOVER_CLASS}--confirm`);
 		const isPublish = mode === "publish";
-		const subNotes: SubNoteStatus[] = this.plugin.settings.includeLinkedNotes
-			? collectLinkedNotesWithStatus(this.plugin.app, file)
-			: [];
+		const level = this.plugin.settings.exportLevel;
+		const { nodes, truncated } =
+			level > 1
+				? await collectSubNoteTree(this.plugin.app, file, level - 1)
+				: { nodes: [] as SubNoteNode[], truncated: false };
+		const flat = flattenSubTree(nodes);
+		// Strip the unique-note timestamp prefix from displayed names, matching
+		// the exported pages (no-op unless the compatibility toggle is on).
+		const displayName = await makeUniquePrefixStripper(
+			this.plugin.app,
+			this.plugin.settings.stripUniquePrefix
+		);
+
+		// checkStates governs which sub-pages are published/stopped; checkboxes lets a
+		// parent toggle cascade onto its descendants; descendantsOf maps each node to
+		// the paths below it for that cascade.
 		const checkStates = new Map<string, boolean>();
+		const checkboxes = new Map<string, HTMLInputElement>();
+		const descendantsOf = new Map<string, string[]>();
+		const computeDesc = (node: SubNoteNode): string[] => {
+			const all: string[] = [];
+			for (const c of node.children) all.push(c.file.path, ...computeDesc(c));
+			descendantsOf.set(node.file.path, all);
+			return all;
+		};
+		nodes.forEach(computeDesc);
 
 		// Header: icon avatar + title, matching the published/unpublished views.
 		const header = card.createDiv({ cls: "opal-share-popover-header" });
@@ -605,42 +648,68 @@ export class SharePopover {
 		});
 		const mainRow = body.createDiv({ cls: "opal-share-popover-confirm-item" });
 		setIcon(mainRow.createDiv({ cls: "opal-share-popover-confirm-icon" }), "file-text");
-		mainRow.createSpan({ cls: "opal-share-popover-confirm-name", text: file.basename + ".md" });
+		this.createConfirmName(mainRow, displayName(file.basename) + ".md");
 		if (isPublish) this.showConfirmViews(mainRow, this.plugin.getShareLink(file));
 
-		// Linked sub-notes (only when "include linked notes" is on and some exist).
-		if (subNotes.length > 0) {
+		// Gate updater is wired after the confirm button exists below.
+		let updateGate = (): void => {};
+
+		// Linked sub-pages, shown as an indented hierarchy with per-page checkboxes.
+		if (flat.length > 0) {
 			body.createDiv({
 				cls: "opal-share-popover-confirm-label",
 				text: isPublish
-					? t("modal.subNotes.publish", { count: String(subNotes.length) })
+					? t("modal.subNotes.publish", { count: String(flat.length) })
 					: t("modal.subNotes.unpublish"),
 			});
-			for (const sn of subNotes) {
+			if (truncated) {
+				body.createDiv({
+					cls: "opal-share-popover-confirm-truncated",
+					text: t("modal.subNotes.truncated", { max: String(flat.length) }),
+				});
+			}
+			for (const node of flat) {
 				const row = body.createDiv({ cls: "opal-share-popover-confirm-item" });
-				if (!isPublish) {
-					if (sn.shareLink) {
-						checkStates.set(sn.file.path, true);
-						const cb = row.createEl("input", { cls: "opal-share-popover-confirm-check" });
-						cb.type = "checkbox";
-						cb.checked = true;
-						cb.addEventListener("change", () => checkStates.set(sn.file.path, cb.checked));
-					} else {
-						row.createDiv({ cls: "opal-share-popover-confirm-check-placeholder" });
-					}
+				row.setCssProps({ "--depth": String(node.depth - 1) });
+				// Publish: every sub-page is selectable. Unpublish: only already-published ones.
+				const canCheck = isPublish || !!node.shareLink;
+				if (canCheck) {
+					checkStates.set(node.file.path, true);
+					const cb = row.createEl("input", { cls: "opal-share-popover-confirm-check" });
+					cb.type = "checkbox";
+					cb.checked = true;
+					checkboxes.set(node.file.path, cb);
+					cb.addEventListener("change", () => {
+						checkStates.set(node.file.path, cb.checked);
+						// A page is only reachable through its parent — cascade the toggle down.
+						for (const p of descendantsOf.get(node.file.path) ?? []) {
+							const dcb = checkboxes.get(p);
+							if (dcb) {
+								dcb.checked = cb.checked;
+								dcb.disabled = !cb.checked;
+								checkStates.set(p, cb.checked);
+							}
+						}
+						updateGate();
+					});
+				} else {
+					row.createDiv({ cls: "opal-share-popover-confirm-check-placeholder" });
 				}
 				setIcon(row.createDiv({ cls: "opal-share-popover-confirm-icon" }), "file-text");
-				row.createSpan({ cls: "opal-share-popover-confirm-name", text: sn.file.basename + ".md" });
+				this.createConfirmName(row, displayName(node.file.basename) + ".md");
 				if (isPublish) {
 					row.createSpan({
 						cls: "opal-share-popover-confirm-badge",
-						text: sn.shareLink ? t("modal.badge.hasLink") : t("modal.badge.willUpload"),
+						text: node.shareLink ? t("modal.badge.hasLink") : t("modal.badge.willUpload"),
 					});
 				}
-				if (isPublish && sn.shareLink) this.showConfirmViews(row, sn.shareLink);
-				if (!sn.shareLink) row.addClass("is-skip");
+				if (isPublish && node.shareLink) this.showConfirmViews(row, node.shareLink);
+				if (isPublish && !node.shareLink) row.addClass("is-skip");
 			}
 		}
+
+		// Over-limit warning (publish only): too many sub-pages selected to publish.
+		const warn = card.createDiv({ cls: "opal-share-popover-confirm-warn" });
 
 		// Cancel / confirm — same full-width button row as the unpublished view.
 		const actions = card.createDiv({
@@ -658,14 +727,72 @@ export class SharePopover {
 			cls: "opal-share-popover-textbtn mod-cta",
 			text: isPublish ? t("modal.btn.confirmPublish") : t("modal.btn.confirmUnpublish"),
 		});
+
+		// Enforce the sub-page cap: while more than MAX_SUB_PAGES are selected for
+		// publishing, warn and block confirm until the user unchecks enough.
+		updateGate = () => {
+			if (!isPublish) return;
+			const selected = [...checkStates.values()].filter(Boolean).length;
+			const over = selected > MAX_SUB_PAGES;
+			confirm.disabled = over;
+			warn.toggleClass("is-visible", over);
+			if (over) {
+				warn.setText(
+					t("modal.subNotes.overLimit", { count: String(selected), max: String(MAX_SUB_PAGES) })
+				);
+			}
+		};
+		updateGate();
+
 		confirm.addEventListener("click", () => {
+			if (confirm.disabled) return;
+			const selected: SubNoteStatus[] = flat
+				.filter((n) => checkStates.get(n.file.path) && (isPublish || n.shareLink))
+				.map((n) => ({ file: n.file, shareLink: n.shareLink }));
 			if (isPublish) {
-				this.plugin.publishFromUi(file, subNotes);
+				this.plugin.publishFromUi(file, selected);
 			} else {
-				const selected = subNotes.filter((sn) => sn.shareLink && checkStates.get(sn.file.path));
 				this.plugin.unpublishFromUi(file, selected);
 			}
 		});
+	}
+
+	/**
+	 * Render a note name in a confirm row. Long names are clipped with an ellipsis;
+	 * hovering scrolls the name horizontally at a steady speed to reveal the full text
+	 * (and a native `title` tooltip is set as a fallback).
+	 */
+	private createConfirmName(parent: HTMLElement, name: string): HTMLSpanElement {
+		const el = parent.createSpan({ cls: "opal-share-popover-confirm-name", text: name });
+		el.setAttr("title", name);
+
+		const SPEED = 0.04; // px per ms (~40px/s)
+		const DELAY = 350; // ms to pause before scrolling starts
+		let raf = 0;
+		el.addEventListener("mouseenter", () => {
+			const max = el.scrollWidth - el.clientWidth;
+			if (max <= 0) return;
+			// Drop the ellipsis while scrolling so it doesn't sit on top of the text.
+			el.addClass("is-scrolling");
+			let start = 0;
+			let last = 0;
+			const tick = (ts: number): void => {
+				if (!start) start = last = ts;
+				if (ts - start > DELAY) {
+					el.scrollLeft = Math.min(max, el.scrollLeft + SPEED * (ts - last));
+				}
+				last = ts;
+				if (el.scrollLeft < max) raf = window.requestAnimationFrame(tick);
+			};
+			raf = window.requestAnimationFrame(tick);
+		});
+		el.addEventListener("mouseleave", () => {
+			if (raf) window.cancelAnimationFrame(raf);
+			raf = 0;
+			el.scrollLeft = 0;
+			el.removeClass("is-scrolling");
+		});
+		return el;
 	}
 
 	/** Async-load a sub-note/main-note's view count into the confirm row (best-effort). */

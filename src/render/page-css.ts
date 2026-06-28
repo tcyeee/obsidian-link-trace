@@ -358,7 +358,7 @@ p:empty { display: none; }
 }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
 thead { background: #F3F9F7; border-bottom: 1px solid #DADCDE; }
-th, td { color: rgb(107, 107, 107); padding: 10px 13px; border-left: 1px solid #DADCDE; }
+th, td { color: rgb(107, 107, 107); padding: 7px 13px; border-left: 1px solid #DADCDE; }
 th { font-weight: 700; }
 th:first-child, td:first-child { border-left: none; }
 tbody tr { border-bottom: 1px solid #DADCDE; }

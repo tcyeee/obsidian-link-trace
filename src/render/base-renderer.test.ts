@@ -131,6 +131,15 @@ describe("evalExpr", () => {
     const ctx = fakeCtx({ fm: { created: "2024-03-09T00:00:00" } });
     expect(evalExpr('created.format("YYYY-MM-DD")', ctx)).toBe("2024-03-09");
   });
+
+  it("renders link() as a rewritable internal link (data-href + internal-link class), not an obsidian:// deep link", () => {
+    const ctx = fakeCtx({ file: fakeFile({ basename: "My Note", path: "folder/My Note.md" }) });
+    const out = evalExpr("link(file)", ctx);
+    expect(out).toContain('data-href="folder/My Note.md"');
+    expect(out).toContain('class="internal-link base-link"');
+    expect(out).toContain(">My Note</a>");
+    expect(out).not.toContain("obsidian://");
+  });
 });
 
 /* ── List view row formatting (the list-vs-table bug) ───────────────────── */

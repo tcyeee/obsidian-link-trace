@@ -238,6 +238,16 @@ function escapeHtml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
+/**
+ * An Obsidian-style internal link to `ctx.file`, the same shape the markdown
+ * renderer emits: `data-href` carries the note path and the `internal-link`
+ * class marks it, so the exporter rewrites it to the sibling exported page and
+ * picks the note up as a sub-page. href is "#" until rewriteInternalLinks runs.
+ */
+function fileLinkHtml(ctx: EvalCtx, text: string): string {
+  return `<a href="#" class="internal-link base-link" data-href="${escapeHtml(ctx.file.path)}">${escapeHtml(text)}</a>`;
+}
+
 function fmToString(v: unknown): string {
   if (Array.isArray(v)) return v.map(item => (item !== null && typeof item === "object" ? JSON.stringify(item) : String(item))).join(", ");
   if (v !== null && typeof v === "object") return JSON.stringify(v);
@@ -261,15 +271,18 @@ export function evalExpr(expr: string, ctx: EvalCtx): string {
   }
 
   // link(path) or link(path, display)
-  // Renders as an obsidian:// deep-link pointing to the current row's file.
+  // Rendered as an Obsidian-style internal link to the current row's file: a
+  // `data-href` carrying the note path + the `internal-link` class, so the
+  // exporter's rewriteInternalLinks() can repoint it at the sibling exported
+  // page (and the note is picked up as a sub-page to publish). href starts at
+  // "#"; rewriteInternalLinks replaces it with the real target or leaves "#".
   const linkM = expr.match(/^link\(([\s\S]+)\)$/);
   if (linkM) {
     const args = splitTopLevelArgs(linkM[1]);
     const display = args.length >= 2
       ? evalExpr(args[1], ctx)          // already HTML-safe
       : escapeHtml(ctx.file.basename);
-    const href = `obsidian://open?vault=${encodeURIComponent(ctx.vaultName)}&file=${encodeURIComponent(ctx.file.path)}`;
-    return `<a href="${href}" class="base-link">${display}</a>`;
+    return `<a href="#" class="internal-link base-link" data-href="${escapeHtml(ctx.file.path)}">${display}</a>`;
   }
 
   // if(cond, val1, val2)
@@ -490,8 +503,8 @@ function cellValue(col: string, ctx: EvalCtx, formulas: Record<string, string>):
   }
   if (col === "file.mtime")     return formatDateValue(ctx.stat.mtime);
   if (col === "file.ctime")     return formatDateValue(ctx.stat.ctime);
-  if (col === "file.name")      return escapeHtml(ctx.file.name);
-  if (col === "file.basename")  return escapeHtml(ctx.file.basename);
+  if (col === "file.name")      return fileLinkHtml(ctx, ctx.file.name);
+  if (col === "file.basename")  return fileLinkHtml(ctx, ctx.file.basename);
   if (col === "file.size")      return String(ctx.stat.size);
   if (col === "file.backlinks") return String(countBacklinks(ctx.app, ctx.file));
   const key = col.startsWith("note.") ? col.slice(5) : col;
@@ -509,17 +522,31 @@ function viewOrder(
 
 /* ── Public API ─────────────────────────────────────────────────────────── */
 
-/** Build an HTML table from a `.base` file by querying the vault. */
-export async function renderBaseAsTable(
+/** A parsed `.base` view plus the vault files it resolves to (filter/sort/limit applied). */
+interface BaseQuery {
+  config:     BaseConfig;
+  view:       NonNullable<BaseConfig["views"]>[number];
+  formulas:   Record<string, string>;
+  properties: BaseConfig["properties"];
+  vaultName:  string;
+  matched:    TFile[];
+}
+
+/**
+ * Parse a `.base` file and run its query (selected view's filter + sort + limit)
+ * against the vault. Returns the matched files alongside the parsed view config,
+ * or `null` when the YAML can't be parsed. Shared by the renderer and the
+ * exporter's sub-page collection so both see exactly the same set of notes.
+ */
+async function queryBase(
   app: App,
   baseFile: TFile,
-  images?: Map<string, TFile>,
   viewName?: string
-): Promise<string> {
+): Promise<BaseQuery | null> {
   const raw = await app.vault.read(baseFile);
   let config: BaseConfig;
   try { config = parseYaml(raw) as BaseConfig; }
-  catch { return `<div class="base-error">无法解析 ${baseFile.name}</div>`; }
+  catch { return null; }
 
   // Select the requested view (by name) or fall back to the first one.
   const views      = config.views ?? [];
@@ -564,6 +591,33 @@ export async function renderBaseAsTable(
 
   // ── Limit ──
   if (view.limit) matched = matched.slice(0, view.limit);
+
+  return { config, view, formulas, properties, vaultName, matched };
+}
+
+/**
+ * The markdown files a `.base` embed resolves to, after applying the view's
+ * filter/sort/limit — the same set the renderer displays. Used by the exporter
+ * to treat base entries as sub-pages. Returns `[]` on a parse error.
+ */
+export async function queryBaseFiles(
+  app: App,
+  baseFile: TFile,
+  viewName?: string
+): Promise<TFile[]> {
+  return (await queryBase(app, baseFile, viewName))?.matched ?? [];
+}
+
+/** Build an HTML table from a `.base` file by querying the vault. */
+export async function renderBaseAsTable(
+  app: App,
+  baseFile: TFile,
+  images?: Map<string, TFile>,
+  viewName?: string
+): Promise<string> {
+  const query = await queryBase(app, baseFile, viewName);
+  if (!query) return `<div class="base-error">无法解析 ${baseFile.name}</div>`;
+  const { config, view, formulas, properties, vaultName, matched } = query;
 
   if (matched.length === 0) return `<div class="base-empty">（无匹配记录）</div>`;
 

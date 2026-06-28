@@ -3,7 +3,10 @@ import type ShareOnlinePlugin from "../../main";
 import { Language, t, setLanguage, formatPageCount } from "../core/i18n";
 
 export interface ShareOnlineSettings {
-	includeLinkedNotes: boolean;
+	/** Export depth: 1 = main note only, 2 = + direct sub-pages, 3 = + one more level. */
+	exportLevel: number;
+	/** Strip the core "Unique note creator" timestamp prefix from the exported <title>. */
+	stripUniquePrefix: boolean;
 	storageProvider: "none" | "aliyun" | "tencent";
 	ossRegion: string;
 	ossBucket: string;
@@ -23,7 +26,8 @@ export interface ShareOnlineSettings {
 }
 
 export const DEFAULT_SETTINGS: ShareOnlineSettings = {
-	includeLinkedNotes: false,
+	exportLevel: 1,
+	stripUniquePrefix: true,
 	storageProvider: "none",
 	ossRegion: "",
 	ossBucket: "",
@@ -119,13 +123,16 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 		});
 
 		new Setting(exportDetails)
-			.setName(t("settings.includeLinked.name"))
-			.setDesc(t("settings.includeLinked.desc"))
-			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.settings.includeLinkedNotes)
+			.setName(t("settings.exportLevel.name"))
+			.setDesc(t("settings.exportLevel.desc"))
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("1", t("settings.exportLevel.option.1"))
+					.addOption("2", t("settings.exportLevel.option.2"))
+					.addOption("3", t("settings.exportLevel.option.3"))
+					.setValue(String(this.plugin.settings.exportLevel))
 					.onChange(async (value) => {
-						this.plugin.settings.includeLinkedNotes = value;
+						this.plugin.settings.exportLevel = parseInt(value, 10);
 						await this.plugin.saveSettings();
 					})
 			);
@@ -152,6 +159,18 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 						previewEl?.setText(this.buildPreviewUrl());
 					});
 			});
+
+		new Setting(exportDetails)
+			.setName(t("settings.stripUniquePrefix.name"))
+			.setDesc(t("settings.stripUniquePrefix.desc"))
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.stripUniquePrefix)
+					.onChange(async (value) => {
+						this.plugin.settings.stripUniquePrefix = value;
+						await this.plugin.saveSettings();
+					})
+			);
 
 		// ── 发布路线配置 / Publish Route ──────────
 		// One route, two choices (Aliyun OSS / Tencent COS). The matching credential

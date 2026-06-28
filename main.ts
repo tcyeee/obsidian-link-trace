@@ -1,6 +1,6 @@
 import { MarkdownView, Notice, Plugin, TFile, debounce, setIcon, setTooltip } from "obsidian";
 import { ShareOnlineSettings, DEFAULT_SETTINGS, ShareOnlineSettingTab } from "./src/ui/settings";
-import { exportToZip, prepareExport, generateUniqueName, collectLinkedNotesWithStatus, rewriteInternalLinks } from "./src/publish/exporter";
+import { exportToZip, prepareExport, generateUniqueName, collectSubNoteTree, flattenSubTree, rewriteInternalLinks, makeUniquePrefixStripper, type ExportResult } from "./src/publish/exporter";
 import { uploadPage, deletePage, listPublishedNames, ensureKatexAssets, katexBaseUrl, getStore } from "./src/publish/storage";
 import { t, setLanguage } from "./src/core/i18n";
 import { getAnalyticsInjectConfig } from "./src/analytics/analytics";
@@ -27,7 +27,9 @@ export default class ShareOnlinePlugin extends Plugin {
 		this.addCommand({
 			id: "export-current-note-to-oss",
 			name: t("cmd.exportOss"),
-			callback: () => this.exportCurrentNote(true),
+			// Reuse the in-popover publish path: open the confirm panel (anchored to the
+			// status-bar icon) so the user gets the sub-page hierarchy, checkboxes and cap.
+			callback: () => this.sharePopover.openPublishConfirm(this.statusBarEl),
 		});
 
 		// ── Share-stats page (dedicated tab + ribbon + command) ──────────────
@@ -76,7 +78,15 @@ export default class ShareOnlinePlugin extends Plugin {
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, (await this.loadData()) as Partial<ShareOnlineSettings>);
+		const raw = (await this.loadData()) as
+			| (Partial<ShareOnlineSettings> & { includeLinkedNotes?: boolean })
+			| null;
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, raw);
+		// Migrate the legacy boolean toggle to the export-level dropdown.
+		if (raw && raw.exportLevel === undefined && typeof raw.includeLinkedNotes === "boolean") {
+			this.settings.exportLevel = raw.includeLinkedNotes ? 2 : 1;
+		}
+		delete (this.settings as Partial<ShareOnlineSettings> & { includeLinkedNotes?: boolean }).includeLinkedNotes;
 		setLanguage(this.settings.language);
 	}
 
@@ -244,43 +254,59 @@ export default class ShareOnlinePlugin extends Plugin {
 				await ensureKatexAssets(this.settings);
 				katexProvisioned = true;
 			};
-			const result = await prepareExport(this.app, this.app.vault, file, mainName, katexBase, analytics);
+			const pageTitle = await makeUniquePrefixStripper(this.app, this.settings.stripUniquePrefix);
+			const result = await prepareExport(this.app, this.app.vault, file, mainName, katexBase, analytics, pageTitle(file.basename));
+			// Seed the map with the main note so sub-pages can link back to it.
 			const subFolderMap = new Map<string, string>();
-			let mainHtml = result.html;
+			subFolderMap.set(file.basename, mainName);
+			subFolderMap.set(file.path.replace(/\.md$/i, ""), mainName);
 
+			// Pass 1 — assign names and render every page we'll upload, building the
+			// full link map first so each page (sub-pages included) can be rewritten
+			// to point at any sibling/parent/child page in pass 2.
+			type Pending = { file: TFile; result: ExportResult } | null;
+			const pending: Pending[] = [];
 			for (const sn of subNotes) {
 				const reuseName = sn.shareLink ? this.extractNoteName(sn.shareLink) : undefined;
 				if (reuseName && !updateExisting) {
 					// Fresh publish: reuse the already-published page as-is, only
-					// register its name so the main note's links resolve to it.
+					// register its name so links resolve to it.
 					usedNames.add(reuseName);
 					subFolderMap.set(sn.file.basename, reuseName);
 					subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), reuseName);
+					pending.push(null);
 				} else {
 					// A newly-linked sub-note (new name), or — on an update — an
 					// already-published one re-rendered and re-uploaded to its own name.
 					const noteName =
 						reuseName ?? generateUniqueName(usedNames, this.settings.pageLinkLength);
 					if (reuseName) usedNames.add(reuseName);
-					const subResult = await prepareExport(this.app, this.app.vault, sn.file, noteName, katexBase, analytics);
+					const subResult = await prepareExport(this.app, this.app.vault, sn.file, noteName, katexBase, analytics, pageTitle(sn.file.basename));
 					subFolderMap.set(sn.file.basename, subResult.noteName);
 					subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), subResult.noteName);
-					if (subResult.hasMath) await ensureKatex();
-					progress(t("toast.progress.subPage", { done: String(done + 1), total: String(total) }));
-					const subUrl = await uploadPage(
-						this.settings,
-						this.app.vault,
-						subResult.noteName,
-						subResult.html,
-						subResult.images
-					);
-					await this.setShareMeta(sn.file, subUrl);
-					done++;
-					progress(t("toast.progress.subPage", { done: String(done), total: String(total) }));
+					pending.push({ file: sn.file, result: subResult });
 				}
 			}
 
-			mainHtml = rewriteInternalLinks(mainHtml, subFolderMap, false);
+			// Pass 2 — rewrite internal links against the complete map, then upload.
+			for (const p of pending) {
+				if (!p) continue;
+				if (p.result.hasMath) await ensureKatex();
+				progress(t("toast.progress.subPage", { done: String(done + 1), total: String(total) }));
+				const subHtml = rewriteInternalLinks(p.result.html, subFolderMap, false, pageTitle);
+				const subUrl = await uploadPage(
+					this.settings,
+					this.app.vault,
+					p.result.noteName,
+					subHtml,
+					p.result.images
+				);
+				await this.setShareMeta(p.file, subUrl);
+				done++;
+				progress(t("toast.progress.subPage", { done: String(done), total: String(total) }));
+			}
+
+			const mainHtml = rewriteInternalLinks(result.html, subFolderMap, false, pageTitle);
 			if (result.hasMath) await ensureKatex();
 			progress(t("toast.progress.mainPage"));
 			const url = await uploadPage(
@@ -360,12 +386,17 @@ export default class ShareOnlinePlugin extends Plugin {
 		return last === "index.html" ? (parts[parts.length - 2] ?? "") : last.replace(/\.html$/i, "");
 	}
 
+	/** Flatten the export hierarchy (per the configured level) into a publish list. */
+	private async collectSubNotes(file: TFile): Promise<{ file: TFile; shareLink: string }[]> {
+		if (this.settings.exportLevel <= 1) return [];
+		const { nodes } = await collectSubNoteTree(this.app, file, this.settings.exportLevel - 1);
+		return flattenSubTree(nodes).map((n) => ({ file: n.file, shareLink: n.shareLink }));
+	}
+
 	private async updateNote(file: TFile) {
 		const existingUrl = this.getShareLink(file);
 		const existingName = existingUrl ? this.extractNoteName(existingUrl) : undefined;
-		const subNotes = this.settings.includeLinkedNotes
-			? collectLinkedNotesWithStatus(this.app, file)
-			: [];
+		const subNotes = await this.collectSubNotes(file);
 		// Update re-uploads every linked sub-note too (updateExisting=true): already-
 		// published ones are re-rendered in place, newly-linked ones are uploaded fresh.
 		// Sub-notes dropped from the note simply aren't in `subNotes`, so they're left as-is.
@@ -376,20 +407,13 @@ export default class ShareOnlinePlugin extends Plugin {
 		await this.updateNote(file);
 	}
 
-	private async exportCurrentNote(toOss = false) {
+	private async exportCurrentNote() {
 		const file = this.app.workspace.getActiveFile();
 		if (!this.isMarkdown(file)) {
 			new Notice(t("notice.onlyMarkdown.publish"));
 			return;
 		}
-		if (toOss) {
-			const subNotes = this.settings.includeLinkedNotes
-				? collectLinkedNotesWithStatus(this.app, file)
-				: [];
-			await this.doPublish(file, subNotes, undefined, t("toast.uploadSuccess"), false);
-		} else {
-			await this.exportFile(file);
-		}
+		await this.exportFile(file);
 	}
 
 	/**
@@ -417,9 +441,10 @@ export default class ShareOnlinePlugin extends Plugin {
 				this.app,
 				this.app.vault,
 				file,
-				this.settings.includeLinkedNotes,
+				this.settings.exportLevel,
 				this.settings.pageLinkLength,
-				getAnalyticsInjectConfig(this.settings)
+				getAnalyticsInjectConfig(this.settings),
+				this.settings.stripUniquePrefix
 			);
 			this.triggerDownload(zip, `${file.basename}.zip`);
 			// A local export changes no publish state — re-derive the card's current state.

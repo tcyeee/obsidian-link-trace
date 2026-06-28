@@ -469,7 +469,7 @@ details[open] > .opal-collapsible-heading::before {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 4px 0;
+  padding: 4px 0 4px calc(var(--depth, 0) * 16px);
 }
 .opal-share-popover-confirm-icon {
   display: flex;
@@ -479,10 +479,14 @@ details[open] > .opal-collapsible-heading::before {
 }
 .opal-share-popover-confirm-name {
   flex: 1;
+  min-width: 0;
   font-size: 13px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.opal-share-popover-confirm-name.is-scrolling {
+  text-overflow: clip;
 }
 .opal-share-popover-confirm-badge {
   font-size: 11px;
@@ -511,6 +515,25 @@ details[open] > .opal-collapsible-heading::before {
 }
 .opal-share-popover-confirm-item.is-skip .opal-share-popover-confirm-badge {
   background: var(--background-modifier-border);
+}
+.opal-share-popover-confirm-truncated {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: 2px 0 4px;
+}
+.opal-share-popover-confirm-warn {
+  display: none;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-error);
+  margin: 8px 0 2px;
+}
+.opal-share-popover-confirm-warn.is-visible {
+  display: block;
+}
+.opal-share-popover-textbtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Success banner above the published details after a publish/update */
