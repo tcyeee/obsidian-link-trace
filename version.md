@@ -5,6 +5,20 @@
 
 ---
 
+## Version 0.1.12
+
+- Added an export-depth setting (1–3 levels) replacing the include-linked-notes toggle, so a note can pull in its sub-pages, and their sub-pages, recursively
+- Added `.base` embed support to publishing: notes matched by an embedded base now publish as sub-pages and their in-table links resolve to the exported pages
+- Added Unique-note prefix compatibility that strips the core "Unique note creator" timestamp prefix from exported page titles and link text
+- Changed the publish confirmation to a hierarchical sub-page tree with per-page checkboxes, a 50-page limit warning, and the "export to OSS" command now opens it
+- Fixed external links being broken when rewriting internal links during export
+
+- 新增导出层级设置（1–3 级），取代「包含二级笔记」开关，可逐层向下递归导出子页面
+- 发布新增对 `.base` 嵌入的支持：被嵌入 base 匹配到的笔记会作为子页面一并发布，表格内的链接也会指向导出的页面
+- 新增「Unique 笔记前缀兼容」，从导出页面的标题与链接文字中去掉核心插件「唯一笔记创建器」的时间戳前缀
+- 发布确认改为带层级的子页面树，支持逐页勾选、超过 50 页的上限提示，「导出到 OSS」命令也改为打开该面板
+- 修复导出时改写内部链接会破坏外部链接的问题
+
 ## Version 0.1.11
 
 - Added Tencent Cloud COS as a storage provider you can publish to, alongside Alibaba Cloud OSS, selectable in settings
