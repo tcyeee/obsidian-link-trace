@@ -606,6 +606,18 @@ em { font-style: italic; }
 ul.dv-list { padding-left: 1.5em; margin: 0.5em 0; }
 ul.dv-list li { margin: 0.25em 0; line-height: 1.6; }
 
+/* ── Footer ── */
+.lt-footer {
+  text-align: center;
+  margin: 3em 0 1.5em;
+  padding-top: 1.5em;
+  border-top: 1px dashed #DADCDE;
+  font-size: 0.75rem;
+  color: #aaa;
+}
+.lt-footer a { color: #aaa; text-decoration: none; }
+.lt-footer a:hover { color: #888; text-decoration: underline; }
+
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 3px; height: 3px; }
 ::-webkit-scrollbar-thumb { background: transparent; border-radius: 999px; transition: background 0.3s; }

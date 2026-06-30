@@ -541,7 +541,7 @@ export class SharePopover {
 			cls: "opal-share-popover-textbtn mod-cta",
 			text: t("menu.publish"),
 		});
-		publishBtn.addEventListener("click", () => this.openPublishConfirm(this.anchor as HTMLElement));
+		publishBtn.addEventListener("click", () => this.openPublishConfirm(this.anchor));
 		const exportBtn = actions.createEl("button", {
 			cls: "opal-share-popover-textbtn",
 			text: t("menu.exportLocal"),
@@ -720,7 +720,7 @@ export class SharePopover {
 			text: t("modal.btn.cancel"),
 		});
 		cancel.addEventListener("click", () => {
-			const c = this.ensureCard(this.anchor as HTMLElement);
+			const c = this.ensureCard(this.anchor);
 			void this.renderState(c, file);
 		});
 		const confirm = actions.createEl("button", {
@@ -915,7 +915,7 @@ export class SharePopover {
 			trend.empty();
 			this.renderTrend(trend, null);
 		}
-		this.position(card, this.anchor as HTMLElement);
+		this.position(card, this.anchor);
 	}
 
 	/** Get (or create) the session cache entry for a share link. */
@@ -962,7 +962,7 @@ export class SharePopover {
 		// changes the card's height over time, so reposition once it finishes settling.
 		panel.addEventListener("transitionend", (e) => {
 			if (e.propertyName !== "max-height") return;
-			this.position(card, this.anchor as HTMLElement);
+			this.position(card, this.anchor);
 		});
 
 		let expanded = false;
@@ -976,7 +976,7 @@ export class SharePopover {
 				loaded = true;
 				void this.loadExpand(card, shareLink, panel);
 			}
-			this.position(card, this.anchor as HTMLElement);
+			this.position(card, this.anchor);
 		});
 	}
 
@@ -1012,7 +1012,7 @@ export class SharePopover {
 			this.fillDimension(body, key, items);
 			const entry = this.cacheEntry(shareLink);
 			(entry.dimensions ??= {} as Record<PopoverDimensionKey, DimensionItem[]>)[key] = items;
-			this.position(card, this.anchor as HTMLElement);
+			this.position(card, this.anchor);
 		});
 
 		if (this.el !== card || !card.isConnected) return;
@@ -1020,7 +1020,7 @@ export class SharePopover {
 		if (result === null && !cached) {
 			panel.empty();
 			panel.createDiv({ cls: "opal-stats-notice", text: t("stats.notConfigured") });
-			this.position(card, this.anchor as HTMLElement);
+			this.position(card, this.anchor);
 		}
 	}
 
