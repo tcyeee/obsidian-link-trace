@@ -9,6 +9,9 @@ export function buildCss(): string {
 
 /* ── Page ── */
 body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
   margin: 0;
   padding: 2rem 1rem;
   background: #fff;
@@ -151,9 +154,11 @@ body {
 
 /* ── Content container ── */
 .markdown-preview-view {
+  width: 100%;
   max-width: 780px;
   margin: 0 auto;
   padding: 2.5rem 3rem;
+  flex: 1 0 auto;
 }
 
 /* ── Mobile content padding ── */
@@ -608,6 +613,8 @@ ul.dv-list li { margin: 0.25em 0; line-height: 1.6; }
 
 /* ── Footer ── */
 .lt-footer {
+  flex-shrink: 0;
+  width: 100%;
   text-align: center;
   margin: 3em 0 1.5em;
   padding-top: 1.5em;

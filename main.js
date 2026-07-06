@@ -25765,6 +25765,7 @@ var zh = {
   "modal.subNotes.unpublish": "\u5173\u8054\u7684\u5B50\u9875\u9762\uFF08\u53EF\u52FE\u9009\u4E00\u5E76\u505C\u6B62\uFF09",
   "modal.badge.hasLink": "\u5DF2\u6709\u94FE\u63A5",
   "modal.badge.willUpload": "\u5C06\u88AB\u4E0A\u4F20",
+  "modal.check.notShared": "\u672A\u5206\u4EAB\uFF0C\u65E0\u9700\u505C\u6B62",
   "modal.subNotes.truncated": "\u5B50\u9875\u9762\u8FC7\u591A\uFF0C\u4EC5\u663E\u793A\u524D {max} \u4E2A",
   "modal.subNotes.overLimit": "\u5DF2\u9009 {count} \u4E2A\u5B50\u9875\u9762\uFF0C\u8D85\u8FC7\u4E0A\u9650 {max}\uFF0C\u8BF7\u53D6\u6D88\u52FE\u9009\u90E8\u5206\u9875\u9762\u540E\u518D\u53D1\u5E03",
   "modal.btn.cancel": "\u53D6\u6D88",
@@ -25907,6 +25908,7 @@ var en = {
   "modal.subNotes.unpublish": "Linked sub-pages (optionally stop sharing)",
   "modal.badge.hasLink": "Has link",
   "modal.badge.willUpload": "Will be uploaded",
+  "modal.check.notShared": "Not shared, nothing to stop",
   "modal.subNotes.truncated": "Too many sub-pages; showing the first {max}",
   "modal.subNotes.overLimit": "{count} sub-pages selected, over the limit of {max}. Uncheck some pages before publishing.",
   "modal.btn.cancel": "Cancel",
@@ -27494,6 +27496,9 @@ function buildCss() {
 
 /* \u2500\u2500 Page \u2500\u2500 */
 body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
   margin: 0;
   padding: 2rem 1rem;
   background: #fff;
@@ -27636,9 +27641,11 @@ body {
 
 /* \u2500\u2500 Content container \u2500\u2500 */
 .markdown-preview-view {
+  width: 100%;
   max-width: 780px;
   margin: 0 auto;
   padding: 2.5rem 3rem;
+  flex: 1 0 auto;
 }
 
 /* \u2500\u2500 Mobile content padding \u2500\u2500 */
@@ -28093,6 +28100,8 @@ ul.dv-list li { margin: 0.25em 0; line-height: 1.6; }
 
 /* \u2500\u2500 Footer \u2500\u2500 */
 .lt-footer {
+  flex-shrink: 0;
+  width: 100%;
   text-align: center;
   margin: 3em 0 1.5em;
   padding-top: 1.5em;
@@ -29499,6 +29508,14 @@ async function deletePage(settings, noteName) {
   }
 }
 
+// src/core/share-status.ts
+var SHARE_STATUS_KEY = "share_status";
+function isPublishedFrontmatter(fm) {
+  const shareLink = fm == null ? void 0 : fm["share_link"];
+  if (typeof shareLink !== "string" || !shareLink) return false;
+  return (fm == null ? void 0 : fm[SHARE_STATUS_KEY]) !== "unpublished";
+}
+
 // src/ui/share-popover.ts
 var import_obsidian10 = require("obsidian");
 
@@ -29913,8 +29930,8 @@ var SharePopover = class {
   /** Render the card's normal published/unpublished state and wire up dismissal. */
   async renderState(card, file) {
     var _a2, _b2;
-    const shareLink = this.plugin.getShareLink(file);
-    if (shareLink) {
+    if (this.plugin.isPublished(file)) {
+      const shareLink = this.plugin.getShareLink(file);
       const stale = await this.plugin.isStale(file);
       if (this.el !== card) return;
       this.renderPublished(card, file, shareLink, this.readPublishedAt(file), stale);
@@ -29962,9 +29979,8 @@ var SharePopover = class {
     const card = this.ensureCard(anchor);
     card.addClass(`${POPOVER_CLASS}--busy`);
     const banner = { kind: "progress", label, pct: this.displayPct() };
-    const shareLink = file ? this.plugin.getShareLink(file) : "";
-    if (file && shareLink) {
-      this.renderPublished(card, file, shareLink, this.readPublishedAt(file), false, banner);
+    if (file && this.plugin.isPublished(file)) {
+      this.renderPublished(card, file, this.plugin.getShareLink(file), this.readPublishedAt(file), false, banner);
     } else if (file) {
       this.renderUnpublished(card, file, banner);
     } else {
@@ -30037,7 +30053,7 @@ var SharePopover = class {
     const card = this.ensureCard(anchor);
     const banner = { kind: "success", text: successText };
     const pinned = state !== void 0;
-    const shareLink = pinned ? state : this.plugin.getShareLink(file);
+    const shareLink = pinned ? state : this.plugin.isPublished(file) ? this.plugin.getShareLink(file) : "";
     if (shareLink) {
       const stale = pinned ? false : await this.plugin.isStale(file);
       if (this.el !== card) return;
@@ -30370,7 +30386,8 @@ var SharePopover = class {
       for (const node of flat) {
         const row = body.createDiv({ cls: "opal-share-popover-confirm-item" });
         row.setCssProps({ "--depth": String(node.depth - 1) });
-        const canCheck = isPublish || !!node.shareLink;
+        const live = this.plugin.isPublished(node.file);
+        const canCheck = isPublish || live;
         if (canCheck) {
           checkStates.set(node.file.path, true);
           const cb = row.createEl("input", { cls: "opal-share-popover-confirm-check" });
@@ -30391,18 +30408,21 @@ var SharePopover = class {
             updateGate();
           });
         } else {
-          row.createDiv({ cls: "opal-share-popover-confirm-check-placeholder" });
+          row.addClass("is-skip");
+          const inactive = row.createDiv({ cls: "opal-share-popover-confirm-check-inactive" });
+          (0, import_obsidian10.setIcon)(inactive, "eye-off");
+          (0, import_obsidian10.setTooltip)(inactive, t("modal.check.notShared"));
         }
         (0, import_obsidian10.setIcon)(row.createDiv({ cls: "opal-share-popover-confirm-icon" }), "file-text");
         this.createConfirmName(row, displayName(node.file.basename) + ".md");
         if (isPublish) {
           row.createSpan({
             cls: "opal-share-popover-confirm-badge",
-            text: node.shareLink ? t("modal.badge.hasLink") : t("modal.badge.willUpload")
+            text: live ? t("modal.badge.hasLink") : t("modal.badge.willUpload")
           });
         }
-        if (isPublish && node.shareLink) this.showConfirmViews(row, node.shareLink);
-        if (isPublish && !node.shareLink) row.addClass("is-skip");
+        if (isPublish && live) this.showConfirmViews(row, node.shareLink);
+        if (isPublish && !live) row.addClass("is-skip");
       }
     }
     const warn = card.createDiv({ cls: "opal-share-popover-confirm-warn" });
@@ -30436,7 +30456,7 @@ var SharePopover = class {
     updateGate();
     confirm.addEventListener("click", () => {
       if (confirm.disabled) return;
-      const selected = flat.filter((n) => checkStates.get(n.file.path) && (isPublish || n.shareLink)).map((n) => ({ file: n.file, shareLink: n.shareLink }));
+      const selected = flat.filter((n) => checkStates.get(n.file.path) && (isPublish || this.plugin.isPublished(n.file))).map((n) => ({ file: n.file, shareLink: n.shareLink }));
       if (isPublish) {
         this.plugin.publishFromUi(file, selected);
       } else {
@@ -30723,11 +30743,11 @@ function collectPublishedPages(app) {
   const pages = [];
   for (const file of app.vault.getMarkdownFiles()) {
     const fm = (_a2 = app.metadataCache.getFileCache(file)) == null ? void 0 : _a2.frontmatter;
+    if (!isPublishedFrontmatter(fm)) continue;
     const shareLink = fm == null ? void 0 : fm["share_link"];
-    if (typeof shareLink !== "string" || !shareLink) continue;
     const path = extractPathname(shareLink);
     if (!path) continue;
-    const shareTime = fm["share_time"];
+    const shareTime = fm == null ? void 0 : fm["share_time"];
     const parsed = typeof shareTime === "string" ? Date.parse(shareTime) : NaN;
     pages.push({
       path,
@@ -30951,9 +30971,17 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
     await workspace.revealLeaf(leaf);
   }
   // ── Frontmatter helpers ───────────────────────────────────────────────
+  /** Last-known share link, or "" if this note has never been published. Kept
+   *  around after unpublish so a republish can reuse the same address — use
+   *  {@link isPublished} to know whether the link is actually live. */
   getShareLink(file) {
     var _a2, _b2, _c;
     return (_c = (_b2 = (_a2 = this.app.metadataCache.getFileCache(file)) == null ? void 0 : _a2.frontmatter) == null ? void 0 : _b2["share_link"]) != null ? _c : "";
+  }
+  /** True when the note is currently live at its share link (not just previously published). */
+  isPublished(file) {
+    var _a2;
+    return isPublishedFrontmatter((_a2 = this.app.metadataCache.getFileCache(file)) == null ? void 0 : _a2.frontmatter);
   }
   async setShareMeta(file, url) {
     const raw = await this.app.vault.read(file);
@@ -30963,13 +30991,13 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
       fm["share_link"] = url;
       fm["share_time"] = time;
       fm["share_hash"] = hash;
+      fm["share_status"] = "published";
     });
   }
-  async removeShareMeta(file) {
+  /** Mark the note as taken down without deleting `share_link`, so republishing can reuse it. */
+  async setUnpublished(file) {
     await this.app.fileManager.processFrontMatter(file, (fm) => {
-      delete fm["share_link"];
-      delete fm["share_time"];
-      delete fm["share_hash"];
+      fm["share_status"] = "unpublished";
     });
   }
   // ── File type helper ──────────────────────────────────────────────────
@@ -30986,7 +31014,7 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
       return;
     }
     this.statusBarEl.show();
-    const published = !!this.getShareLink(file);
+    const published = this.isPublished(file);
     const stale = published ? await this.isStale(file) : false;
     if (((_a2 = this.app.workspace.getActiveFile()) == null ? void 0 : _a2.path) !== file.path) return;
     this.statusBarEl.toggleClass("opal-status-published", published && !stale);
@@ -31019,6 +31047,8 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
    * Publish the note plus the given linked sub-notes. Sub-note selection now
    * happens inline in the share popover (no separate modal), so this just runs
    * the publish — progress/result are shown back in the popover by `doPublish`.
+   * Only reachable while the note is unpublished, but it may carry a `share_link`
+   * from before it was taken down — reuse that name so the address doesn't change.
    */
   publishFromUi(file, subNotes) {
     if (this.settings.storageProvider === "none") {
@@ -31029,7 +31059,9 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
       new import_obsidian12.Notice(t("notice.routeNotConfigured"));
       return;
     }
-    void this.doPublish(file, subNotes);
+    const existingUrl = this.getShareLink(file);
+    const existingName = existingUrl ? this.extractNoteName(existingUrl) : void 0;
+    void this.doPublish(file, subNotes, existingName);
   }
   /** Unpublish the note plus the sub-notes the user ticked in the popover's confirm panel. */
   unpublishFromUi(file, subNotesToDelete) {
@@ -31040,7 +31072,7 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
   }
   // ── Actions ──────────────────────────────────────────────────────────
   async doPublish(file, subNotes, existingName, successText = t("toast.publishSuccess"), copyToClipboard = true, updateExisting = false) {
-    const total = (updateExisting ? subNotes.length : subNotes.filter((sn) => !sn.shareLink).length) + 1;
+    const total = (updateExisting ? subNotes.length : subNotes.filter((sn) => !this.isPublished(sn.file)).length) + 1;
     let done = 0;
     const progress = (label) => this.sharePopover.showProgress(this.statusBarEl, label, done, total);
     progress(t("toast.progress.rendering"));
@@ -31064,7 +31096,7 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
       const pending = [];
       for (const sn of subNotes) {
         const reuseName = sn.shareLink ? this.extractNoteName(sn.shareLink) : void 0;
-        if (reuseName && !updateExisting) {
+        if (reuseName && !updateExisting && this.isPublished(sn.file)) {
           usedNames.add(reuseName);
           subFolderMap.set(sn.file.basename, reuseName);
           subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), reuseName);
@@ -31116,7 +31148,7 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
     }
   }
   async doUnpublish(file, subNotesToDelete) {
-    const total = subNotesToDelete.length + (this.getShareLink(file) ? 1 : 0);
+    const total = subNotesToDelete.length + (this.isPublished(file) ? 1 : 0);
     let done = 0;
     const progress = (label) => this.sharePopover.showProgress(this.statusBarEl, label, done, total);
     progress(t("toast.stopping"));
@@ -31127,7 +31159,7 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
         progress(t("toast.progress.deleteSub", { done: String(done + 1), total: String(total) }));
         try {
           await deletePage(this.settings, snName);
-          await this.removeShareMeta(sn.file);
+          await this.setUnpublished(sn.file);
         } catch (err2) {
           console.error(`\u5220\u9664\u4E8C\u7EA7\u7B14\u8BB0\u5931\u8D25 (${sn.file.basename}):`, err2);
           failedSubs.push(sn.file.basename);
@@ -31135,13 +31167,12 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
         done++;
         progress(t("toast.progress.deleteSub", { done: String(done), total: String(total) }));
       }
-      const existingUrl = this.getShareLink(file);
-      if (existingUrl) {
+      if (this.isPublished(file)) {
         progress(t("toast.progress.deleteMain"));
-        const existingName = this.extractNoteName(existingUrl);
+        const existingName = this.extractNoteName(this.getShareLink(file));
         await deletePage(this.settings, existingName);
       }
-      await this.removeShareMeta(file);
+      await this.setUnpublished(file);
       void this.updateStatusBar();
       const successText = failedSubs.length > 0 ? t("toast.stoppedWithWarn", { names: failedSubs.join("\u3001") }) : t("toast.stopped");
       await this.sharePopover.showResult(this.statusBarEl, file, successText, null);

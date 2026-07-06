@@ -5,6 +5,7 @@ import { uploadPage, deletePage, listPublishedNames, ensureKatexAssets, katexBas
 import { t, setLanguage } from "./src/core/i18n";
 import { getAnalyticsInjectConfig } from "./src/analytics/analytics";
 import { hashBody, stripFrontmatter } from "./src/core/note-hash";
+import { isPublishedFrontmatter } from "./src/core/share-status";
 import { SharePopover } from "./src/ui/share-popover";
 import { ShareStatsView, VIEW_TYPE_SHARE_STATS } from "./src/analytics/stats-view";
 
@@ -109,8 +110,16 @@ export default class ShareOnlinePlugin extends Plugin {
 
 	// ── Frontmatter helpers ───────────────────────────────────────────────
 
+	/** Last-known share link, or "" if this note has never been published. Kept
+	 *  around after unpublish so a republish can reuse the same address — use
+	 *  {@link isPublished} to know whether the link is actually live. */
 	getShareLink(file: TFile): string {
 		return (this.app.metadataCache.getFileCache(file)?.frontmatter?.["share_link"] as string | undefined) ?? "";
+	}
+
+	/** True when the note is currently live at its share link (not just previously published). */
+	isPublished(file: TFile): boolean {
+		return isPublishedFrontmatter(this.app.metadataCache.getFileCache(file)?.frontmatter);
 	}
 
 	private async setShareMeta(file: TFile, url: string): Promise<void> {
@@ -121,14 +130,14 @@ export default class ShareOnlinePlugin extends Plugin {
 			fm["share_link"] = url;
 			fm["share_time"] = time;
 			fm["share_hash"] = hash;
+			fm["share_status"] = "published";
 		});
 	}
 
-	private async removeShareMeta(file: TFile): Promise<void> {
+	/** Mark the note as taken down without deleting `share_link`, so republishing can reuse it. */
+	private async setUnpublished(file: TFile): Promise<void> {
 		await this.app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
-			delete fm["share_link"];
-			delete fm["share_time"];
-			delete fm["share_hash"];
+			fm["share_status"] = "unpublished";
 		});
 	}
 
@@ -149,7 +158,7 @@ export default class ShareOnlinePlugin extends Plugin {
 			return;
 		}
 		this.statusBarEl.show();
-		const published = !!this.getShareLink(file);
+		const published = this.isPublished(file);
 		const stale = published ? await this.isStale(file) : false;
 		// Active file may have changed during the async read — re-check before painting.
 		if (this.app.workspace.getActiveFile()?.path !== file.path) return;
@@ -192,6 +201,8 @@ export default class ShareOnlinePlugin extends Plugin {
 	 * Publish the note plus the given linked sub-notes. Sub-note selection now
 	 * happens inline in the share popover (no separate modal), so this just runs
 	 * the publish — progress/result are shown back in the popover by `doPublish`.
+	 * Only reachable while the note is unpublished, but it may carry a `share_link`
+	 * from before it was taken down — reuse that name so the address doesn't change.
 	 */
 	publishFromUi(file: TFile, subNotes: { file: TFile; shareLink: string }[]): void {
 		if (this.settings.storageProvider === "none") {
@@ -202,7 +213,9 @@ export default class ShareOnlinePlugin extends Plugin {
 			new Notice(t("notice.routeNotConfigured"));
 			return;
 		}
-		void this.doPublish(file, subNotes);
+		const existingUrl = this.getShareLink(file);
+		const existingName = existingUrl ? this.extractNoteName(existingUrl) : undefined;
+		void this.doPublish(file, subNotes, existingName);
 	}
 
 	/** Unpublish the note plus the sub-notes the user ticked in the popover's confirm panel. */
@@ -231,9 +244,11 @@ export default class ShareOnlinePlugin extends Plugin {
 		// main page) only raises a floor that can push the bar ahead of the ramp.
 		// On a fresh publish, already-published sub-notes are reused and do no upload
 		// work; on an update (`updateExisting`), they are re-rendered and re-uploaded
-		// in place so linked pages reflect the latest content too.
+		// in place so linked pages reflect the latest content too. A sub-note whose
+		// share_link survived an earlier unpublish (share_status: "unpublished")
+		// counts as needing upload too, since its OSS object was deleted.
 		const total =
-			(updateExisting ? subNotes.length : subNotes.filter((sn) => !sn.shareLink).length) + 1;
+			(updateExisting ? subNotes.length : subNotes.filter((sn) => !this.isPublished(sn.file)).length) + 1;
 		let done = 0;
 		const progress = (label: string) =>
 			this.sharePopover.showProgress(this.statusBarEl, label, done, total);
@@ -268,16 +283,17 @@ export default class ShareOnlinePlugin extends Plugin {
 			const pending: Pending[] = [];
 			for (const sn of subNotes) {
 				const reuseName = sn.shareLink ? this.extractNoteName(sn.shareLink) : undefined;
-				if (reuseName && !updateExisting) {
-					// Fresh publish: reuse the already-published page as-is, only
-					// register its name so links resolve to it.
+				if (reuseName && !updateExisting && this.isPublished(sn.file)) {
+					// Fresh publish, sub-note still live: reuse the already-published
+					// page as-is, only register its name so links resolve to it.
 					usedNames.add(reuseName);
 					subFolderMap.set(sn.file.basename, reuseName);
 					subFolderMap.set(sn.file.path.replace(/\.md$/i, ""), reuseName);
 					pending.push(null);
 				} else {
-					// A newly-linked sub-note (new name), or — on an update — an
-					// already-published one re-rendered and re-uploaded to its own name.
+					// A newly-linked sub-note (new name), an already-published one being
+					// re-rendered on an update, or a previously-unpublished one — all
+					// re-uploaded, reusing its old name (if any) so old links keep working.
 					const noteName =
 						reuseName ?? generateUniqueName(usedNames, this.settings.pageLinkLength);
 					if (reuseName) usedNames.add(reuseName);
@@ -336,7 +352,7 @@ export default class ShareOnlinePlugin extends Plugin {
 		// count here (one step per deleted page: each selected sub-note plus the main
 		// page — a failed sub-note delete is non-fatal but still advances the step,
 		// it's over either way) only raises a floor, matching the publish flow.
-		const total = subNotesToDelete.length + (this.getShareLink(file) ? 1 : 0);
+		const total = subNotesToDelete.length + (this.isPublished(file) ? 1 : 0);
 		let done = 0;
 		const progress = (label: string) =>
 			this.sharePopover.showProgress(this.statusBarEl, label, done, total);
@@ -350,7 +366,7 @@ export default class ShareOnlinePlugin extends Plugin {
 				progress(t("toast.progress.deleteSub", { done: String(done + 1), total: String(total) }));
 				try {
 					await deletePage(this.settings, snName);
-					await this.removeShareMeta(sn.file);
+					await this.setUnpublished(sn.file);
 				} catch (err: unknown) {
 					console.error(`删除二级笔记失败 (${sn.file.basename}):`, err);
 					failedSubs.push(sn.file.basename);
@@ -360,13 +376,12 @@ export default class ShareOnlinePlugin extends Plugin {
 			}
 
 			// Delete main note (fatal on failure)
-			const existingUrl = this.getShareLink(file);
-			if (existingUrl) {
+			if (this.isPublished(file)) {
 				progress(t("toast.progress.deleteMain"));
-				const existingName = this.extractNoteName(existingUrl);
+				const existingName = this.extractNoteName(this.getShareLink(file));
 				await deletePage(this.settings, existingName);
 			}
-			await this.removeShareMeta(file);
+			await this.setUnpublished(file);
 			void this.updateStatusBar();
 			const successText =
 				failedSubs.length > 0

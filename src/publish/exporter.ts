@@ -59,7 +59,9 @@ const MAX_COLLECT = 200;
 /** One note in the export hierarchy: its publish status, depth, and its own children. */
 export interface SubNoteNode {
 	file: TFile;
-	/** Current `share_link` frontmatter, or "" if not yet published. */
+	/** Current `share_link` frontmatter, or "" if never published. Survives an
+	 *  unpublish (for reuse on republish) — check `share_status`/`isPublished`
+	 *  for whether the link is actually live. */
 	shareLink: string;
 	/** 1 = direct child of the main note, 2 = grandchild, … */
 	depth: number;

@@ -11,6 +11,7 @@ import {
 } from "./analytics";
 import { fetchAllPathHits } from "./analytics-client";
 import { StatsDetailModal } from "./stats-detail-modal";
+import { isPublishedFrontmatter } from "../core/share-status";
 
 export const VIEW_TYPE_SHARE_STATS = "share-stats-view";
 
@@ -24,19 +25,21 @@ function formatDate(ms: number | null): string {
 }
 
 /**
- * Scan every Markdown note for a `share_link` frontmatter entry — the canonical
+ * Scan every Markdown note for a currently-live `share_link` — the canonical
  * local record of what this plugin has published (main notes and sub-notes alike).
- * Pages with zero views still show up here; GoatCounter only knows the visited ones.
+ * Notes taken down keep their `share_link` (so republishing can reuse it) but are
+ * excluded here via `share_status`. Pages with zero views still show up here;
+ * GoatCounter only knows the visited ones.
  */
 export function collectPublishedPages(app: App): PublishedPage[] {
 	const pages: PublishedPage[] = [];
 	for (const file of app.vault.getMarkdownFiles()) {
 		const fm = app.metadataCache.getFileCache(file)?.frontmatter;
-		const shareLink = fm?.["share_link"] as unknown;
-		if (typeof shareLink !== "string" || !shareLink) continue;
+		if (!isPublishedFrontmatter(fm)) continue;
+		const shareLink = fm?.["share_link"] as string;
 		const path = extractPathname(shareLink);
 		if (!path) continue;
-		const shareTime = fm["share_time"] as unknown;
+		const shareTime = fm?.["share_time"] as unknown;
 		const parsed = typeof shareTime === "string" ? Date.parse(shareTime) : NaN;
 		pages.push({
 			path,

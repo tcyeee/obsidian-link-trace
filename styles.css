@@ -499,9 +499,17 @@ details[open] > .opal-collapsible-heading::before {
 .opal-share-popover-confirm-check {
   flex-shrink: 0;
 }
-.opal-share-popover-confirm-check-placeholder {
+.opal-share-popover-confirm-check-inactive {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 13px;
   flex-shrink: 0;
+  color: var(--text-faint);
+}
+.opal-share-popover-confirm-check-inactive svg {
+  width: 13px;
+  height: 13px;
 }
 .opal-share-popover-confirm-views {
   font-size: 11px;

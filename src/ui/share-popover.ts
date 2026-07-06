@@ -124,8 +124,8 @@ export class SharePopover {
 
 	/** Render the card's normal published/unpublished state and wire up dismissal. */
 	private async renderState(card: HTMLElement, file: TFile): Promise<void> {
-		const shareLink = this.plugin.getShareLink(file);
-		if (shareLink) {
+		if (this.plugin.isPublished(file)) {
+			const shareLink = this.plugin.getShareLink(file);
 			const stale = await this.plugin.isStale(file);
 			if (this.el !== card) return;
 			this.renderPublished(card, file, shareLink, this.readPublishedAt(file), stale);
@@ -182,9 +182,8 @@ export class SharePopover {
 		const card = this.ensureCard(anchor);
 		card.addClass(`${POPOVER_CLASS}--busy`);
 		const banner: TopBanner = { kind: "progress", label, pct: this.displayPct() };
-		const shareLink = file ? this.plugin.getShareLink(file) : "";
-		if (file && shareLink) {
-			this.renderPublished(card, file, shareLink, this.readPublishedAt(file), false, banner);
+		if (file && this.plugin.isPublished(file)) {
+			this.renderPublished(card, file, this.plugin.getShareLink(file), this.readPublishedAt(file), false, banner);
 		} else if (file) {
 			this.renderUnpublished(card, file, banner);
 		} else {
@@ -267,7 +266,7 @@ export class SharePopover {
 		const card = this.ensureCard(anchor);
 		const banner: TopBanner = { kind: "success", text: successText };
 		const pinned = state !== undefined;
-		const shareLink = pinned ? state : this.plugin.getShareLink(file);
+		const shareLink = pinned ? state : this.plugin.isPublished(file) ? this.plugin.getShareLink(file) : "";
 		if (shareLink) {
 			// A freshly published note is by definition up to date, with share_time = now.
 			const stale = pinned ? false : await this.plugin.isStale(file);
@@ -671,8 +670,11 @@ export class SharePopover {
 			for (const node of flat) {
 				const row = body.createDiv({ cls: "opal-share-popover-confirm-item" });
 				row.setCssProps({ "--depth": String(node.depth - 1) });
-				// Publish: every sub-page is selectable. Unpublish: only already-published ones.
-				const canCheck = isPublish || !!node.shareLink;
+				// node.shareLink survives an unpublish (kept for reuse), so "will this be
+				// skipped / can it be taken down" must check live status, not just the link.
+				const live = this.plugin.isPublished(node.file);
+				// Publish: every sub-page is selectable. Unpublish: only currently-live ones.
+				const canCheck = isPublish || live;
 				if (canCheck) {
 					checkStates.set(node.file.path, true);
 					const cb = row.createEl("input", { cls: "opal-share-popover-confirm-check" });
@@ -693,18 +695,24 @@ export class SharePopover {
 						updateGate();
 					});
 				} else {
-					row.createDiv({ cls: "opal-share-popover-confirm-check-placeholder" });
+					// Unpublish mode, sub-note already not shared: no checkbox — show an
+					// "eye-off" icon instead of the blank placeholder used elsewhere, and
+					// grey out the row (same treatment as a publish-mode skipped row).
+					row.addClass("is-skip");
+					const inactive = row.createDiv({ cls: "opal-share-popover-confirm-check-inactive" });
+					setIcon(inactive, "eye-off");
+					setTooltip(inactive, t("modal.check.notShared"));
 				}
 				setIcon(row.createDiv({ cls: "opal-share-popover-confirm-icon" }), "file-text");
 				this.createConfirmName(row, displayName(node.file.basename) + ".md");
 				if (isPublish) {
 					row.createSpan({
 						cls: "opal-share-popover-confirm-badge",
-						text: node.shareLink ? t("modal.badge.hasLink") : t("modal.badge.willUpload"),
+						text: live ? t("modal.badge.hasLink") : t("modal.badge.willUpload"),
 					});
 				}
-				if (isPublish && node.shareLink) this.showConfirmViews(row, node.shareLink);
-				if (isPublish && !node.shareLink) row.addClass("is-skip");
+				if (isPublish && live) this.showConfirmViews(row, node.shareLink);
+				if (isPublish && !live) row.addClass("is-skip");
 			}
 		}
 
@@ -747,7 +755,7 @@ export class SharePopover {
 		confirm.addEventListener("click", () => {
 			if (confirm.disabled) return;
 			const selected: SubNoteStatus[] = flat
-				.filter((n) => checkStates.get(n.file.path) && (isPublish || n.shareLink))
+				.filter((n) => checkStates.get(n.file.path) && (isPublish || this.plugin.isPublished(n.file)))
 				.map((n) => ({ file: n.file, shareLink: n.shareLink }));
 			if (isPublish) {
 				this.plugin.publishFromUi(file, selected);
