@@ -25009,18 +25009,7 @@ var require_sdk_base = __commonJS({
 var require_address = __commonJS({
   "src/stubs/address.js"(exports2, module2) {
     "use strict";
-    var os = require("os");
     function localIP() {
-      var ifaces = os.networkInterfaces();
-      var names = Object.keys(ifaces);
-      for (var i2 = 0; i2 < names.length; i2++) {
-        var addrs = ifaces[names[i2]];
-        for (var j = 0; j < addrs.length; j++) {
-          if (addrs[j].family === "IPv4" && !addrs[j].internal) {
-            return addrs[j].address;
-          }
-        }
-      }
       return "127.0.0.1";
     }
     function address(interfaceName, callback) {

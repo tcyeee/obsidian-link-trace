@@ -1,21 +1,11 @@
 "use strict";
 // Stub for the 'address' npm package.
-// ali-oss uses address.ip() only in cluster.js for load-balancing server selection.
-// This plugin uses single-node OSS mode, so os.networkInterfaces() is sufficient
-// and avoids bundling the child_process.exec(ifconfig) call the real package uses.
-var os = require("os");
-
+// ali-oss's cluster.js calls address.ip() once at module load (unconditionally, even
+// though this plugin never uses ClusterClient) purely to name a per-host status-check
+// file for load-balancing. Single-node OSS mode never reads that file, so the value is
+// functionally unused — a fixed loopback address avoids probing real network interfaces
+// (os.networkInterfaces()) and the child_process.exec(ifconfig) call the real package uses.
 function localIP() {
-	var ifaces = os.networkInterfaces();
-	var names = Object.keys(ifaces);
-	for (var i = 0; i < names.length; i++) {
-		var addrs = ifaces[names[i]];
-		for (var j = 0; j < addrs.length; j++) {
-			if (addrs[j].family === "IPv4" && !addrs[j].internal) {
-				return addrs[j].address;
-			}
-		}
-	}
 	return "127.0.0.1";
 }
 

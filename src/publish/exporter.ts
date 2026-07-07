@@ -381,15 +381,15 @@ export async function exportToZip(
 
 		// All notes (main and sub) are flat at the archive root, so links share the map.
 		for (const subResult of subResults) {
-			files[`${subResult.noteName}.html`] = strToU8(rewriteInternalLinks(subResult.html, subFolderMap, true, pageTitle)) as Uint8Array;
+			files[`${subResult.noteName}.html`] = strToU8(rewriteInternalLinks(subResult.html, subFolderMap, true, pageTitle));
 			await addImages(subResult.noteName, subResult.images);
 		}
 	}
 
 	mainHtml = rewriteInternalLinks(mainHtml, subFolderMap, true, pageTitle);
-	files[`${result.noteName}.html`] = strToU8(mainHtml) as Uint8Array;
+	files[`${result.noteName}.html`] = strToU8(mainHtml);
 	await addImages(result.noteName, result.images);
 
-	const zip = zipSync(files, { level: 6 }) as Uint8Array;
+	const zip = zipSync(files, { level: 6 });
 	return { result, zip };
 }
