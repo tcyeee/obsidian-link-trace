@@ -28,8 +28,8 @@ importers:
         specifier: 2.4.0
         version: 2.4.0
       typescript:
-        specifier: 4.7.4
-        version: 4.7.4
+        specifier: 5.8.3
+        version: 5.8.3
       vitest:
         specifier: ^4.1.8
         version: 4.1.8(@types/node@16.18.126)(vite@8.0.16(@types/node@16.18.126)(esbuild@0.28.1))
@@ -860,9 +860,9 @@ packages:
   tslib@2.4.0:
     resolution: {integrity: sha512-d6xOpEDfsi2CZVlPQzGeux8XMwLT9hssAsaPYExaQMuYskwb+x1x7J371tWlbBdWHroy99KnVB6qIkUbs5X3UQ==}
 
-  typescript@4.7.4:
-    resolution: {integrity: sha512-C0WQT0gezHuw6AdY1M2jxUO83Rjf0HP7Sk1DtXj6j1EwkQNZrHAg2XPWlq62oqEhYvONq5pkC2Y9oPljWToLmQ==}
-    engines: {node: '>=4.2.0'}
+  typescript@5.8.3:
+    resolution: {integrity: sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ==}
+    engines: {node: '>=14.17'}
     hasBin: true
 
   unescape@1.0.1:
@@ -1714,7 +1714,7 @@ snapshots:
 
   tslib@2.4.0: {}
 
-  typescript@4.7.4: {}
+  typescript@5.8.3: {}
 
   unescape@1.0.1:
     dependencies:
