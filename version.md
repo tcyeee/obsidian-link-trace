@@ -1,4 +1,3 @@
-# 0.1.13
+# 0.1.14
 
-- feat: keep share_link across unpublish so republish reuses the same address (9868c80)
-- feat: add footer with language-specific generation message and improve share popover event handling (129255c)
+- fix: remove unnecessary type assertions and avoid network interface probing in address stub (d59d2e5)
