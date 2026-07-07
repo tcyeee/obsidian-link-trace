@@ -1,3 +1,3 @@
-# 0.1.14
+# 0.1.15
 
-- fix: remove unnecessary type assertions and avoid network interface probing in address stub (d59d2e5)
+- fix: bump typescript devDependency to 5.8.3 to fix spurious no-unsafe-* lint reports (29be923)
