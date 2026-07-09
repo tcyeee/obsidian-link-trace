@@ -25687,11 +25687,11 @@ var zh = {
   "stats.loading": "\u52A0\u8F7D\u4E2D \u2026",
   "stats.card.pages": "\u6B63\u5728\u5206\u4EAB",
   "stats.card.views": "\u603B\u6D4F\u89C8\u91CF",
-  "stats.col.title": "\u7B14\u8BB0",
-  "stats.col.url": "\u94FE\u63A5",
-  "stats.col.views": "\u8BBF\u95EE",
-  "stats.col.published": "\u53D1\u5E03\u4E8E",
+  "stats.card.unit.views": "\u6B21",
+  "stats.viewsCount": "{count} \u6B21\u6D4F\u89C8",
   "stats.views.unknown": "\u2014",
+  "stats.list.title": "\u6700\u8FD1\u5206\u4EAB\u8BB0\u5F55",
+  "stats.list.count": "\u5171 {count} \u6761\u5185\u5BB9",
   "stats.empty": "\u8FD8\u6CA1\u6709\u5DF2\u53D1\u5E03\u7684\u5206\u4EAB\u9875",
   "stats.notConfigured": "\u672A\u914D\u7F6E GoatCounter API Token\uFF0C\u65E0\u6CD5\u8BFB\u53D6\u8BBF\u95EE\u6570\u636E\uFF08\u4EC5\u5217\u51FA\u5DF2\u53D1\u5E03\u9875\u9762\uFF09",
   "stats.fetchFailed": "\u8BBF\u95EE\u6570\u636E\u8BFB\u53D6\u5931\u8D25\uFF0C\u4EC5\u5217\u51FA\u5DF2\u53D1\u5E03\u9875\u9762",
@@ -25830,11 +25830,11 @@ var en = {
   "stats.loading": "Loading \u2026",
   "stats.card.pages": "Sharing",
   "stats.card.views": "Total views",
-  "stats.col.title": "Note",
-  "stats.col.url": "Link",
-  "stats.col.views": "Views",
-  "stats.col.published": "Published",
+  "stats.card.unit.views": "",
+  "stats.viewsCount": "{count} views",
   "stats.views.unknown": "\u2014",
+  "stats.list.title": "Recent shares",
+  "stats.list.count": "{count} total",
   "stats.empty": "No published share pages yet",
   "stats.notConfigured": "No GoatCounter API Token configured \u2014 listing pages only, without view counts",
   "stats.fetchFailed": "Failed to read view data \u2014 listing pages only",
@@ -30727,7 +30727,7 @@ function formatDate(ms) {
   const pad = (n) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
-function collectPublishedPages(app) {
+function collectPublishedPages(app, titleFor = (n) => n) {
   var _a2;
   const pages = [];
   for (const file of app.vault.getMarkdownFiles()) {
@@ -30740,7 +30740,7 @@ function collectPublishedPages(app) {
     const parsed = typeof shareTime === "string" ? Date.parse(shareTime) : NaN;
     pages.push({
       path,
-      title: file.basename,
+      title: titleFor(file.basename),
       shareLink,
       publishedAt: isNaN(parsed) ? null : parsed,
       filePath: file.path
@@ -30790,7 +30790,11 @@ var ShareStatsView = class extends import_obsidian11.ItemView {
     const body = root.createDiv({ cls: "opal-stats-body" });
     body.createDiv({ cls: "opal-stats-loading", text: t("stats.loading") });
     try {
-      const pages = collectPublishedPages(this.app);
+      const titleFor = await makeUniquePrefixStripper(
+        this.app,
+        this.plugin.settings.stripUniquePrefix
+      );
+      const pages = collectPublishedPages(this.app, titleFor);
       const configured = canReadAnalytics(this.plugin.settings);
       const hits = configured ? await fetchAllPathHits(this.plugin.settings) : null;
       const countsAvailable = hits !== null;
@@ -30807,7 +30811,8 @@ var ShareStatsView = class extends import_obsidian11.ItemView {
         body.createDiv({ cls: "opal-stats-empty", text: t("stats.empty") });
         return;
       }
-      this.renderTable(body, rows, countsAvailable);
+      this.renderListHeader(body, rows.length);
+      this.renderList(body, rows, countsAvailable);
     } catch (err2) {
       body.empty();
       body.createDiv({ cls: "opal-stats-notice", text: t("stats.fetchFailed") });
@@ -30819,59 +30824,74 @@ var ShareStatsView = class extends import_obsidian11.ItemView {
   /** Render the two header stat cards: published page count + total views. */
   renderCards(parent, pageCount, totalViews) {
     parent.empty();
-    const card = (value, label) => {
-      const el = parent.createDiv({ cls: "opal-stat-card" });
-      el.createDiv({ cls: "opal-stat-card-value", text: value });
+    const card = (value, unit, label, accent) => {
+      const el = parent.createDiv({ cls: `opal-stat-card opal-stat-card-${accent}` });
       el.createDiv({ cls: "opal-stat-card-label", text: label });
+      const valueRow = el.createDiv({ cls: "opal-stat-card-valuerow" });
+      valueRow.createSpan({ cls: "opal-stat-card-value", text: value });
+      if (unit) valueRow.createSpan({ cls: "opal-stat-card-unit", text: unit });
+      el.createDiv({ cls: "opal-stat-card-accent" });
     };
-    card(pageCount.toLocaleString(), t("stats.card.pages"));
+    card(pageCount.toLocaleString(), "", t("stats.card.pages"), "blue");
     card(
       totalViews == null ? t("stats.views.unknown") : totalViews.toLocaleString(),
-      t("stats.card.views")
+      totalViews == null ? "" : t("stats.card.unit.views"),
+      t("stats.card.views"),
+      "green"
     );
   }
-  renderTable(parent, rows, countsAvailable) {
-    const table = parent.createEl("table", { cls: "opal-stats-table" });
-    const thead = table.createEl("thead").createEl("tr");
-    thead.createEl("th", { text: t("stats.col.title") });
-    thead.createEl("th", { cls: "opal-stats-url", text: t("stats.col.url") });
-    thead.createEl("th", { cls: "opal-stats-num", text: t("stats.col.views") });
-    thead.createEl("th", { cls: "opal-stats-date", text: t("stats.col.published") });
-    const tbody = table.createEl("tbody");
+  /** Section heading above the page list: title + total item count. */
+  renderListHeader(parent, count) {
+    const header = parent.createDiv({ cls: "opal-stats-listheader" });
+    header.createDiv({ cls: "opal-stats-listtitle", text: t("stats.list.title") });
+    header.createDiv({
+      cls: "opal-stats-listcount",
+      text: t("stats.list.count", { count: count.toLocaleString() })
+    });
+  }
+  /** Stacked cards — one per published page — sized for a narrow sidebar. */
+  renderList(parent, rows, countsAvailable) {
+    const list = parent.createDiv({ cls: "opal-stats-list" });
     for (const row of rows) {
-      const tr = tbody.createEl("tr", { cls: "opal-stats-row" });
-      (0, import_obsidian11.setTooltip)(tr, t("stats.openDetail"));
-      tr.addEventListener(
+      const item = list.createDiv({ cls: "opal-stats-item" });
+      (0, import_obsidian11.setTooltip)(item, t("stats.openDetail"));
+      item.addEventListener(
         "click",
         () => new StatsDetailModal(this.app, this.plugin.settings, row, countsAvailable).open()
       );
-      const titleTd = tr.createEl("td", { cls: "opal-stats-titlecol" });
-      const titleWrap = titleTd.createDiv({ cls: "opal-stats-titlecell" });
-      const nameEl = titleWrap.createSpan({ cls: "opal-stats-notename", text: row.title });
+      const titleRow = item.createDiv({ cls: "opal-stats-itemtitle" });
+      const nameEl = titleRow.createSpan({ cls: "opal-stats-notename", text: row.title });
       (0, import_obsidian11.setTooltip)(nameEl, t("stats.openNote"));
       nameEl.addEventListener("click", (e) => {
         e.stopPropagation();
         void this.openNote(row.filePath);
       });
-      const linkEl = titleWrap.createSpan({ cls: "opal-stats-openlink" });
+      const linkEl = titleRow.createDiv({ cls: "opal-stats-openlink" });
       (0, import_obsidian11.setIcon)(linkEl, "external-link");
       (0, import_obsidian11.setTooltip)(linkEl, t("stats.openLink"));
       linkEl.addEventListener("click", (e) => {
         e.stopPropagation();
         window.open(row.shareLink, "_blank");
       });
-      const urlTd = tr.createEl("td", { cls: "opal-stats-url" });
-      const urlEl = urlTd.createSpan({ cls: "opal-stats-urltext", text: row.path });
-      (0, import_obsidian11.setTooltip)(urlEl, row.shareLink);
-      urlEl.addEventListener("click", (e) => {
+      const metaRow = item.createDiv({ cls: "opal-stats-itemmeta" });
+      const chip = metaRow.createDiv({ cls: "opal-stats-linkchip" });
+      const chipIcon = chip.createSpan({ cls: "opal-stats-linkchip-icon" });
+      (0, import_obsidian11.setIcon)(chipIcon, "link");
+      chip.createSpan({ text: row.path });
+      (0, import_obsidian11.setTooltip)(chip, row.shareLink);
+      chip.addEventListener("click", (e) => {
         e.stopPropagation();
         window.open(row.shareLink, "_blank");
       });
-      tr.createEl("td", {
-        cls: "opal-stats-num",
-        text: countsAvailable ? row.views.toLocaleString() : t("stats.views.unknown")
+      const metaGroup = metaRow.createDiv({ cls: "opal-stats-metagroup" });
+      const viewsEl = metaGroup.createDiv({ cls: "opal-stats-metaitem" });
+      (0, import_obsidian11.setIcon)(viewsEl.createSpan({ cls: "opal-stats-metaicon" }), "eye");
+      viewsEl.createSpan({
+        text: countsAvailable ? t("stats.viewsCount", { count: row.views.toLocaleString() }) : t("stats.views.unknown")
       });
-      tr.createEl("td", { cls: "opal-stats-date", text: formatDate(row.publishedAt) });
+      const dateEl = metaGroup.createDiv({ cls: "opal-stats-metaitem" });
+      (0, import_obsidian11.setIcon)(dateEl.createSpan({ cls: "opal-stats-metaicon" }), "calendar");
+      dateEl.createSpan({ text: formatDate(row.publishedAt) });
     }
   }
   async openNote(filePath) {
@@ -30947,7 +30967,7 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
   async saveSettings() {
     await this.saveData(this.settings);
   }
-  /** Reveal the share-stats tab, reusing an open one or opening a new main-area tab. */
+  /** Reveal the share-stats view, reusing an open one or opening it in the right sidebar. */
   async activateStatsView() {
     const { workspace } = this.app;
     const existing = workspace.getLeavesOfType(VIEW_TYPE_SHARE_STATS);
@@ -30955,9 +30975,10 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
       await workspace.revealLeaf(existing[0]);
       return;
     }
-    const leaf = workspace.getLeaf(true);
+    const leaf = workspace.getRightLeaf(false);
+    if (!leaf) return;
     await leaf.setViewState({ type: VIEW_TYPE_SHARE_STATS, active: true });
-    await workspace.revealLeaf(leaf);
+    workspace.revealLeaf(leaf);
   }
   // ── Frontmatter helpers ───────────────────────────────────────────────
   /** Last-known share link, or "" if this note has never been published. Kept

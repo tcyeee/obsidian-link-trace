@@ -566,56 +566,44 @@ details[open] > .opal-collapsible-heading::before {
   height: 15px;
 }
 
-/* ── Share-stats view ──────────────────────────────────────────────── */
+/* ── Share-stats view (sidebar) ──────────────────────────────────────── */
 .opal-stats-view {
-  padding: 150px 18px 16px;
+  padding: 12px 12px 16px;
   overflow: auto;
-}
-/* Center content with a readable max-width, like an Obsidian note */
-.opal-stats-header,
-.opal-stats-body {
-  max-width: 700px;
-  margin-left: auto;
-  margin-right: auto;
 }
 .opal-stats-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 .opal-stats-titlerow {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 28px;
+  gap: 6px;
+  margin-bottom: 10px;
 }
 .opal-stats-titleicon {
   display: flex;
   color: var(--text-accent);
 }
 .opal-stats-titleicon svg {
-  width: 36px;
-  height: 36px;
+  width: 16px;
+  height: 16px;
 }
 .opal-stats-title {
-  font-size: 300%;
+  font-size: var(--font-ui-medium);
   font-weight: var(--font-bold);
   color: var(--text-normal);
-}
-.opal-stats-summary {
-  margin-top: 4px;
-  font-size: var(--font-ui-small);
-  color: var(--text-muted);
 }
 .opal-stats-refresh {
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   border-radius: var(--radius-s);
   color: var(--text-muted);
   cursor: pointer;
@@ -625,8 +613,8 @@ details[open] > .opal-collapsible-heading::before {
   color: var(--text-normal);
 }
 .opal-stats-refresh svg {
-  width: 15px;
-  height: 15px;
+  width: 14px;
+  height: 14px;
 }
 .opal-stats-loading,
 .opal-stats-empty {
@@ -644,49 +632,95 @@ details[open] > .opal-collapsible-heading::before {
   font-size: var(--font-ui-smaller);
   color: var(--text-muted);
 }
-.opal-stats-table {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-  font-size: var(--font-ui-small);
+
+/* ── Header stat cards ── */
+.opal-stats-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
-.opal-stats-table th.opal-stats-num,
-.opal-stats-table td.opal-stats-num {
-  width: 72px;
+.opal-stat-card {
+  flex: 1 1 0;
+  min-width: 88px;
+  padding: 10px 12px 8px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  background: var(--background-secondary);
+  overflow: hidden;
 }
-.opal-stats-table th.opal-stats-date,
-.opal-stats-table td.opal-stats-date {
-  width: 104px;
-}
-.opal-stats-table th,
-.opal-stats-table td {
-  padding: 7px 8px;
-  text-align: left;
-  border-bottom: 1px solid var(--background-modifier-border);
-}
-.opal-stats-table th {
-  color: var(--text-muted);
-  font-weight: var(--font-medium);
+.opal-stat-card-label {
   font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
 }
-.opal-stats-table tbody tr:hover {
+.opal-stat-card-valuerow {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  margin-top: 4px;
+}
+.opal-stat-card-value {
+  font-size: var(--font-ui-larger);
+  font-weight: var(--font-bold);
+  line-height: 1.1;
+  color: var(--text-normal);
+}
+.opal-stat-card-unit {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+.opal-stat-card-accent {
+  height: 3px;
+  margin-top: 8px;
+  border-radius: var(--radius-s);
+  background: var(--background-modifier-border);
+}
+.opal-stat-card-blue .opal-stat-card-accent {
+  background: var(--color-blue);
+}
+.opal-stat-card-green .opal-stat-card-accent {
+  background: var(--color-green);
+}
+
+/* ── List header ── */
+.opal-stats-listheader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 16px 0 8px;
+}
+.opal-stats-listtitle {
+  font-size: var(--font-ui-medium);
+  font-weight: var(--font-bold);
+  color: var(--text-normal);
+}
+.opal-stats-listcount {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+
+/* ── Page list: stacked cards, one per published page ── */
+.opal-stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.opal-stats-item {
+  padding: 10px 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  background: var(--background-secondary);
+  cursor: pointer;
+  transition: background 80ms ease-out;
+}
+.opal-stats-item:hover {
   background: var(--background-modifier-hover);
 }
-.opal-stats-num {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-.opal-stats-date {
-  text-align: right;
-  white-space: nowrap;
-  color: var(--text-muted);
-  font-variant-numeric: tabular-nums;
-}
-.opal-stats-titlecell {
+.opal-stats-itemtitle {
   display: flex;
   align-items: center;
   gap: 6px;
+  margin-bottom: 8px;
 }
 .opal-stats-notename {
   min-width: 0;
@@ -694,6 +728,7 @@ details[open] > .opal-collapsible-heading::before {
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--text-normal);
+  font-weight: var(--font-medium);
   cursor: pointer;
 }
 .opal-stats-notename:hover {
@@ -703,6 +738,7 @@ details[open] > .opal-collapsible-heading::before {
 .opal-stats-openlink {
   display: flex;
   flex-shrink: 0;
+  margin-left: auto;
   color: var(--text-faint);
   cursor: pointer;
 }
@@ -714,52 +750,59 @@ details[open] > .opal-collapsible-heading::before {
   height: 13px;
 }
 
-/* ── Header stat cards ── */
-.opal-stats-cards {
+.opal-stats-itemmeta {
   display: flex;
-  gap: 10px;
-  margin-top: 10px;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
-.opal-stat-card {
-  min-width: 120px;
-  padding: 10px 14px;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: var(--radius-m);
-  background: var(--background-secondary);
-}
-.opal-stat-card-value {
-  font-size: var(--h2-size);
-  font-weight: var(--font-bold);
-  line-height: 1.1;
-  color: var(--text-normal);
-  font-variant-numeric: tabular-nums;
-}
-.opal-stat-card-label {
-  margin-top: 3px;
+.opal-stats-linkchip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: var(--radius-l, 12px);
+  background: rgba(var(--color-blue-rgb), 0.12);
+  color: var(--color-blue);
   font-size: var(--font-ui-smaller);
-  color: var(--text-muted);
-}
-
-/* ── Table: URL column + clickable rows ── */
-.opal-stats-table th.opal-stats-url,
-.opal-stats-table td.opal-stats-url {
-  width: 132px;
-}
-.opal-stats-row {
-  cursor: pointer;
-}
-.opal-stats-urltext {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--text-muted);
   font-variant-numeric: tabular-nums;
   cursor: pointer;
 }
-.opal-stats-urltext:hover {
-  color: var(--text-accent);
-  text-decoration: underline;
+.opal-stats-linkchip:hover {
+  background: rgba(var(--color-blue-rgb), 0.2);
+}
+.opal-stats-linkchip-icon {
+  display: flex;
+}
+.opal-stats-linkchip-icon svg {
+  width: 12px;
+  height: 12px;
+}
+.opal-stats-metagroup {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.opal-stats-metaitem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.opal-stats-metaicon {
+  display: flex;
+}
+.opal-stats-metaicon svg {
+  width: 12px;
+  height: 12px;
 }
 
 /* ── Detail modal ── */

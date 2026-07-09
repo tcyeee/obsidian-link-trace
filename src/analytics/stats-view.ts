@@ -12,6 +12,7 @@ import {
 import { fetchAllPathHits } from "./analytics-client";
 import { StatsDetailModal } from "./stats-detail-modal";
 import { isPublishedFrontmatter } from "../core/share-status";
+import { makeUniquePrefixStripper } from "../publish/exporter";
 
 export const VIEW_TYPE_SHARE_STATS = "share-stats-view";
 
@@ -30,8 +31,15 @@ function formatDate(ms: number | null): string {
  * Notes taken down keep their `share_link` (so republishing can reuse it) but are
  * excluded here via `share_status`. Pages with zero views still show up here;
  * GoatCounter only knows the visited ones.
+ *
+ * `titleFor` strips the unique-note timestamp prefix when the compatibility
+ * toggle is on, matching the title shown on the exported page itself; pass
+ * the identity function (the default) to keep the raw basename.
  */
-export function collectPublishedPages(app: App): PublishedPage[] {
+export function collectPublishedPages(
+	app: App,
+	titleFor: (name: string) => string = (n) => n
+): PublishedPage[] {
 	const pages: PublishedPage[] = [];
 	for (const file of app.vault.getMarkdownFiles()) {
 		const fm = app.metadataCache.getFileCache(file)?.frontmatter;
@@ -43,7 +51,7 @@ export function collectPublishedPages(app: App): PublishedPage[] {
 		const parsed = typeof shareTime === "string" ? Date.parse(shareTime) : NaN;
 		pages.push({
 			path,
-			title: file.basename,
+			title: titleFor(file.basename),
 			shareLink,
 			publishedAt: isNaN(parsed) ? null : parsed,
 			filePath: file.path,
@@ -111,7 +119,11 @@ export class ShareStatsView extends ItemView {
 		body.createDiv({ cls: "opal-stats-loading", text: t("stats.loading") });
 
 		try {
-			const pages = collectPublishedPages(this.app);
+			const titleFor = await makeUniquePrefixStripper(
+				this.app,
+				this.plugin.settings.stripUniquePrefix
+			);
+			const pages = collectPublishedPages(this.app, titleFor);
 			const configured = canReadAnalytics(this.plugin.settings);
 			const hits = configured ? await fetchAllPathHits(this.plugin.settings) : null;
 			const countsAvailable = hits !== null;
@@ -137,7 +149,8 @@ export class ShareStatsView extends ItemView {
 				return;
 			}
 
-			this.renderTable(body, rows, countsAvailable);
+			this.renderListHeader(body, rows.length);
+			this.renderList(body, rows, countsAvailable);
 		} catch (err) {
 			body.empty();
 			body.createDiv({ cls: "opal-stats-notice", text: t("stats.fetchFailed") });
@@ -150,45 +163,53 @@ export class ShareStatsView extends ItemView {
 	/** Render the two header stat cards: published page count + total views. */
 	private renderCards(parent: HTMLElement, pageCount: number, totalViews: number | null): void {
 		parent.empty();
-		const card = (value: string, label: string) => {
-			const el = parent.createDiv({ cls: "opal-stat-card" });
-			el.createDiv({ cls: "opal-stat-card-value", text: value });
+		const card = (value: string, unit: string, label: string, accent: "blue" | "green") => {
+			const el = parent.createDiv({ cls: `opal-stat-card opal-stat-card-${accent}` });
 			el.createDiv({ cls: "opal-stat-card-label", text: label });
+			const valueRow = el.createDiv({ cls: "opal-stat-card-valuerow" });
+			valueRow.createSpan({ cls: "opal-stat-card-value", text: value });
+			if (unit) valueRow.createSpan({ cls: "opal-stat-card-unit", text: unit });
+			el.createDiv({ cls: "opal-stat-card-accent" });
 		};
-		card(pageCount.toLocaleString(), t("stats.card.pages"));
+		card(pageCount.toLocaleString(), "", t("stats.card.pages"), "blue");
 		card(
 			totalViews == null ? t("stats.views.unknown") : totalViews.toLocaleString(),
-			t("stats.card.views")
+			totalViews == null ? "" : t("stats.card.unit.views"),
+			t("stats.card.views"),
+			"green"
 		);
 	}
 
-	private renderTable(parent: HTMLElement, rows: StatsRow[], countsAvailable: boolean): void {
-		const table = parent.createEl("table", { cls: "opal-stats-table" });
-		const thead = table.createEl("thead").createEl("tr");
-		thead.createEl("th", { text: t("stats.col.title") });
-		thead.createEl("th", { cls: "opal-stats-url", text: t("stats.col.url") });
-		thead.createEl("th", { cls: "opal-stats-num", text: t("stats.col.views") });
-		thead.createEl("th", { cls: "opal-stats-date", text: t("stats.col.published") });
+	/** Section heading above the page list: title + total item count. */
+	private renderListHeader(parent: HTMLElement, count: number): void {
+		const header = parent.createDiv({ cls: "opal-stats-listheader" });
+		header.createDiv({ cls: "opal-stats-listtitle", text: t("stats.list.title") });
+		header.createDiv({
+			cls: "opal-stats-listcount",
+			text: t("stats.list.count", { count: count.toLocaleString() }),
+		});
+	}
 
-		const tbody = table.createEl("tbody");
+	/** Stacked cards — one per published page — sized for a narrow sidebar. */
+	private renderList(parent: HTMLElement, rows: StatsRow[], countsAvailable: boolean): void {
+		const list = parent.createDiv({ cls: "opal-stats-list" });
 		for (const row of rows) {
-			const tr = tbody.createEl("tr", { cls: "opal-stats-row" });
-			setTooltip(tr, t("stats.openDetail"));
-			tr.addEventListener("click", () =>
+			const item = list.createDiv({ cls: "opal-stats-item" });
+			setTooltip(item, t("stats.openDetail"));
+			item.addEventListener("click", () =>
 				new StatsDetailModal(this.app, this.plugin.settings, row, countsAvailable).open()
 			);
 
-			// Title cell: note name opens the note; external-link icon opens the page.
-			// Both stop propagation so they don't also trigger the row's detail modal.
-			const titleTd = tr.createEl("td", { cls: "opal-stats-titlecol" });
-			const titleWrap = titleTd.createDiv({ cls: "opal-stats-titlecell" });
-			const nameEl = titleWrap.createSpan({ cls: "opal-stats-notename", text: row.title });
+			// Title row: note name opens the note; external-link icon opens the page.
+			// Both stop propagation so they don't also trigger the item's detail modal.
+			const titleRow = item.createDiv({ cls: "opal-stats-itemtitle" });
+			const nameEl = titleRow.createSpan({ cls: "opal-stats-notename", text: row.title });
 			setTooltip(nameEl, t("stats.openNote"));
 			nameEl.addEventListener("click", (e) => {
 				e.stopPropagation();
 				void this.openNote(row.filePath);
 			});
-			const linkEl = titleWrap.createSpan({ cls: "opal-stats-openlink" });
+			const linkEl = titleRow.createDiv({ cls: "opal-stats-openlink" });
 			setIcon(linkEl, "external-link");
 			setTooltip(linkEl, t("stats.openLink"));
 			linkEl.addEventListener("click", (e) => {
@@ -196,20 +217,32 @@ export class ShareStatsView extends ItemView {
 				window.open(row.shareLink, "_blank");
 			});
 
-			// URL cell: the short-link path, click opens the page (stops row propagation).
-			const urlTd = tr.createEl("td", { cls: "opal-stats-url" });
-			const urlEl = urlTd.createSpan({ cls: "opal-stats-urltext", text: row.path });
-			setTooltip(urlEl, row.shareLink);
-			urlEl.addEventListener("click", (e) => {
+			// Meta row: short-link pill, view count, and published date.
+			const metaRow = item.createDiv({ cls: "opal-stats-itemmeta" });
+
+			const chip = metaRow.createDiv({ cls: "opal-stats-linkchip" });
+			const chipIcon = chip.createSpan({ cls: "opal-stats-linkchip-icon" });
+			setIcon(chipIcon, "link");
+			chip.createSpan({ text: row.path });
+			setTooltip(chip, row.shareLink);
+			chip.addEventListener("click", (e) => {
 				e.stopPropagation();
 				window.open(row.shareLink, "_blank");
 			});
 
-			tr.createEl("td", {
-				cls: "opal-stats-num",
-				text: countsAvailable ? row.views.toLocaleString() : t("stats.views.unknown"),
+			const metaGroup = metaRow.createDiv({ cls: "opal-stats-metagroup" });
+
+			const viewsEl = metaGroup.createDiv({ cls: "opal-stats-metaitem" });
+			setIcon(viewsEl.createSpan({ cls: "opal-stats-metaicon" }), "eye");
+			viewsEl.createSpan({
+				text: countsAvailable
+					? t("stats.viewsCount", { count: row.views.toLocaleString() })
+					: t("stats.views.unknown"),
 			});
-			tr.createEl("td", { cls: "opal-stats-date", text: formatDate(row.publishedAt) });
+
+			const dateEl = metaGroup.createDiv({ cls: "opal-stats-metaitem" });
+			setIcon(dateEl.createSpan({ cls: "opal-stats-metaicon" }), "calendar");
+			dateEl.createSpan({ text: formatDate(row.publishedAt) });
 		}
 	}
 

@@ -95,7 +95,7 @@ export default class ShareOnlinePlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	/** Reveal the share-stats tab, reusing an open one or opening a new main-area tab. */
+	/** Reveal the share-stats view, reusing an open one or opening it in the right sidebar. */
 	async activateStatsView(): Promise<void> {
 		const { workspace } = this.app;
 		const existing = workspace.getLeavesOfType(VIEW_TYPE_SHARE_STATS);
@@ -103,9 +103,10 @@ export default class ShareOnlinePlugin extends Plugin {
 			await workspace.revealLeaf(existing[0]);
 			return;
 		}
-		const leaf = workspace.getLeaf(true);
+		const leaf = workspace.getRightLeaf(false);
+		if (!leaf) return;
 		await leaf.setViewState({ type: VIEW_TYPE_SHARE_STATS, active: true });
-		await workspace.revealLeaf(leaf);
+		workspace.revealLeaf(leaf);
 	}
 
 	// ── Frontmatter helpers ───────────────────────────────────────────────
