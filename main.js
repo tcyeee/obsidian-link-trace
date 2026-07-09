@@ -27324,7 +27324,7 @@ async function queryBase(app, baseFile, viewName) {
     return null;
   }
   const views = (_a2 = config.views) != null ? _a2 : [];
-  const view = (_c = (_b2 = viewName && views.find((v) => v.name === viewName)) != null ? _b2 : views[0]) != null ? _c : {};
+  const view = (_c = (_b2 = viewName !== void 0 ? views.find((v) => v.name === viewName) : void 0) != null ? _b2 : views[0]) != null ? _c : {};
   const formulas = (_d = config.formulas) != null ? _d : {};
   const properties = config.properties;
   const vaultName = app.vault.getName();

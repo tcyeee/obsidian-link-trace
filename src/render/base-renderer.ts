@@ -550,7 +550,7 @@ async function queryBase(
 
   // Select the requested view (by name) or fall back to the first one.
   const views      = config.views ?? [];
-  const view       = (viewName && views.find(v => v.name === viewName)) ?? views[0] ?? {};
+  const view       = (viewName !== undefined ? views.find(v => v.name === viewName) : undefined) ?? views[0] ?? {};
   const formulas   = config.formulas   ?? {};
   const properties = config.properties;
   const vaultName  = app.vault.getName();
