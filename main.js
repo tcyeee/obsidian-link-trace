@@ -30978,7 +30978,7 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
     const leaf = workspace.getRightLeaf(false);
     if (!leaf) return;
     await leaf.setViewState({ type: VIEW_TYPE_SHARE_STATS, active: true });
-    workspace.revealLeaf(leaf);
+    await workspace.revealLeaf(leaf);
   }
   // ── Frontmatter helpers ───────────────────────────────────────────────
   /** Last-known share link, or "" if this note has never been published. Kept

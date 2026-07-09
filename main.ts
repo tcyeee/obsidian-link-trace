@@ -106,7 +106,7 @@ export default class ShareOnlinePlugin extends Plugin {
 		const leaf = workspace.getRightLeaf(false);
 		if (!leaf) return;
 		await leaf.setViewState({ type: VIEW_TYPE_SHARE_STATS, active: true });
-		workspace.revealLeaf(leaf);
+		await workspace.revealLeaf(leaf);
 	}
 
 	// ── Frontmatter helpers ───────────────────────────────────────────────
