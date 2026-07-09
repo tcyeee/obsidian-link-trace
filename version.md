@@ -1,5 +1,4 @@
-# 0.1.16
+# 0.1.17
 
-- fix: await revealLeaf in activateStatsView to avoid floating promise (89d435c)
-- feat: enhance share-stats view with improved layout and new features (5be0a7f)
-- fix: update README for clarity and feature enhancements (c589088)
+- fix: correct view-selection fallback to avoid empty-string type leak in queryBase (d780d61)
+- fix: publish GitHub releases immediately instead of as drafts (87657d4)
