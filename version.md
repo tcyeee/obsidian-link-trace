@@ -1,4 +1,4 @@
-# 0.1.17
+# 0.1.18
 
-- fix: correct view-selection fallback to avoid empty-string type leak in queryBase (d780d61)
-- fix: publish GitHub releases immediately instead of as drafts (87657d4)
+- fix: resolve Obsidian submission-bot lint findings (9f1d2c7)
+- feat: manage unpublished share records in the stats view (889f5b0)
