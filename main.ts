@@ -142,6 +142,17 @@ export default class ShareOnlinePlugin extends Plugin {
 		});
 	}
 
+	/**
+	 * Hide a taken-down note's record from the stats page's "unpublished" list
+	 * (it stays reachable only via the note itself). `share_link` is left
+	 * untouched so a later republish can still reuse the same address.
+	 */
+	async hideShareRecordFromUi(file: TFile): Promise<void> {
+		await this.app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
+			fm["share_status"] = "hidden";
+		});
+	}
+
 	// ── File type helper ──────────────────────────────────────────────────
 
 	/** Only Markdown notes can be published / shared. */
@@ -409,18 +420,27 @@ export default class ShareOnlinePlugin extends Plugin {
 		return flattenSubTree(nodes).map((n) => ({ file: n.file, shareLink: n.shareLink }));
 	}
 
-	private async updateNote(file: TFile) {
+	private async updateNote(file: TFile, successText = t("toast.updateSuccess")) {
 		const existingUrl = this.getShareLink(file);
 		const existingName = existingUrl ? this.extractNoteName(existingUrl) : undefined;
 		const subNotes = await this.collectSubNotes(file);
 		// Update re-uploads every linked sub-note too (updateExisting=true): already-
 		// published ones are re-rendered in place, newly-linked ones are uploaded fresh.
 		// Sub-notes dropped from the note simply aren't in `subNotes`, so they're left as-is.
-		await this.doPublish(file, subNotes, existingName, t("toast.updateSuccess"), false, true);
+		await this.doPublish(file, subNotes, existingName, successText, false, true);
 	}
 
 	async updateFromUi(file: TFile): Promise<void> {
 		await this.updateNote(file);
+	}
+
+	/**
+	 * Republish a previously taken-down note from the stats page's "unpublished"
+	 * list: same underlying flow as {@link updateFromUi} (reuses the old
+	 * `share_link` and current sub-note selection), just a different success label.
+	 */
+	async republishFromUi(file: TFile): Promise<void> {
+		await this.updateNote(file, t("toast.republishSuccess"));
 	}
 
 	private async exportCurrentNote() {

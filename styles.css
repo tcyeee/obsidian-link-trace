@@ -689,10 +689,51 @@ details[open] > .opal-collapsible-heading::before {
   gap: 8px;
   margin: 16px 0 8px;
 }
+.opal-stats-listheader-titlerow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 .opal-stats-listtitle {
   font-size: var(--font-ui-medium);
   font-weight: var(--font-bold);
   color: var(--text-normal);
+}
+.opal-stats-listheader-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  color: var(--text-faint);
+  cursor: pointer;
+}
+.opal-stats-listheader-action svg {
+  width: 13px;
+  height: 13px;
+}
+.opal-stats-listheader-action:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+.opal-stats-listheader-action svg {
+  transition: transform 0.2s ease;
+}
+.opal-stats-listheader-action.is-expanded svg {
+  transform: rotate(180deg);
+}
+
+/* Unpublished list panel: collapses/expands under its section header. */
+.opal-stats-unpublished-panel {
+  overflow: hidden;
+  max-height: 2000px;
+  opacity: 1;
+  transition: max-height 0.25s ease, opacity 0.2s ease;
+}
+.opal-stats-unpublished-panel.is-collapsed {
+  max-height: 0;
+  opacity: 0;
 }
 .opal-stats-listcount {
   font-size: var(--font-ui-smaller);
@@ -803,6 +844,94 @@ details[open] > .opal-collapsible-heading::before {
 .opal-stats-metaicon svg {
   width: 12px;
   height: 12px;
+}
+
+/* ── Unpublished list: dimmer (taken-down state), no link, hover-reveal actions ── */
+.opal-stats-item--unpublished {
+  position: relative;
+  overflow: hidden;
+  cursor: default;
+  opacity: 0.7;
+  transition: opacity 160ms ease;
+}
+.opal-stats-item--unpublished:hover {
+  /* The gradient overlay is the hover affordance here — skip the generic tint,
+     just lift the fade a little so the row (and the actions) read clearly. */
+  background: var(--background-secondary);
+  opacity: 0.96;
+}
+.opal-stats-item--unpublished .opal-stats-itemtitle {
+  /* Name, view count and date all sit inline now — no second meta row below. */
+  margin-bottom: 0;
+}
+.opal-stats-item--unpublished .opal-stats-notename {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.opal-stats-item--unpublished .opal-stats-notename:hover {
+  color: var(--text-accent);
+}
+.opal-stats-item--unpublished .opal-stats-itemtitle .opal-stats-metaitem {
+  flex-shrink: 0;
+  color: var(--text-faint);
+}
+.opal-stats-item--unpublished .opal-stats-metaicon {
+  color: var(--text-faint);
+}
+.opal-stats-item-content {
+  position: relative;
+}
+
+/* Right-aligned gradient mask, darkest at the right edge, fading to transparent
+   toward the left; hidden until hover, with a matching fade on the way out. */
+.opal-stats-item-hoverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 8px;
+  background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.4) 65%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+.opal-stats-item--unpublished:hover .opal-stats-item-hoverlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+.opal-stats-item-hoverlay .opal-stats-itemactions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.opal-stats-item-hoverlay .opal-stats-itemaction {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.85);
+}
+.opal-stats-item-hoverlay .opal-stats-itemaction svg {
+  width: 14px;
+  height: 14px;
+}
+.opal-stats-item-hoverlay .opal-stats-itemaction:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+.opal-stats-item-hoverlay .opal-stats-itemaction--danger:hover {
+  background: rgba(var(--color-red-rgb), 0.45);
+  color: #ffffff;
+}
+.opal-stats-item-hoverlay .opal-stats-itemaction.is-loading {
+  pointer-events: none;
+  opacity: 0.5;
 }
 
 /* ── Detail modal ── */

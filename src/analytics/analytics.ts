@@ -330,6 +330,12 @@ export interface PublishedPage {
 	publishedAt: number | null;
 	/** 笔记在库内的路径，用于点击打开。 */
 	filePath: string;
+	/**
+	 * 已冻结（frontmatter 里记录过一次）的访问数——用于已下架的页面：下架后流量
+	 * 不会再变化，没必要每次都向 GoatCounter 重新拉取。设置了此字段时，
+	 * {@link buildStatsRows} 直接采用它，不再查 hits 映射。
+	 */
+	cachedViews?: number;
 }
 
 /** 统计页一行：分享页 + 访问数。 */
@@ -339,14 +345,15 @@ export interface StatsRow extends PublishedPage {
 
 /**
  * 把已发布页与 GoatCounter 命中按 path 对齐，得到带访问数的行。
- * 未被 GoatCounter 记录（从未访问）的页计为 0。按访问数降序、再按发布时间降序。
+ * 有 `cachedViews`（已冻结）的页直接用该值；否则按 path 查 hits 映射，未命中
+ * （从未访问）计为 0。按访问数降序、再按发布时间降序。
  */
 export function buildStatsRows(
 	pages: PublishedPage[],
 	hitsByPath: Map<string, number>
 ): StatsRow[] {
 	return pages
-		.map((p) => ({ ...p, views: hitsByPath.get(p.path) ?? 0 }))
+		.map((p) => ({ ...p, views: p.cachedViews ?? hitsByPath.get(p.path) ?? 0 }))
 		.sort((a, b) => b.views - a.views || (b.publishedAt ?? 0) - (a.publishedAt ?? 0));
 }
 

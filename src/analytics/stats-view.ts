@@ -11,10 +11,17 @@ import {
 } from "./analytics";
 import { fetchAllPathHits } from "./analytics-client";
 import { StatsDetailModal } from "./stats-detail-modal";
-import { isPublishedFrontmatter } from "../core/share-status";
+import { isPublishedFrontmatter, isUnpublishedVisibleFrontmatter } from "../core/share-status";
 import { makeUniquePrefixStripper } from "../publish/exporter";
 
 export const VIEW_TYPE_SHARE_STATS = "share-stats-view";
+
+/**
+ * Frontmatter key an unpublished page's view count is frozen into, once known
+ * (see {@link ShareStatsView.cacheUnpublishedViews}). A taken-down page's traffic
+ * can't change again, so caching it avoids re-querying GoatCounter forever.
+ */
+const SHARE_VIEWS_CACHE_KEY = "share_views_cached";
 
 /** Format a timestamp as a local date, e.g. "2026-06-15"; null → em dash. */
 function formatDate(ms: number | null): string {
@@ -26,38 +33,64 @@ function formatDate(ms: number | null): string {
 }
 
 /**
- * Scan every Markdown note for a currently-live `share_link` — the canonical
- * local record of what this plugin has published (main notes and sub-notes alike).
- * Notes taken down keep their `share_link` (so republishing can reuse it) but are
- * excluded here via `share_status`. Pages with zero views still show up here;
- * GoatCounter only knows the visited ones.
+ * Scan every Markdown note for one matching `share_link` record, keyed by a
+ * frontmatter predicate. Shared by {@link collectPublishedPages} (currently-live
+ * pages) and {@link collectUnpublishedPages} (taken-down but not hidden pages).
  *
  * `titleFor` strips the unique-note timestamp prefix when the compatibility
  * toggle is on, matching the title shown on the exported page itself; pass
  * the identity function (the default) to keep the raw basename.
  */
-export function collectPublishedPages(
+function collectPages(
 	app: App,
-	titleFor: (name: string) => string = (n) => n
+	predicate: (fm: Record<string, unknown> | null | undefined) => boolean,
+	titleFor: (name: string) => string
 ): PublishedPage[] {
 	const pages: PublishedPage[] = [];
 	for (const file of app.vault.getMarkdownFiles()) {
 		const fm = app.metadataCache.getFileCache(file)?.frontmatter;
-		if (!isPublishedFrontmatter(fm)) continue;
+		if (!predicate(fm)) continue;
 		const shareLink = fm?.["share_link"] as string;
 		const path = extractPathname(shareLink);
 		if (!path) continue;
 		const shareTime = fm?.["share_time"] as unknown;
 		const parsed = typeof shareTime === "string" ? Date.parse(shareTime) : NaN;
+		const cachedViewsRaw: unknown = fm?.[SHARE_VIEWS_CACHE_KEY];
 		pages.push({
 			path,
 			title: titleFor(file.basename),
 			shareLink,
 			publishedAt: isNaN(parsed) ? null : parsed,
 			filePath: file.path,
+			cachedViews: typeof cachedViewsRaw === "number" ? cachedViewsRaw : undefined,
 		});
 	}
 	return pages;
+}
+
+/**
+ * Every currently-live published page (main notes and sub-notes alike) — the
+ * canonical local record of what this plugin has published. Pages with zero
+ * views still show up here; GoatCounter only knows the visited ones.
+ */
+export function collectPublishedPages(
+	app: App,
+	titleFor: (name: string) => string = (n) => n
+): PublishedPage[] {
+	return collectPages(app, isPublishedFrontmatter, titleFor);
+}
+
+/**
+ * Every taken-down page that hasn't been hidden — shown in the stats page's
+ * "unpublished" section so it can be republished (reusing the same address)
+ * or hidden from that list. `share_link` survives an unpublish so it stays
+ * joinable with GoatCounter's historical hit counts even after takedown.
+ */
+export function collectUnpublishedPages(
+	app: App,
+	titleFor: (name: string) => string = (n) => n
+): PublishedPage[] {
+	return collectPages(app, isUnpublishedVisibleFrontmatter, titleFor);
 }
 
 /**
@@ -67,6 +100,8 @@ export function collectPublishedPages(
  */
 export class ShareStatsView extends ItemView {
 	private loading = false;
+	/** UI-only: whether the "unpublished" section's list is expanded. Resets on reopen. */
+	private unpublishedExpanded = true;
 
 	constructor(leaf: WorkspaceLeaf, private plugin: ShareOnlinePlugin) {
 		super(leaf);
@@ -124,13 +159,20 @@ export class ShareStatsView extends ItemView {
 				this.plugin.settings.stripUniquePrefix
 			);
 			const pages = collectPublishedPages(this.app, titleFor);
+			const unpublishedPages = collectUnpublishedPages(this.app, titleFor);
 			const configured = canReadAnalytics(this.plugin.settings);
 			const hits = configured ? await fetchAllPathHits(this.plugin.settings) : null;
 			const countsAvailable = hits !== null;
-			const rows = buildStatsRows(pages, hits ?? new Map<string, number>());
+			const hitsMap = hits ?? new Map<string, number>();
+			const rows = buildStatsRows(pages, hitsMap);
+			const unpublishedRows = buildStatsRows(unpublishedPages, hitsMap);
 			const totalViews = countsAvailable
 				? rows.reduce((sum, r) => sum + r.views, 0)
 				: null;
+
+			// A taken-down page's view count is frozen the first time it's known —
+			// write it into frontmatter so later renders never re-query it.
+			if (countsAvailable) void this.cacheUnpublishedViews(unpublishedRows);
 
 			// Header stat cards: page count + total views (— when counts unavailable).
 			this.renderCards(cardsEl, pages.length, totalViews);
@@ -144,14 +186,20 @@ export class ShareStatsView extends ItemView {
 				body.createDiv({ cls: "opal-stats-notice", text: t("stats.fetchFailed") });
 			}
 
-			if (rows.length === 0) {
+			if (rows.length === 0 && unpublishedRows.length === 0) {
 				body.createDiv({ cls: "opal-stats-empty", text: t("stats.empty") });
 				return;
 			}
 
-			this.renderListHeader(body, rows.length);
-			this.renderList(body, rows, countsAvailable);
-		} catch (err) {
+			if (rows.length > 0) {
+				this.renderListHeader(body, t("stats.list.title"), rows.length);
+				this.renderList(body, rows, countsAvailable);
+			}
+
+			if (unpublishedRows.length > 0) {
+				this.renderUnpublishedSection(body, unpublishedRows, countsAvailable);
+			}
+		} catch (err: unknown) {
 			body.empty();
 			body.createDiv({ cls: "opal-stats-notice", text: t("stats.fetchFailed") });
 			console.error(err);
@@ -180,13 +228,52 @@ export class ShareStatsView extends ItemView {
 		);
 	}
 
-	/** Section heading above the page list: title + total item count. */
-	private renderListHeader(parent: HTMLElement, count: number): void {
+	/** Section heading above a page list: title + total item count. */
+	private renderListHeader(parent: HTMLElement, title: string, count: number): void {
 		const header = parent.createDiv({ cls: "opal-stats-listheader" });
-		header.createDiv({ cls: "opal-stats-listtitle", text: t("stats.list.title") });
+		header.createDiv({ cls: "opal-stats-listtitle", text: title });
 		header.createDiv({
 			cls: "opal-stats-listcount",
 			text: t("stats.list.count", { count: count.toLocaleString() }),
+		});
+	}
+
+	/**
+	 * The "unpublished" section: same heading shape as {@link renderListHeader},
+	 * plus a chevron toggle next to the title that collapses/expands the list
+	 * below it (a local UI toggle only — it doesn't touch any note's frontmatter,
+	 * unlike the per-row hide button).
+	 */
+	private renderUnpublishedSection(
+		parent: HTMLElement,
+		rows: StatsRow[],
+		countsAvailable: boolean
+	): void {
+		const header = parent.createDiv({ cls: "opal-stats-listheader" });
+		const titleRow = header.createDiv({ cls: "opal-stats-listheader-titlerow" });
+		titleRow.createDiv({ cls: "opal-stats-listtitle", text: t("stats.list.unpublished.title") });
+		const toggle = titleRow.createDiv({ cls: "opal-stats-listheader-action" });
+		setIcon(toggle, "chevron-down");
+		header.createDiv({
+			cls: "opal-stats-listcount",
+			text: t("stats.list.count", { count: rows.length.toLocaleString() }),
+		});
+
+		const panel = parent.createDiv({ cls: "opal-stats-unpublished-panel" });
+		this.renderUnpublishedList(panel, rows, countsAvailable);
+
+		const applyState = () => {
+			toggle.toggleClass("is-expanded", this.unpublishedExpanded);
+			panel.toggleClass("is-collapsed", !this.unpublishedExpanded);
+			setTooltip(
+				toggle,
+				t(this.unpublishedExpanded ? "stats.unpublished.collapse" : "stats.unpublished.expand")
+			);
+		};
+		applyState();
+		toggle.addEventListener("click", () => {
+			this.unpublishedExpanded = !this.unpublishedExpanded;
+			applyState();
 		});
 	}
 
@@ -243,6 +330,98 @@ export class ShareStatsView extends ItemView {
 			const dateEl = metaGroup.createDiv({ cls: "opal-stats-metaitem" });
 			setIcon(dateEl.createSpan({ cls: "opal-stats-metaicon" }), "calendar");
 			dateEl.createSpan({ text: formatDate(row.publishedAt) });
+		}
+	}
+
+	/**
+	 * Stacked cards for taken-down pages — dimmer than {@link renderList}'s live
+	 * pages (no click-to-open-detail, no link — the page is offline). Title row
+	 * carries name, view count, and published date all inline. Actions (republish
+	 * / hide) live in a right-aligned overlay that's invisible until hover: a dark
+	 * gradient (darkest at the right edge, fading out to the left) fades in under
+	 * the buttons, and fades back out on mouse-leave.
+	 */
+	private renderUnpublishedList(
+		parent: HTMLElement,
+		rows: StatsRow[],
+		countsAvailable: boolean
+	): void {
+		const list = parent.createDiv({ cls: "opal-stats-list" });
+		for (const row of rows) {
+			const item = list.createDiv({ cls: "opal-stats-item opal-stats-item--unpublished" });
+
+			const content = item.createDiv({ cls: "opal-stats-item-content" });
+			const titleRow = content.createDiv({ cls: "opal-stats-itemtitle" });
+			const nameEl = titleRow.createSpan({ cls: "opal-stats-notename", text: row.title });
+			setTooltip(nameEl, t("stats.openNote"));
+			nameEl.addEventListener("click", () => void this.openNote(row.filePath));
+
+			// A cached (frozen) view count is always shown; otherwise it falls back
+			// to this render's live join, same as the published list.
+			const viewsKnown = row.cachedViews !== undefined || countsAvailable;
+			const viewsEl = titleRow.createDiv({ cls: "opal-stats-metaitem" });
+			setIcon(viewsEl.createSpan({ cls: "opal-stats-metaicon" }), "eye");
+			viewsEl.createSpan({
+				text: viewsKnown
+					? t("stats.viewsCount", { count: row.views.toLocaleString() })
+					: t("stats.views.unknown"),
+			});
+
+			const dateEl = titleRow.createDiv({ cls: "opal-stats-metaitem" });
+			setIcon(dateEl.createSpan({ cls: "opal-stats-metaicon" }), "calendar");
+			dateEl.createSpan({ text: formatDate(row.publishedAt) });
+
+			// Hover-reveal overlay: gradient mask + the two actions sitting on top of it.
+			const hoverlay = item.createDiv({ cls: "opal-stats-item-hoverlay" });
+			const actions = hoverlay.createDiv({ cls: "opal-stats-itemactions" });
+			const republishBtn = actions.createDiv({ cls: "opal-stats-itemaction" });
+			setIcon(republishBtn, "rotate-ccw");
+			setTooltip(republishBtn, t("stats.unpublished.republish"));
+			republishBtn.addEventListener("click", () => void this.handleRepublish(row.filePath, republishBtn));
+
+			const hideBtn = actions.createDiv({
+				cls: "opal-stats-itemaction opal-stats-itemaction--danger",
+			});
+			setIcon(hideBtn, "eye-off");
+			setTooltip(hideBtn, t("stats.unpublished.hide"));
+			hideBtn.addEventListener("click", () => void this.handleHide(row.filePath));
+		}
+	}
+
+	/** Republish a taken-down note in place, then refresh the whole view. */
+	private async handleRepublish(filePath: string, trigger: HTMLElement): Promise<void> {
+		const file = this.app.vault.getAbstractFileByPath(filePath);
+		if (!(file instanceof TFile)) return;
+		trigger.addClass("is-loading");
+		try {
+			await this.plugin.republishFromUi(file);
+		} finally {
+			trigger.removeClass("is-loading");
+		}
+		await this.render();
+	}
+
+	/** Drop a taken-down note's record from the unpublished list, then refresh. */
+	private async handleHide(filePath: string): Promise<void> {
+		const file = this.app.vault.getAbstractFileByPath(filePath);
+		if (!(file instanceof TFile)) return;
+		await this.plugin.hideShareRecordFromUi(file);
+		await this.render();
+	}
+
+	/**
+	 * Persist each not-yet-cached unpublished row's just-fetched view count into
+	 * frontmatter (`share_views_cached`), so later renders never re-fetch it — a
+	 * taken-down page's traffic is frozen, there's nothing left to refresh.
+	 */
+	private async cacheUnpublishedViews(rows: StatsRow[]): Promise<void> {
+		for (const row of rows) {
+			if (row.cachedViews !== undefined) continue;
+			const file = this.app.vault.getAbstractFileByPath(row.filePath);
+			if (!(file instanceof TFile)) continue;
+			await this.app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
+				fm[SHARE_VIEWS_CACHE_KEY] = row.views;
+			});
 		}
 	}
 
