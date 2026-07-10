@@ -251,6 +251,10 @@ function fileLinkHtml(ctx: EvalCtx, text: string): string {
 function fmToString(v: unknown): string {
   if (Array.isArray(v)) return v.map(item => (item !== null && typeof item === "object" ? JSON.stringify(item) : String(item))).join(", ");
   if (v !== null && typeof v === "object") return JSON.stringify(v);
+  // Only string/number/boolean/bigint/null/undefined reach here — arrays and
+  // plain objects already returned above. TS can't express that exclusion for
+  // `unknown` across separate branches, so the linter can't see it either.
+  // eslint-disable-next-line @typescript-eslint/no-base-to-string -- objects/arrays return earlier above; only primitives/null/undefined remain
   return String(v);
 }
 
@@ -678,7 +682,8 @@ function renderCards(
     // ── Banner image ──
     let bannerHtml = "";
     if (imgFmKey) {
-      const raw = String(ctx.fm[imgFmKey] ?? "").replace(/^\//, "");
+      const imgFmVal = ctx.fm[imgFmKey];
+      const raw = (typeof imgFmVal === "string" ? imgFmVal : "").replace(/^\//, "");
       if (raw) {
         const imgFile =
           app.vault.getAbstractFileByPath(raw) ??

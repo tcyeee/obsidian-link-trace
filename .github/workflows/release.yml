@@ -47,6 +47,17 @@ jobs:
             extra_files="styles.css"
           fi
 
-          gh release create "$tag" \
-            --title="$tag" \
-            main.js manifest.json $extra_files
+          # actions/checkout leaves a lightweight ref pointing at the tagged commit,
+          # which silently drops the annotated tag's own message — re-fetch the real
+          # tag object by name so the changelog written into it at tag time survives.
+          git fetch origin "refs/tags/$tag:refs/tags/$tag" --force
+          notes="$(git tag -l --format='%(contents)' "$tag")"
+
+          if [ -n "$notes" ]; then
+            echo "$notes" > /tmp/release-notes.md
+            gh release create "$tag" --title="$tag" --notes-file /tmp/release-notes.md \
+              main.js manifest.json $extra_files
+          else
+            gh release create "$tag" --title="$tag" --generate-notes \
+              main.js manifest.json $extra_files
+          fi

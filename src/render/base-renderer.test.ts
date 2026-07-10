@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import type { TFile, CachedMetadata } from "obsidian";
+import type { App, TFile, CachedMetadata } from "obsidian";
 import { evalExpr, evalFilterAtom, formatListItem, type EvalCtx } from "./base-renderer";
 
 /* ── Test fixtures ──────────────────────────────────────────────────────── */
@@ -16,16 +16,17 @@ function fakeFile(opts: Partial<{ basename: string; name: string; path: string; 
 }
 
 function fakeMeta(frontmatter: Record<string, unknown> = {}, bodyTags: string[] = []): CachedMetadata {
+  const pos = { start: { line: 0, col: 0, offset: 0 }, end: { line: 0, col: 0, offset: 0 } };
   return {
     frontmatter,
-    tags: bodyTags.map(t => ({ tag: "#" + t })),
-  } as unknown as CachedMetadata;
+    tags: bodyTags.map(t => ({ tag: "#" + t, position: pos })),
+  };
 }
 
 function fakeCtx(opts: Partial<{ file: TFile; fm: Record<string, unknown>; resolvedLinks: Record<string, Record<string, number>> }> = {}): EvalCtx {
   const file = opts.file ?? fakeFile();
   return {
-    app: { metadataCache: { resolvedLinks: opts.resolvedLinks ?? {} } } as any,
+    app: { metadataCache: { resolvedLinks: opts.resolvedLinks ?? {} } } as unknown as App,
     file,
     fm: opts.fm ?? {},
     stat: { mtime: file.stat.mtime, ctime: file.stat.ctime, size: file.stat.size },

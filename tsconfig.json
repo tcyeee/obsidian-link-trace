@@ -7,7 +7,7 @@
     "allowSyntheticDefaultImports": true,
     "importHelpers": true,
     "jsx": "react",
-    "lib": ["ES2018", "DOM"],
+    "lib": ["ES2020", "DOM"],
     "moduleResolution": "bundler",
     "types": ["node"],
     "skipLibCheck": true

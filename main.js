@@ -25690,8 +25690,13 @@ var zh = {
   "stats.card.unit.views": "\u6B21",
   "stats.viewsCount": "{count} \u6B21\u6D4F\u89C8",
   "stats.views.unknown": "\u2014",
-  "stats.list.title": "\u6700\u8FD1\u5206\u4EAB\u8BB0\u5F55",
+  "stats.list.title": "\u6B63\u5728\u5206\u4EAB\u7684\u7B14\u8BB0",
   "stats.list.count": "\u5171 {count} \u6761\u5185\u5BB9",
+  "stats.list.unpublished.title": "\u5DF2\u4E0B\u67B6",
+  "stats.unpublished.republish": "\u91CD\u65B0\u4E0A\u67B6",
+  "stats.unpublished.hide": "\u9690\u85CF\u8BB0\u5F55",
+  "stats.unpublished.collapse": "\u6536\u8D77",
+  "stats.unpublished.expand": "\u5C55\u5F00",
   "stats.empty": "\u8FD8\u6CA1\u6709\u5DF2\u53D1\u5E03\u7684\u5206\u4EAB\u9875",
   "stats.notConfigured": "\u672A\u914D\u7F6E GoatCounter API Token\uFF0C\u65E0\u6CD5\u8BFB\u53D6\u8BBF\u95EE\u6570\u636E\uFF08\u4EC5\u5217\u51FA\u5DF2\u53D1\u5E03\u9875\u9762\uFF09",
   "stats.fetchFailed": "\u8BBF\u95EE\u6570\u636E\u8BFB\u53D6\u5931\u8D25\uFF0C\u4EC5\u5217\u51FA\u5DF2\u53D1\u5E03\u9875\u9762",
@@ -25734,6 +25739,7 @@ var zh = {
   "toast.stoppedWithWarn": "\u5DF2\u505C\u6B62\u5206\u4EAB\uFF0C\u4F46\u90E8\u5206\u4E8C\u7EA7\u7B14\u8BB0\u672A\u5220\u9664\uFF1A{names}",
   "toast.publishSuccess": "\u53D1\u5E03\u6210\u529F\uFF0C\u94FE\u63A5\u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F",
   "toast.updateSuccess": "\u66F4\u65B0\u6210\u529F",
+  "toast.republishSuccess": "\u91CD\u65B0\u4E0A\u67B6\u6210\u529F",
   "toast.publishFailed": "\u53D1\u5E03\u5931\u8D25\uFF1A{error}",
   "toast.exportFailed": "\u5BFC\u51FA\u5931\u8D25\uFF1A{error}",
   "toast.stopFailed": "\u505C\u6B62\u5206\u4EAB\u5931\u8D25\uFF1A{error}",
@@ -25833,8 +25839,13 @@ var en = {
   "stats.card.unit.views": "",
   "stats.viewsCount": "{count} views",
   "stats.views.unknown": "\u2014",
-  "stats.list.title": "Recent shares",
+  "stats.list.title": "Currently sharing",
   "stats.list.count": "{count} total",
+  "stats.list.unpublished.title": "Unpublished",
+  "stats.unpublished.republish": "Republish",
+  "stats.unpublished.hide": "Hide record",
+  "stats.unpublished.collapse": "Collapse",
+  "stats.unpublished.expand": "Expand",
   "stats.empty": "No published share pages yet",
   "stats.notConfigured": "No GoatCounter API Token configured \u2014 listing pages only, without view counts",
   "stats.fetchFailed": "Failed to read view data \u2014 listing pages only",
@@ -25877,6 +25888,7 @@ var en = {
   "toast.stoppedWithWarn": "Sharing stopped, but some sub-notes were not removed: {names}",
   "toast.publishSuccess": "Published, link copied to clipboard",
   "toast.updateSuccess": "Updated successfully",
+  "toast.republishSuccess": "Republished successfully",
   "toast.publishFailed": "Publish failed: {error}",
   "toast.exportFailed": "Export failed: {error}",
   "toast.stopFailed": "Stop sharing failed: {error}",
@@ -27404,13 +27416,14 @@ function renderCards(app, baseFile, config, view, matched, formulas, properties,
   const imgFmKey = ((_c = view.image) == null ? void 0 : _c.startsWith("note.")) ? view.image.slice(5) : (_d = view.image) != null ? _d : "";
   const order = viewOrder(view, formulas);
   const cards = matched.map((f) => {
-    var _a3, _b3;
+    var _a3;
     const ctx = makeCtx(app, f, vaultName);
     let bannerHtml = "";
     if (imgFmKey) {
-      const raw = String((_a3 = ctx.fm[imgFmKey]) != null ? _a3 : "").replace(/^\//, "");
+      const imgFmVal = ctx.fm[imgFmKey];
+      const raw = (typeof imgFmVal === "string" ? imgFmVal : "").replace(/^\//, "");
       if (raw) {
-        const imgFile = (_b3 = app.vault.getAbstractFileByPath(raw)) != null ? _b3 : app.metadataCache.getFirstLinkpathDest(raw, baseFile.path);
+        const imgFile = (_a3 = app.vault.getAbstractFileByPath(raw)) != null ? _a3 : app.metadataCache.getFirstLinkpathDest(raw, baseFile.path);
         if (imgFile instanceof import_obsidian3.TFile) {
           const src = images ? `images/${registerImage(imgFile, images)}` : `app://local/${encodeURIComponent(imgFile.path)}`;
           bannerHtml = `<img class="base-card-banner" src="${src}" alt="${escapeHtml(imgFile.name)}" style="height:${imgHeight}px">`;
@@ -28529,8 +28542,8 @@ function parseDailySeries(json) {
 }
 function buildStatsRows(pages, hitsByPath) {
   return pages.map((p) => {
-    var _a2;
-    return { ...p, views: (_a2 = hitsByPath.get(p.path)) != null ? _a2 : 0 };
+    var _a2, _b2;
+    return { ...p, views: (_b2 = (_a2 = p.cachedViews) != null ? _a2 : hitsByPath.get(p.path)) != null ? _b2 : 0 };
   }).sort((a, b) => {
     var _a2, _b2;
     return b.views - a.views || ((_a2 = b.publishedAt) != null ? _a2 : 0) - ((_b2 = a.publishedAt) != null ? _b2 : 0);
@@ -29502,7 +29515,13 @@ var SHARE_STATUS_KEY = "share_status";
 function isPublishedFrontmatter(fm) {
   const shareLink = fm == null ? void 0 : fm["share_link"];
   if (typeof shareLink !== "string" || !shareLink) return false;
-  return (fm == null ? void 0 : fm[SHARE_STATUS_KEY]) !== "unpublished";
+  const status = fm == null ? void 0 : fm[SHARE_STATUS_KEY];
+  return status === void 0 || status === "published";
+}
+function isUnpublishedVisibleFrontmatter(fm) {
+  const shareLink = fm == null ? void 0 : fm["share_link"];
+  if (typeof shareLink !== "string" || !shareLink) return false;
+  return (fm == null ? void 0 : fm[SHARE_STATUS_KEY]) === "unpublished";
 }
 
 // src/ui/share-popover.ts
@@ -30720,6 +30739,7 @@ var SharePopover = class {
 // src/analytics/stats-view.ts
 var import_obsidian11 = require("obsidian");
 var VIEW_TYPE_SHARE_STATS = "share-stats-view";
+var SHARE_VIEWS_CACHE_KEY = "share_views_cached";
 function formatDate(ms) {
   if (ms == null) return t("stats.views.unknown");
   const d = new Date(ms);
@@ -30727,32 +30747,42 @@ function formatDate(ms) {
   const pad = (n) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
-function collectPublishedPages(app, titleFor = (n) => n) {
+function collectPages(app, predicate, titleFor) {
   var _a2;
   const pages = [];
   for (const file of app.vault.getMarkdownFiles()) {
     const fm = (_a2 = app.metadataCache.getFileCache(file)) == null ? void 0 : _a2.frontmatter;
-    if (!isPublishedFrontmatter(fm)) continue;
+    if (!predicate(fm)) continue;
     const shareLink = fm == null ? void 0 : fm["share_link"];
     const path = extractPathname(shareLink);
     if (!path) continue;
     const shareTime = fm == null ? void 0 : fm["share_time"];
     const parsed = typeof shareTime === "string" ? Date.parse(shareTime) : NaN;
+    const cachedViewsRaw = fm == null ? void 0 : fm[SHARE_VIEWS_CACHE_KEY];
     pages.push({
       path,
       title: titleFor(file.basename),
       shareLink,
       publishedAt: isNaN(parsed) ? null : parsed,
-      filePath: file.path
+      filePath: file.path,
+      cachedViews: typeof cachedViewsRaw === "number" ? cachedViewsRaw : void 0
     });
   }
   return pages;
+}
+function collectPublishedPages(app, titleFor = (n) => n) {
+  return collectPages(app, isPublishedFrontmatter, titleFor);
+}
+function collectUnpublishedPages(app, titleFor = (n) => n) {
+  return collectPages(app, isUnpublishedVisibleFrontmatter, titleFor);
 }
 var ShareStatsView = class extends import_obsidian11.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
     this.plugin = plugin;
     this.loading = false;
+    /** UI-only: whether the "unpublished" section's list is expanded. Resets on reopen. */
+    this.unpublishedExpanded = true;
   }
   getViewType() {
     return VIEW_TYPE_SHARE_STATS;
@@ -30795,11 +30825,15 @@ var ShareStatsView = class extends import_obsidian11.ItemView {
         this.plugin.settings.stripUniquePrefix
       );
       const pages = collectPublishedPages(this.app, titleFor);
+      const unpublishedPages = collectUnpublishedPages(this.app, titleFor);
       const configured = canReadAnalytics(this.plugin.settings);
       const hits = configured ? await fetchAllPathHits(this.plugin.settings) : null;
       const countsAvailable = hits !== null;
-      const rows = buildStatsRows(pages, hits != null ? hits : /* @__PURE__ */ new Map());
+      const hitsMap = hits != null ? hits : /* @__PURE__ */ new Map();
+      const rows = buildStatsRows(pages, hitsMap);
+      const unpublishedRows = buildStatsRows(unpublishedPages, hitsMap);
       const totalViews = countsAvailable ? rows.reduce((sum, r) => sum + r.views, 0) : null;
+      if (countsAvailable) void this.cacheUnpublishedViews(unpublishedRows);
       this.renderCards(cardsEl, pages.length, totalViews);
       body.empty();
       if (!configured) {
@@ -30807,12 +30841,17 @@ var ShareStatsView = class extends import_obsidian11.ItemView {
       } else if (!countsAvailable) {
         body.createDiv({ cls: "opal-stats-notice", text: t("stats.fetchFailed") });
       }
-      if (rows.length === 0) {
+      if (rows.length === 0 && unpublishedRows.length === 0) {
         body.createDiv({ cls: "opal-stats-empty", text: t("stats.empty") });
         return;
       }
-      this.renderListHeader(body, rows.length);
-      this.renderList(body, rows, countsAvailable);
+      if (rows.length > 0) {
+        this.renderListHeader(body, t("stats.list.title"), rows.length);
+        this.renderList(body, rows, countsAvailable);
+      }
+      if (unpublishedRows.length > 0) {
+        this.renderUnpublishedSection(body, unpublishedRows, countsAvailable);
+      }
     } catch (err2) {
       body.empty();
       body.createDiv({ cls: "opal-stats-notice", text: t("stats.fetchFailed") });
@@ -30840,13 +30879,45 @@ var ShareStatsView = class extends import_obsidian11.ItemView {
       "green"
     );
   }
-  /** Section heading above the page list: title + total item count. */
-  renderListHeader(parent, count) {
+  /** Section heading above a page list: title + total item count. */
+  renderListHeader(parent, title, count) {
     const header = parent.createDiv({ cls: "opal-stats-listheader" });
-    header.createDiv({ cls: "opal-stats-listtitle", text: t("stats.list.title") });
+    header.createDiv({ cls: "opal-stats-listtitle", text: title });
     header.createDiv({
       cls: "opal-stats-listcount",
       text: t("stats.list.count", { count: count.toLocaleString() })
+    });
+  }
+  /**
+   * The "unpublished" section: same heading shape as {@link renderListHeader},
+   * plus a chevron toggle next to the title that collapses/expands the list
+   * below it (a local UI toggle only — it doesn't touch any note's frontmatter,
+   * unlike the per-row hide button).
+   */
+  renderUnpublishedSection(parent, rows, countsAvailable) {
+    const header = parent.createDiv({ cls: "opal-stats-listheader" });
+    const titleRow = header.createDiv({ cls: "opal-stats-listheader-titlerow" });
+    titleRow.createDiv({ cls: "opal-stats-listtitle", text: t("stats.list.unpublished.title") });
+    const toggle = titleRow.createDiv({ cls: "opal-stats-listheader-action" });
+    (0, import_obsidian11.setIcon)(toggle, "chevron-down");
+    header.createDiv({
+      cls: "opal-stats-listcount",
+      text: t("stats.list.count", { count: rows.length.toLocaleString() })
+    });
+    const panel = parent.createDiv({ cls: "opal-stats-unpublished-panel" });
+    this.renderUnpublishedList(panel, rows, countsAvailable);
+    const applyState = () => {
+      toggle.toggleClass("is-expanded", this.unpublishedExpanded);
+      panel.toggleClass("is-collapsed", !this.unpublishedExpanded);
+      (0, import_obsidian11.setTooltip)(
+        toggle,
+        t(this.unpublishedExpanded ? "stats.unpublished.collapse" : "stats.unpublished.expand")
+      );
+    };
+    applyState();
+    toggle.addEventListener("click", () => {
+      this.unpublishedExpanded = !this.unpublishedExpanded;
+      applyState();
     });
   }
   /** Stacked cards — one per published page — sized for a narrow sidebar. */
@@ -30892,6 +30963,80 @@ var ShareStatsView = class extends import_obsidian11.ItemView {
       const dateEl = metaGroup.createDiv({ cls: "opal-stats-metaitem" });
       (0, import_obsidian11.setIcon)(dateEl.createSpan({ cls: "opal-stats-metaicon" }), "calendar");
       dateEl.createSpan({ text: formatDate(row.publishedAt) });
+    }
+  }
+  /**
+   * Stacked cards for taken-down pages — dimmer than {@link renderList}'s live
+   * pages (no click-to-open-detail, no link — the page is offline). Title row
+   * carries name, view count, and published date all inline. Actions (republish
+   * / hide) live in a right-aligned overlay that's invisible until hover: a dark
+   * gradient (darkest at the right edge, fading out to the left) fades in under
+   * the buttons, and fades back out on mouse-leave.
+   */
+  renderUnpublishedList(parent, rows, countsAvailable) {
+    const list = parent.createDiv({ cls: "opal-stats-list" });
+    for (const row of rows) {
+      const item = list.createDiv({ cls: "opal-stats-item opal-stats-item--unpublished" });
+      const content = item.createDiv({ cls: "opal-stats-item-content" });
+      const titleRow = content.createDiv({ cls: "opal-stats-itemtitle" });
+      const nameEl = titleRow.createSpan({ cls: "opal-stats-notename", text: row.title });
+      (0, import_obsidian11.setTooltip)(nameEl, t("stats.openNote"));
+      nameEl.addEventListener("click", () => void this.openNote(row.filePath));
+      const viewsKnown = row.cachedViews !== void 0 || countsAvailable;
+      const viewsEl = titleRow.createDiv({ cls: "opal-stats-metaitem" });
+      (0, import_obsidian11.setIcon)(viewsEl.createSpan({ cls: "opal-stats-metaicon" }), "eye");
+      viewsEl.createSpan({
+        text: viewsKnown ? t("stats.viewsCount", { count: row.views.toLocaleString() }) : t("stats.views.unknown")
+      });
+      const dateEl = titleRow.createDiv({ cls: "opal-stats-metaitem" });
+      (0, import_obsidian11.setIcon)(dateEl.createSpan({ cls: "opal-stats-metaicon" }), "calendar");
+      dateEl.createSpan({ text: formatDate(row.publishedAt) });
+      const hoverlay = item.createDiv({ cls: "opal-stats-item-hoverlay" });
+      const actions = hoverlay.createDiv({ cls: "opal-stats-itemactions" });
+      const republishBtn = actions.createDiv({ cls: "opal-stats-itemaction" });
+      (0, import_obsidian11.setIcon)(republishBtn, "rotate-ccw");
+      (0, import_obsidian11.setTooltip)(republishBtn, t("stats.unpublished.republish"));
+      republishBtn.addEventListener("click", () => void this.handleRepublish(row.filePath, republishBtn));
+      const hideBtn = actions.createDiv({
+        cls: "opal-stats-itemaction opal-stats-itemaction--danger"
+      });
+      (0, import_obsidian11.setIcon)(hideBtn, "eye-off");
+      (0, import_obsidian11.setTooltip)(hideBtn, t("stats.unpublished.hide"));
+      hideBtn.addEventListener("click", () => void this.handleHide(row.filePath));
+    }
+  }
+  /** Republish a taken-down note in place, then refresh the whole view. */
+  async handleRepublish(filePath, trigger) {
+    const file = this.app.vault.getAbstractFileByPath(filePath);
+    if (!(file instanceof import_obsidian11.TFile)) return;
+    trigger.addClass("is-loading");
+    try {
+      await this.plugin.republishFromUi(file);
+    } finally {
+      trigger.removeClass("is-loading");
+    }
+    await this.render();
+  }
+  /** Drop a taken-down note's record from the unpublished list, then refresh. */
+  async handleHide(filePath) {
+    const file = this.app.vault.getAbstractFileByPath(filePath);
+    if (!(file instanceof import_obsidian11.TFile)) return;
+    await this.plugin.hideShareRecordFromUi(file);
+    await this.render();
+  }
+  /**
+   * Persist each not-yet-cached unpublished row's just-fetched view count into
+   * frontmatter (`share_views_cached`), so later renders never re-fetch it — a
+   * taken-down page's traffic is frozen, there's nothing left to refresh.
+   */
+  async cacheUnpublishedViews(rows) {
+    for (const row of rows) {
+      if (row.cachedViews !== void 0) continue;
+      const file = this.app.vault.getAbstractFileByPath(row.filePath);
+      if (!(file instanceof import_obsidian11.TFile)) continue;
+      await this.app.fileManager.processFrontMatter(file, (fm) => {
+        fm[SHARE_VIEWS_CACHE_KEY] = row.views;
+      });
     }
   }
   async openNote(filePath) {
@@ -31008,6 +31153,16 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
   async setUnpublished(file) {
     await this.app.fileManager.processFrontMatter(file, (fm) => {
       fm["share_status"] = "unpublished";
+    });
+  }
+  /**
+   * Hide a taken-down note's record from the stats page's "unpublished" list
+   * (it stays reachable only via the note itself). `share_link` is left
+   * untouched so a later republish can still reuse the same address.
+   */
+  async hideShareRecordFromUi(file) {
+    await this.app.fileManager.processFrontMatter(file, (fm) => {
+      fm["share_status"] = "hidden";
     });
   }
   // ── File type helper ──────────────────────────────────────────────────
@@ -31203,14 +31358,22 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
     const { nodes } = await collectSubNoteTree(this.app, file, this.settings.exportLevel - 1);
     return flattenSubTree(nodes).map((n) => ({ file: n.file, shareLink: n.shareLink }));
   }
-  async updateNote(file) {
+  async updateNote(file, successText = t("toast.updateSuccess")) {
     const existingUrl = this.getShareLink(file);
     const existingName = existingUrl ? this.extractNoteName(existingUrl) : void 0;
     const subNotes = await this.collectSubNotes(file);
-    await this.doPublish(file, subNotes, existingName, t("toast.updateSuccess"), false, true);
+    await this.doPublish(file, subNotes, existingName, successText, false, true);
   }
   async updateFromUi(file) {
     await this.updateNote(file);
+  }
+  /**
+   * Republish a previously taken-down note from the stats page's "unpublished"
+   * list: same underlying flow as {@link updateFromUi} (reuses the old
+   * `share_link` and current sub-note selection), just a different success label.
+   */
+  async republishFromUi(file) {
+    await this.updateNote(file, t("toast.republishSuccess"));
   }
   async exportCurrentNote() {
     const file = this.app.workspace.getActiveFile();
