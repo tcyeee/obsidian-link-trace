@@ -52,9 +52,14 @@ export default class ShareOnlinePlugin extends Plugin {
 		this.statusBarEl.addEventListener("click", () => void this.sharePopover.toggle(this.statusBarEl));
 
 		this.registerEvent(
-			this.app.workspace.on("active-leaf-change", () => {
+			this.app.workspace.on("active-leaf-change", (leaf) => {
 				this.sharePopover.close();
 				void this.updateStatusBar();
+				// Belt-and-suspenders: the view's own metadataCache listener (see
+				// ShareStatsView.onOpen) already keeps the page list live in the
+				// background even while this tab isn't on top, so this cheap
+				// (no-network) re-scan is just a safety net for switching to it.
+				if (leaf?.view instanceof ShareStatsView) void leaf.view.refreshList();
 			})
 		);
 
@@ -101,12 +106,29 @@ export default class ShareOnlinePlugin extends Plugin {
 		const existing = workspace.getLeavesOfType(VIEW_TYPE_SHARE_STATS);
 		if (existing.length > 0) {
 			await workspace.revealLeaf(existing[0]);
+			// An already-open leaf doesn't auto-refresh, so re-scan now — otherwise
+			// reopening the tab right after a publish/unpublish shows stale state.
+			if (existing[0].view instanceof ShareStatsView) void existing[0].view.refresh();
 			return;
 		}
 		const leaf = workspace.getRightLeaf(false);
 		if (!leaf) return;
 		await leaf.setViewState({ type: VIEW_TYPE_SHARE_STATS, active: true });
 		await workspace.revealLeaf(leaf);
+	}
+
+	/**
+	 * Silently sync any open share-stats view's page list after a publish state
+	 * change (publish, unpublish, hide, republish) — a cheap frontmatter re-scan
+	 * with no network call and no loading skeleton, so the action feels instant
+	 * rather than flashing the whole list to a placeholder and back. View counts
+	 * lag behind until the user manually refreshes or reopens the tab, which is
+	 * fine since they aren't time-sensitive the way list membership is.
+	 */
+	private refreshStatsView(): void {
+		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_SHARE_STATS)) {
+			if (leaf.view instanceof ShareStatsView) void leaf.view.refreshList();
+		}
 	}
 
 	// ── Frontmatter helpers ───────────────────────────────────────────────
@@ -151,6 +173,7 @@ export default class ShareOnlinePlugin extends Plugin {
 		await this.app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
 			fm["share_status"] = "hidden";
 		});
+		this.refreshStatsView();
 	}
 
 	// ── File type helper ──────────────────────────────────────────────────
@@ -346,6 +369,7 @@ export default class ShareOnlinePlugin extends Plugin {
 			);
 			await this.setShareMeta(file, url);
 			void this.updateStatusBar();
+			this.refreshStatsView();
 			if (copyToClipboard) {
 				await navigator.clipboard.writeText(url);
 			}
@@ -395,6 +419,7 @@ export default class ShareOnlinePlugin extends Plugin {
 			}
 			await this.setUnpublished(file);
 			void this.updateStatusBar();
+			this.refreshStatsView();
 			const successText =
 				failedSubs.length > 0
 					? t("toast.stoppedWithWarn", { names: failedSubs.join("、") })

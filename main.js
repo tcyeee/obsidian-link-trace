@@ -25684,7 +25684,6 @@ var zh = {
   "stats.ribbon": "\u5206\u4EAB\u7EDF\u8BA1",
   "stats.command": "\u6253\u5F00\u5206\u4EAB\u7EDF\u8BA1\u9875",
   "stats.refresh": "\u5237\u65B0",
-  "stats.loading": "\u52A0\u8F7D\u4E2D \u2026",
   "stats.card.pages": "\u6B63\u5728\u5206\u4EAB",
   "stats.card.views": "\u603B\u6D4F\u89C8\u91CF",
   "stats.card.unit.views": "\u6B21",
@@ -25697,6 +25696,7 @@ var zh = {
   "stats.unpublished.hide": "\u9690\u85CF\u8BB0\u5F55",
   "stats.unpublished.collapse": "\u6536\u8D77",
   "stats.unpublished.expand": "\u5C55\u5F00",
+  "stats.unpublished.loadMore": "\u52A0\u8F7D\u66F4\u591A\uFF08\u8FD8\u6709 {count} \u6761\uFF09",
   "stats.empty": "\u8FD8\u6CA1\u6709\u5DF2\u53D1\u5E03\u7684\u5206\u4EAB\u9875",
   "stats.notConfigured": "\u672A\u914D\u7F6E GoatCounter API Token\uFF0C\u65E0\u6CD5\u8BFB\u53D6\u8BBF\u95EE\u6570\u636E\uFF08\u4EC5\u5217\u51FA\u5DF2\u53D1\u5E03\u9875\u9762\uFF09",
   "stats.fetchFailed": "\u8BBF\u95EE\u6570\u636E\u8BFB\u53D6\u5931\u8D25\uFF0C\u4EC5\u5217\u51FA\u5DF2\u53D1\u5E03\u9875\u9762",
@@ -25833,7 +25833,6 @@ var en = {
   "stats.ribbon": "Share stats",
   "stats.command": "Open share stats page",
   "stats.refresh": "Refresh",
-  "stats.loading": "Loading \u2026",
   "stats.card.pages": "Sharing",
   "stats.card.views": "Total views",
   "stats.card.unit.views": "",
@@ -25846,6 +25845,7 @@ var en = {
   "stats.unpublished.hide": "Hide record",
   "stats.unpublished.collapse": "Collapse",
   "stats.unpublished.expand": "Expand",
+  "stats.unpublished.loadMore": "Load more ({count} left)",
   "stats.empty": "No published share pages yet",
   "stats.notConfigured": "No GoatCounter API Token configured \u2014 listing pages only, without view counts",
   "stats.fetchFailed": "Failed to read view data \u2014 listing pages only",
@@ -30776,6 +30776,7 @@ function collectPublishedPages(app, titleFor = (n) => n) {
 function collectUnpublishedPages(app, titleFor = (n) => n) {
   return collectPages(app, isUnpublishedVisibleFrontmatter, titleFor);
 }
+var UNPUBLISHED_PAGE_SIZE = 20;
 var ShareStatsView = class extends import_obsidian11.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
@@ -30783,6 +30784,23 @@ var ShareStatsView = class extends import_obsidian11.ItemView {
     this.loading = false;
     /** UI-only: whether the "unpublished" section's list is expanded. Resets on reopen. */
     this.unpublishedExpanded = true;
+    /**
+     * How many unpublished rows to render before showing a "load more" row.
+     * Defaults to the first page rather than the full (potentially hundreds-
+     * long) take-down history — painting all of it (icons, hover overlays,
+     * etc.) up front isn't worth the cost. Grows by {@link UNPUBLISHED_PAGE_SIZE}
+     * per click and persists across repaints (refreshList/render) so expanding
+     * doesn't reset on every poll.
+     */
+    this.unpublishedVisibleCount = UNPUBLISHED_PAGE_SIZE;
+    // Header slots painted once by a full render() and reused by the cheap
+    // refreshList() repaint, plus the last-known view-count fetch it repaints
+    // with (view counts don't need to be live — see refreshList()).
+    this.cardsEl = null;
+    this.bodyEl = null;
+    this.lastHitsMap = /* @__PURE__ */ new Map();
+    this.lastCountsAvailable = false;
+    this.lastConfigured = false;
   }
   getViewType() {
     return VIEW_TYPE_SHARE_STATS;
@@ -30796,29 +30814,76 @@ var ShareStatsView = class extends import_obsidian11.ItemView {
   async onOpen() {
     this.contentEl.addClass("opal-stats-view");
     await this.render();
+    const debouncedRefreshList = (0, import_obsidian11.debounce)(() => void this.refreshList(), 300, true);
+    this.registerEvent(
+      this.app.metadataCache.on("changed", (file) => {
+        var _a2;
+        const fm = (_a2 = this.app.metadataCache.getFileCache(file)) == null ? void 0 : _a2.frontmatter;
+        if (typeof (fm == null ? void 0 : fm["share_link"]) !== "string" || !fm["share_link"]) return;
+        debouncedRefreshList();
+      })
+    );
   }
   async onClose() {
     this.contentEl.empty();
   }
-  /** Rebuild the whole view: header + (loading → table). Re-entrancy guarded. */
+  /**
+   * Re-run the full scan + GoatCounter fetch and repaint. Only triggered by
+   * an explicit ask for fresh counts — the manual refresh button, or opening/
+   * revealing the tab. Publish-state changes (publish, unpublish, hide,
+   * republish) never call this: they go through {@link refreshList} instead,
+   * so those actions update silently with no skeleton flash.
+   */
+  async refresh() {
+    await this.render();
+  }
+  /**
+   * Cheap re-scan: rebuilds the page list from frontmatter and repaints using
+   * the last-known view counts, with no network call. This is what keeps
+   * "which notes are currently shared" instant — view-count freshness isn't
+   * time-sensitive the way list membership is, so it's left to {@link render}.
+   * No-ops until a full render has painted the header once, and while one is
+   * in flight (it will produce a fresher repaint on its own shortly).
+   */
+  async refreshList() {
+    if (this.loading || !this.cardsEl || !this.bodyEl) return;
+    const titleFor = await makeUniquePrefixStripper(this.app, this.plugin.settings.stripUniquePrefix);
+    const pages = collectPublishedPages(this.app, titleFor);
+    const unpublishedPages = collectUnpublishedPages(this.app, titleFor);
+    this.paintList(pages, unpublishedPages, this.lastHitsMap, this.lastCountsAvailable, this.lastConfigured);
+  }
+  /**
+   * Rebuild the view. Re-entrancy guarded. The header/cards/refresh-button
+   * shell is built only once — every later call (manual refresh, or the
+   * plugin re-fetching counts after a publish/unpublish) is a *regional*
+   * refresh: it leaves that shell alone and shows a skeleton in just the
+   * body while the network fetch is in flight, instead of blanking the
+   * whole tab back to a bare "loading" line.
+   */
   async render() {
     if (this.loading) return;
     this.loading = true;
     const root = this.contentEl;
-    root.empty();
-    const header = root.createDiv({ cls: "opal-stats-header" });
-    const headLeft = header.createDiv({ cls: "opal-stats-headleft" });
-    const titleRow = headLeft.createDiv({ cls: "opal-stats-titlerow" });
-    const titleIcon = titleRow.createDiv({ cls: "opal-stats-titleicon" });
-    (0, import_obsidian11.setIcon)(titleIcon, "bar-chart-3");
-    titleRow.createSpan({ cls: "opal-stats-title", text: t("stats.title") });
-    const cardsEl = headLeft.createDiv({ cls: "opal-stats-cards" });
-    const refreshBtn = header.createDiv({ cls: "opal-stats-refresh" });
-    (0, import_obsidian11.setIcon)(refreshBtn, "refresh-cw");
-    (0, import_obsidian11.setTooltip)(refreshBtn, t("stats.refresh"));
-    refreshBtn.addEventListener("click", () => void this.render());
-    const body = root.createDiv({ cls: "opal-stats-body" });
-    body.createDiv({ cls: "opal-stats-loading", text: t("stats.loading") });
+    const firstPaint = !this.cardsEl || !this.bodyEl;
+    if (firstPaint) {
+      root.empty();
+      const header = root.createDiv({ cls: "opal-stats-header" });
+      const headLeft = header.createDiv({ cls: "opal-stats-headleft" });
+      const titleRow = headLeft.createDiv({ cls: "opal-stats-titlerow" });
+      const titleIcon = titleRow.createDiv({ cls: "opal-stats-titleicon" });
+      (0, import_obsidian11.setIcon)(titleIcon, "bar-chart-3");
+      titleRow.createSpan({ cls: "opal-stats-title", text: t("stats.title") });
+      this.cardsEl = headLeft.createDiv({ cls: "opal-stats-cards" });
+      const refreshBtn = header.createDiv({ cls: "opal-stats-refresh" });
+      (0, import_obsidian11.setIcon)(refreshBtn, "refresh-cw");
+      (0, import_obsidian11.setTooltip)(refreshBtn, t("stats.refresh"));
+      refreshBtn.addEventListener("click", () => void this.render());
+      this.bodyEl = root.createDiv({ cls: "opal-stats-body" });
+    }
+    const cardsEl = this.cardsEl;
+    const body = this.bodyEl;
+    if (!cardsEl || !body) return;
+    this.renderSkeleton(body);
     try {
       const titleFor = await makeUniquePrefixStripper(
         this.app,
@@ -30830,34 +30895,61 @@ var ShareStatsView = class extends import_obsidian11.ItemView {
       const hits = configured ? await fetchAllPathHits(this.plugin.settings) : null;
       const countsAvailable = hits !== null;
       const hitsMap = hits != null ? hits : /* @__PURE__ */ new Map();
-      const rows = buildStatsRows(pages, hitsMap);
-      const unpublishedRows = buildStatsRows(unpublishedPages, hitsMap);
-      const totalViews = countsAvailable ? rows.reduce((sum, r) => sum + r.views, 0) : null;
-      if (countsAvailable) void this.cacheUnpublishedViews(unpublishedRows);
-      this.renderCards(cardsEl, pages.length, totalViews);
-      body.empty();
-      if (!configured) {
-        body.createDiv({ cls: "opal-stats-notice", text: t("stats.notConfigured") });
-      } else if (!countsAvailable) {
-        body.createDiv({ cls: "opal-stats-notice", text: t("stats.fetchFailed") });
-      }
-      if (rows.length === 0 && unpublishedRows.length === 0) {
-        body.createDiv({ cls: "opal-stats-empty", text: t("stats.empty") });
-        return;
-      }
-      if (rows.length > 0) {
-        this.renderListHeader(body, t("stats.list.title"), rows.length);
-        this.renderList(body, rows, countsAvailable);
-      }
-      if (unpublishedRows.length > 0) {
-        this.renderUnpublishedSection(body, unpublishedRows, countsAvailable);
-      }
+      this.lastHitsMap = hitsMap;
+      this.lastCountsAvailable = countsAvailable;
+      this.lastConfigured = configured;
+      this.paintList(pages, unpublishedPages, hitsMap, countsAvailable, configured);
     } catch (err2) {
       body.empty();
       body.createDiv({ cls: "opal-stats-notice", text: t("stats.fetchFailed") });
       console.error(err2);
     } finally {
       this.loading = false;
+    }
+  }
+  /**
+   * Body-region placeholder shown while a full render() is in flight: a
+   * handful of shimmering rows sized to roughly match whatever was already
+   * there, so a refresh keeps its footprint instead of collapsing to a
+   * single "loading" line.
+   */
+  renderSkeleton(body) {
+    const previousRows = body.querySelectorAll(".opal-stats-item").length;
+    const rows = previousRows > 0 ? Math.min(previousRows, 8) : 3;
+    body.empty();
+    const wrap = body.createDiv({ cls: "opal-stats-skeleton" });
+    for (let i2 = 0; i2 < rows; i2++) {
+      const card = wrap.createDiv({ cls: "opal-stats-skeleton-card" });
+      card.createDiv({ cls: "opal-stats-skeleton-line opal-stats-skeleton-line--title" });
+      card.createDiv({ cls: "opal-stats-skeleton-line opal-stats-skeleton-line--meta" });
+    }
+  }
+  /** Join pages + hit counts into rows and paint cards/list/unpublished section into the cached header/body elements. */
+  paintList(pages, unpublishedPages, hitsMap, countsAvailable, configured) {
+    const cardsEl = this.cardsEl;
+    const body = this.bodyEl;
+    if (!cardsEl || !body) return;
+    const rows = buildStatsRows(pages, hitsMap);
+    const unpublishedRows = buildStatsRows(unpublishedPages, hitsMap);
+    const totalViews = countsAvailable ? rows.reduce((sum, r) => sum + r.views, 0) : null;
+    if (countsAvailable) void this.cacheUnpublishedViews(unpublishedRows);
+    this.renderCards(cardsEl, pages.length, totalViews);
+    body.empty();
+    if (!configured) {
+      body.createDiv({ cls: "opal-stats-notice", text: t("stats.notConfigured") });
+    } else if (!countsAvailable) {
+      body.createDiv({ cls: "opal-stats-notice", text: t("stats.fetchFailed") });
+    }
+    if (rows.length === 0 && unpublishedRows.length === 0) {
+      body.createDiv({ cls: "opal-stats-empty", text: t("stats.empty") });
+      return;
+    }
+    if (rows.length > 0) {
+      this.renderListHeader(body, t("stats.list.title"), rows.length);
+      this.renderList(body, rows, countsAvailable);
+    }
+    if (unpublishedRows.length > 0) {
+      this.renderUnpublishedSection(body, unpublishedRows, countsAvailable);
     }
   }
   /** Render the two header stat cards: published page count + total views. */
@@ -30975,7 +31067,8 @@ var ShareStatsView = class extends import_obsidian11.ItemView {
    */
   renderUnpublishedList(parent, rows, countsAvailable) {
     const list = parent.createDiv({ cls: "opal-stats-list" });
-    for (const row of rows) {
+    const visibleCount = Math.min(this.unpublishedVisibleCount, rows.length);
+    for (const row of rows.slice(0, visibleCount)) {
       const item = list.createDiv({ cls: "opal-stats-item opal-stats-item--unpublished" });
       const content = item.createDiv({ cls: "opal-stats-item-content" });
       const titleRow = content.createDiv({ cls: "opal-stats-itemtitle" });
@@ -31004,8 +31097,24 @@ var ShareStatsView = class extends import_obsidian11.ItemView {
       (0, import_obsidian11.setTooltip)(hideBtn, t("stats.unpublished.hide"));
       hideBtn.addEventListener("click", () => void this.handleHide(row.filePath));
     }
+    if (rows.length > visibleCount) {
+      const loadMoreBtn = parent.createDiv({ cls: "opal-stats-loadmore" });
+      loadMoreBtn.setText(
+        t("stats.unpublished.loadMore", { count: (rows.length - visibleCount).toLocaleString() })
+      );
+      loadMoreBtn.addEventListener("click", () => {
+        this.unpublishedVisibleCount += UNPUBLISHED_PAGE_SIZE;
+        void this.refreshList();
+      });
+    }
   }
-  /** Republish a taken-down note in place, then refresh the whole view. */
+  /**
+   * Republish a taken-down note in place, then sync silently — the button's
+   * own spinner already communicates progress, so this deliberately uses the
+   * cheap {@link refreshList} (no skeleton, no network) rather than a full
+   * {@link render}, which would otherwise flash the whole list to a
+   * placeholder just to reflect one row's status change.
+   */
   async handleRepublish(filePath, trigger) {
     const file = this.app.vault.getAbstractFileByPath(filePath);
     if (!(file instanceof import_obsidian11.TFile)) return;
@@ -31015,14 +31124,14 @@ var ShareStatsView = class extends import_obsidian11.ItemView {
     } finally {
       trigger.removeClass("is-loading");
     }
-    await this.render();
+    await this.refreshList();
   }
-  /** Drop a taken-down note's record from the unpublished list, then refresh. */
+  /** Drop a taken-down note's record from the unpublished list, then sync silently (see {@link handleRepublish}). */
   async handleHide(filePath) {
     const file = this.app.vault.getAbstractFileByPath(filePath);
     if (!(file instanceof import_obsidian11.TFile)) return;
     await this.plugin.hideShareRecordFromUi(file);
-    await this.render();
+    await this.refreshList();
   }
   /**
    * Persist each not-yet-cached unpublished row's just-fetched view count into
@@ -31079,9 +31188,10 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
     void this.updateStatusBar();
     this.statusBarEl.addEventListener("click", () => void this.sharePopover.toggle(this.statusBarEl));
     this.registerEvent(
-      this.app.workspace.on("active-leaf-change", () => {
+      this.app.workspace.on("active-leaf-change", (leaf) => {
         this.sharePopover.close();
         void this.updateStatusBar();
+        if ((leaf == null ? void 0 : leaf.view) instanceof ShareStatsView) void leaf.view.refreshList();
       })
     );
     this.registerEvent(
@@ -31118,12 +31228,26 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
     const existing = workspace.getLeavesOfType(VIEW_TYPE_SHARE_STATS);
     if (existing.length > 0) {
       await workspace.revealLeaf(existing[0]);
+      if (existing[0].view instanceof ShareStatsView) void existing[0].view.refresh();
       return;
     }
     const leaf = workspace.getRightLeaf(false);
     if (!leaf) return;
     await leaf.setViewState({ type: VIEW_TYPE_SHARE_STATS, active: true });
     await workspace.revealLeaf(leaf);
+  }
+  /**
+   * Silently sync any open share-stats view's page list after a publish state
+   * change (publish, unpublish, hide, republish) — a cheap frontmatter re-scan
+   * with no network call and no loading skeleton, so the action feels instant
+   * rather than flashing the whole list to a placeholder and back. View counts
+   * lag behind until the user manually refreshes or reopens the tab, which is
+   * fine since they aren't time-sensitive the way list membership is.
+   */
+  refreshStatsView() {
+    for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_SHARE_STATS)) {
+      if (leaf.view instanceof ShareStatsView) void leaf.view.refreshList();
+    }
   }
   // ── Frontmatter helpers ───────────────────────────────────────────────
   /** Last-known share link, or "" if this note has never been published. Kept
@@ -31164,6 +31288,7 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
     await this.app.fileManager.processFrontMatter(file, (fm) => {
       fm["share_status"] = "hidden";
     });
+    this.refreshStatsView();
   }
   // ── File type helper ──────────────────────────────────────────────────
   /** Only Markdown notes can be published / shared. */
@@ -31303,6 +31428,7 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
       );
       await this.setShareMeta(file, url);
       void this.updateStatusBar();
+      this.refreshStatsView();
       if (copyToClipboard) {
         await navigator.clipboard.writeText(url);
       }
@@ -31339,6 +31465,7 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
       }
       await this.setUnpublished(file);
       void this.updateStatusBar();
+      this.refreshStatsView();
       const successText = failedSubs.length > 0 ? t("toast.stoppedWithWarn", { names: failedSubs.join("\u3001") }) : t("toast.stopped");
       await this.sharePopover.showResult(this.statusBarEl, file, successText, null);
     } catch (err2) {

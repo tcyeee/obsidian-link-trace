@@ -568,8 +568,16 @@ details[open] > .opal-collapsible-heading::before {
 
 /* ── Share-stats view (sidebar) ──────────────────────────────────────── */
 .opal-stats-view {
+  /* Establishes this pane's own box as a size query container so the bottom
+     spacer below can be sized off its actual rendered height (cqh) — the pane
+     may be a normal sidebar or a resized floating panel, and either way that's
+     smaller than the whole app window, which `vh` would measure instead. */
+  container-type: size;
   padding: 12px 12px 16px;
   overflow: auto;
+}
+.opal-stats-body {
+  margin-bottom: 30cqh;
 }
 .opal-stats-header {
   display: flex;
@@ -616,12 +624,57 @@ details[open] > .opal-collapsible-heading::before {
   width: 14px;
   height: 14px;
 }
-.opal-stats-loading,
 .opal-stats-empty {
   padding: 24px 4px;
   text-align: center;
   color: var(--text-muted);
   font-size: var(--font-ui-small);
+}
+
+/* ── Loading skeleton: shimmering placeholder rows shown during a regional refresh ── */
+.opal-stats-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.opal-stats-skeleton-card {
+  padding: 10px 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  background: var(--background-secondary);
+}
+.opal-stats-skeleton-line {
+  border-radius: var(--radius-s);
+  background: linear-gradient(
+    90deg,
+    var(--background-modifier-border) 25%,
+    var(--background-modifier-hover) 37%,
+    var(--background-modifier-border) 63%
+  );
+  background-size: 400% 100%;
+  animation: opal-stats-skeleton-shimmer 1.4s ease infinite;
+}
+.opal-stats-skeleton-line--title {
+  width: 55%;
+  height: 14px;
+  margin-bottom: 10px;
+}
+.opal-stats-skeleton-line--meta {
+  width: 80%;
+  height: 11px;
+}
+@keyframes opal-stats-skeleton-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .opal-stats-skeleton-line {
+    animation: none;
+  }
 }
 .opal-stats-notice {
   margin-bottom: 10px;
@@ -727,7 +780,10 @@ details[open] > .opal-collapsible-heading::before {
 /* Unpublished list panel: collapses/expands under its section header. */
 .opal-stats-unpublished-panel {
   overflow: hidden;
-  max-height: 2000px;
+  /* Large enough to never clip real content (a fixed value is needed for the
+     max-height transition trick) — at ~48px/row this would've silently cut
+     off anything past ~41 unpublished rows. */
+  max-height: 20000px;
   opacity: 1;
   transition: max-height 0.25s ease, opacity 0.2s ease;
 }
@@ -738,6 +794,20 @@ details[open] > .opal-collapsible-heading::before {
 .opal-stats-listcount {
   font-size: var(--font-ui-smaller);
   color: var(--text-muted);
+}
+.opal-stats-loadmore {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border: 1px dashed var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  cursor: pointer;
+}
+.opal-stats-loadmore:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
 }
 
 /* ── Page list: stacked cards, one per published page ── */
