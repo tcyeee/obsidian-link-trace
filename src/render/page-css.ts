@@ -463,6 +463,7 @@ hr { border: none; border-top: 1px dashed #DADCDE; margin: 1.5em 0; }
 
 /* ── Image ── */
 img { max-width: 100%; border-radius: 4px; }
+.markdown-preview-view img.lt-zoomable { cursor: zoom-in; }
 
 /* ── Imgs gallery ── */
 .imgs-gallery {
@@ -496,6 +497,16 @@ img { max-width: 100%; border-radius: 4px; }
   cursor: zoom-out;
 }
 .lightbox.is-open { display: flex; }
+.lightbox-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  touch-action: none;
+}
 .lightbox img {
   max-width: 90vw;
   max-height: 90vh;
@@ -503,6 +514,47 @@ img { max-width: 100%; border-radius: 4px; }
   border-radius: 6px;
   cursor: default;
   box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+  transition: transform 0.15s ease-out;
+  touch-action: none;
+  user-select: none;
+}
+.lightbox.is-zoomed img { cursor: move; transition: none; }
+.lightbox-close,
+.lightbox-nav {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+  z-index: 2;
+}
+.lightbox-close:hover,
+.lightbox-nav:hover { background: rgba(255, 255, 255, 0.22); }
+.lightbox-close { top: 1rem; right: 1rem; }
+.lightbox-prev { left: 1rem; top: 50%; transform: translateY(-50%); }
+.lightbox-next { right: 1rem; top: 50%; transform: translateY(-50%); }
+.lightbox-counter {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 13px;
+  z-index: 2;
+}
+@media (max-width: 640px) {
+  .lightbox-nav { width: 38px; height: 38px; }
+  .lightbox-prev { left: 0.4rem; }
+  .lightbox-next { right: 0.4rem; }
 }
 
 /* ── Mermaid ── */

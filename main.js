@@ -27952,6 +27952,7 @@ hr { border: none; border-top: 1px dashed #DADCDE; margin: 1.5em 0; }
 
 /* \u2500\u2500 Image \u2500\u2500 */
 img { max-width: 100%; border-radius: 4px; }
+.markdown-preview-view img.lt-zoomable { cursor: zoom-in; }
 
 /* \u2500\u2500 Imgs gallery \u2500\u2500 */
 .imgs-gallery {
@@ -27985,6 +27986,16 @@ img { max-width: 100%; border-radius: 4px; }
   cursor: zoom-out;
 }
 .lightbox.is-open { display: flex; }
+.lightbox-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  touch-action: none;
+}
 .lightbox img {
   max-width: 90vw;
   max-height: 90vh;
@@ -27992,6 +28003,47 @@ img { max-width: 100%; border-radius: 4px; }
   border-radius: 6px;
   cursor: default;
   box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+  transition: transform 0.15s ease-out;
+  touch-action: none;
+  user-select: none;
+}
+.lightbox.is-zoomed img { cursor: move; transition: none; }
+.lightbox-close,
+.lightbox-nav {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+  z-index: 2;
+}
+.lightbox-close:hover,
+.lightbox-nav:hover { background: rgba(255, 255, 255, 0.22); }
+.lightbox-close { top: 1rem; right: 1rem; }
+.lightbox-prev { left: 1rem; top: 50%; transform: translateY(-50%); }
+.lightbox-next { right: 1rem; top: 50%; transform: translateY(-50%); }
+.lightbox-counter {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 13px;
+  z-index: 2;
+}
+@media (max-width: 640px) {
+  .lightbox-nav { width: 38px; height: 38px; }
+  .lightbox-prev { left: 0.4rem; }
+  .lightbox-next { right: 0.4rem; }
 }
 
 /* \u2500\u2500 Mermaid \u2500\u2500 */
@@ -28620,7 +28672,21 @@ function buildHtml(title, htmlBody, css, katexBase, analytics) {
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
   </button>
   <div class="toc-backdrop" id="toc-backdrop"></div>
-  <div class="lightbox" id="lightbox"><img id="lightbox-img" src="" alt=""></div>
+  <div class="lightbox" id="lightbox">
+    <button class="lightbox-close" id="lightbox-close" title="\u5173\u95ED" aria-label="Close">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <button class="lightbox-nav lightbox-prev" id="lightbox-prev" title="\u4E0A\u4E00\u5F20" aria-label="Previous">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="lightbox-stage" id="lightbox-stage">
+      <img id="lightbox-img" src="" alt="">
+    </div>
+    <button class="lightbox-nav lightbox-next" id="lightbox-next" title="\u4E0B\u4E00\u5F20" aria-label="Next">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+    <div class="lightbox-counter" id="lightbox-counter"></div>
+  </div>
   <nav class="toc-sidebar" id="toc-sidebar">
     <div class="toc-header">
       <span class="toc-title">OUTLINE</span>
@@ -28779,32 +28845,155 @@ ${katexJsTag}
       });
     })();
 
-    /* \u2500\u2500 Imgs lightbox \u2500\u2500 */
+    /* \u2500\u2500 Lightbox: zoom + swipe gallery over every content image \u2500\u2500 */
     (function() {
       var lightbox = document.getElementById('lightbox');
       var lbImg    = document.getElementById('lightbox-img');
-      if (!lightbox || !lbImg) return;
-      document.querySelectorAll('.imgs-gallery img').forEach(function(img) {
-        img.addEventListener('click', function(e) {
-          e.stopPropagation();
-          lbImg.setAttribute('src', img.getAttribute('src'));
-          lbImg.setAttribute('alt', img.getAttribute('alt') || '');
-          lightbox.classList.add('is-open');
-          document.body.style.overflow = 'hidden';
-        });
-      });
-      lightbox.addEventListener('click', function(e) {
-        if (e.target === lbImg) return; // click on image itself does nothing
+      var stage    = document.getElementById('lightbox-stage');
+      var prevBtn  = document.getElementById('lightbox-prev');
+      var nextBtn  = document.getElementById('lightbox-next');
+      var closeBtn = document.getElementById('lightbox-close');
+      var counter  = document.getElementById('lightbox-counter');
+      if (!lightbox || !lbImg || !stage) return;
+
+      var images = Array.prototype.slice.call(document.querySelectorAll('.markdown-preview-view img'));
+      var current = -1;
+      var scale = 1, panX = 0, panY = 0;
+
+      function applyTransform() {
+        lbImg.style.transform = 'translate(' + panX + 'px,' + panY + 'px) scale(' + scale + ')';
+      }
+      function resetZoom() {
+        scale = 1; panX = 0; panY = 0;
+        applyTransform();
+        lightbox.classList.remove('is-zoomed');
+      }
+      function show(index) {
+        if (!images.length) return;
+        current = (index + images.length) % images.length;
+        resetZoom();
+        lbImg.setAttribute('src', images[current].getAttribute('src') || '');
+        lbImg.setAttribute('alt', images[current].getAttribute('alt') || '');
+        var multi = images.length > 1;
+        if (prevBtn) prevBtn.style.display = multi ? '' : 'none';
+        if (nextBtn) nextBtn.style.display = multi ? '' : 'none';
+        if (counter) {
+          counter.style.display = multi ? '' : 'none';
+          counter.textContent = (current + 1) + ' / ' + images.length;
+        }
+      }
+      function open(index) {
+        show(index);
+        lightbox.classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+      }
+      function close() {
         lightbox.classList.remove('is-open');
         document.body.style.overflow = '';
         lbImg.setAttribute('src', '');
+        resetZoom();
+      }
+      function next() { show(current + 1); }
+      function prev() { show(current - 1); }
+      function dist(a, b) {
+        var dx = a.clientX - b.clientX, dy = a.clientY - b.clientY;
+        return Math.sqrt(dx * dx + dy * dy);
+      }
+
+      images.forEach(function(img, i) {
+        img.classList.add('lt-zoomable');
+        img.addEventListener('click', function(e) {
+          e.stopPropagation();
+          open(i);
+        });
       });
+
+      if (prevBtn)  prevBtn.addEventListener('click', function(e) { e.stopPropagation(); prev(); });
+      if (nextBtn)  nextBtn.addEventListener('click', function(e) { e.stopPropagation(); next(); });
+      if (closeBtn) closeBtn.addEventListener('click', function(e) { e.stopPropagation(); close(); });
+
+      lightbox.addEventListener('click', function(e) {
+        if (e.target === lbImg || e.target === prevBtn || e.target === nextBtn ||
+            e.target === closeBtn || (prevBtn && prevBtn.contains(e.target)) ||
+            (nextBtn && nextBtn.contains(e.target)) || (closeBtn && closeBtn.contains(e.target))) return;
+        close();
+      });
+
       document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-          lightbox.classList.remove('is-open');
-          document.body.style.overflow = '';
-          lbImg.setAttribute('src', '');
+        if (!lightbox.classList.contains('is-open')) return;
+        if (e.key === 'Escape') close();
+        else if (e.key === 'ArrowLeft') prev();
+        else if (e.key === 'ArrowRight') next();
+      });
+
+      /* Double-click / double-tap toggles 1x <-> 2x zoom */
+      lbImg.addEventListener('dblclick', function(e) {
+        e.stopPropagation();
+        if (scale === 1) {
+          scale = 2;
+          lightbox.classList.add('is-zoomed');
+        } else {
+          scale = 1; panX = 0; panY = 0;
+          lightbox.classList.remove('is-zoomed');
         }
+        applyTransform();
+      });
+
+      /* Mouse wheel zoom (desktop) */
+      stage.addEventListener('wheel', function(e) {
+        e.preventDefault();
+        var delta = e.deltaY < 0 ? 0.2 : -0.2;
+        scale = Math.min(4, Math.max(1, scale + delta));
+        if (scale === 1) { panX = 0; panY = 0; lightbox.classList.remove('is-zoomed'); }
+        else lightbox.classList.add('is-zoomed');
+        applyTransform();
+      }, { passive: false });
+
+      /* Touch: one finger swipes between images (or pans when zoomed in),
+         two fingers pinch-zoom. */
+      var touch = null;
+      stage.addEventListener('touchstart', function(e) {
+        if (e.touches.length === 2) {
+          touch = { mode: 'pinch', startDist: dist(e.touches[0], e.touches[1]), startScale: scale };
+        } else if (e.touches.length === 1) {
+          touch = {
+            mode: scale > 1 ? 'pan' : 'swipe',
+            startX: e.touches[0].clientX,
+            startY: e.touches[0].clientY,
+            startPanX: panX,
+            startPanY: panY,
+          };
+        }
+      }, { passive: true });
+
+      stage.addEventListener('touchmove', function(e) {
+        if (!touch) return;
+        if (touch.mode === 'pinch' && e.touches.length === 2) {
+          e.preventDefault();
+          var d = dist(e.touches[0], e.touches[1]);
+          scale = Math.min(4, Math.max(1, touch.startScale * (d / touch.startDist)));
+          lightbox.classList.toggle('is-zoomed', scale > 1);
+          applyTransform();
+        } else if (touch.mode === 'pan' && e.touches.length === 1) {
+          e.preventDefault();
+          panX = touch.startPanX + (e.touches[0].clientX - touch.startX);
+          panY = touch.startPanY + (e.touches[0].clientY - touch.startY);
+          applyTransform();
+        }
+      }, { passive: false });
+
+      stage.addEventListener('touchend', function(e) {
+        if (!touch) return;
+        if (touch.mode === 'swipe') {
+          var dx = e.changedTouches[0].clientX - touch.startX;
+          var dy = e.changedTouches[0].clientY - touch.startY;
+          if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+            if (dx < 0) next(); else prev();
+          }
+        } else if (touch.mode === 'pinch' && scale <= 1.02) {
+          resetZoom();
+        }
+        touch = null;
       });
     })();
 
