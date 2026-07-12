@@ -31488,7 +31488,7 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
   async updateNote(file, successText = t("toast.updateSuccess")) {
     const existingUrl = this.getShareLink(file);
     const existingName = existingUrl ? this.extractNoteName(existingUrl) : void 0;
-    const subNotes = await this.collectSubNotes(file);
+    const subNotes = (await this.collectSubNotes(file)).filter((sn) => this.isPublished(sn.file));
     await this.doPublish(file, subNotes, existingName, successText, false, true);
   }
   async updateFromUi(file) {

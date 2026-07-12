@@ -448,10 +448,12 @@ export default class ShareOnlinePlugin extends Plugin {
 	private async updateNote(file: TFile, successText = t("toast.updateSuccess")) {
 		const existingUrl = this.getShareLink(file);
 		const existingName = existingUrl ? this.extractNoteName(existingUrl) : undefined;
-		const subNotes = await this.collectSubNotes(file);
-		// Update re-uploads every linked sub-note too (updateExisting=true): already-
-		// published ones are re-rendered in place, newly-linked ones are uploaded fresh.
-		// Sub-notes dropped from the note simply aren't in `subNotes`, so they're left as-is.
+		// Update re-uploads already-published sub-notes too (updateExisting=true), so
+		// their content stays current — but it must NEVER publish a linked note for the
+		// first time as a silent side effect of updating the main note (that would push
+		// private, unreviewed content live without explicit confirmation). Sub-notes
+		// dropped from the note simply aren't in `subNotes`, so they're left as-is.
+		const subNotes = (await this.collectSubNotes(file)).filter((sn) => this.isPublished(sn.file));
 		await this.doPublish(file, subNotes, existingName, successText, false, true);
 	}
 
