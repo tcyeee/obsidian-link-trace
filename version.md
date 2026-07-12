@@ -1,3 +1,3 @@
-# 0.1.19
+# 0.1.20
 
-- feat: keep the stats view live and paginate long unpublished history (cc84fca)
+- fix: never auto-publish a never-shared sub-note from the update button (50ce956)
