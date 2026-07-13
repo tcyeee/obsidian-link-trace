@@ -257,11 +257,19 @@ ${katexJsTag}
       var counter  = document.getElementById('lightbox-counter');
       if (!lightbox || !lbImg || !stage) return;
 
-      var images = Array.prototype.slice.call(document.querySelectorAll('.markdown-preview-view img'));
+      // .base-card-banner thumbnails are decorative card identifiers in a Bases
+      // grid/table, not standalone gallery photos — excluded so they don't get
+      // swept into the same prev/next index as unrelated note content.
+      var images = Array.prototype.slice.call(document.querySelectorAll('.markdown-preview-view img:not(.base-card-banner)'));
       var current = -1;
       var scale = 1, panX = 0, panY = 0;
 
       function applyTransform() {
+        // Clamp pan so a zoomed image can never be dragged fully out of the stage.
+        var maxX = Math.max(0, (lbImg.offsetWidth  * scale - stage.clientWidth)  / 2);
+        var maxY = Math.max(0, (lbImg.offsetHeight * scale - stage.clientHeight) / 2);
+        panX = Math.min(maxX, Math.max(-maxX, panX));
+        panY = Math.min(maxY, Math.max(-maxY, panY));
         lbImg.style.transform = 'translate(' + panX + 'px,' + panY + 'px) scale(' + scale + ')';
       }
       function resetZoom() {
@@ -304,6 +312,10 @@ ${katexJsTag}
       images.forEach(function(img, i) {
         img.classList.add('lt-zoomable');
         img.addEventListener('click', function(e) {
+          // preventDefault too: a content image may be wrapped in a real <a href>
+          // (e.g. markdown [![alt](img)](url)) — without this the browser still
+          // follows the link's default navigation while the lightbox opens.
+          e.preventDefault();
           e.stopPropagation();
           open(i);
         });
@@ -315,8 +327,9 @@ ${katexJsTag}
 
       lightbox.addEventListener('click', function(e) {
         if (e.target === lbImg || e.target === prevBtn || e.target === nextBtn ||
-            e.target === closeBtn || (prevBtn && prevBtn.contains(e.target)) ||
-            (nextBtn && nextBtn.contains(e.target)) || (closeBtn && closeBtn.contains(e.target))) return;
+            e.target === closeBtn || e.target === counter ||
+            (prevBtn && prevBtn.contains(e.target)) || (nextBtn && nextBtn.contains(e.target)) ||
+            (closeBtn && closeBtn.contains(e.target)) || (counter && counter.contains(e.target))) return;
         close();
       });
 
@@ -353,33 +366,59 @@ ${katexJsTag}
       /* Touch: one finger swipes between images (or pans when zoomed in),
          two fingers pinch-zoom. */
       var touch = null;
+      function startPinch() {
+        // >=2 so a 3rd finger landing mid-pinch just re-baselines instead of
+        // stalling (its touchstart falls through neither the old ===2 nor ===1
+        // branch, leaving the previous distance stale for a visible zoom jump).
+        return { mode: 'pinch', startDist: 0, startScale: scale };
+      }
+      function startPan(t) {
+        return {
+          mode: scale > 1 ? 'pan' : 'swipe',
+          startX: t.clientX,
+          startY: t.clientY,
+          startPanX: panX,
+          startPanY: panY,
+        };
+      }
       stage.addEventListener('touchstart', function(e) {
-        if (e.touches.length === 2) {
-          touch = { mode: 'pinch', startDist: dist(e.touches[0], e.touches[1]), startScale: scale };
+        if (e.touches.length >= 2) {
+          touch = startPinch();
+          touch.startDist = dist(e.touches[0], e.touches[1]);
         } else if (e.touches.length === 1) {
-          touch = {
-            mode: scale > 1 ? 'pan' : 'swipe',
-            startX: e.touches[0].clientX,
-            startY: e.touches[0].clientY,
-            startPanX: panX,
-            startPanY: panY,
-          };
+          touch = startPan(e.touches[0]);
         }
       }, { passive: true });
 
       stage.addEventListener('touchmove', function(e) {
         if (!touch) return;
-        if (touch.mode === 'pinch' && e.touches.length === 2) {
+        if (e.touches.length >= 2) {
+          if (touch.mode !== 'pinch') { touch = startPinch(); touch.startDist = dist(e.touches[0], e.touches[1]); return; }
           e.preventDefault();
           var d = dist(e.touches[0], e.touches[1]);
-          scale = Math.min(4, Math.max(1, touch.startScale * (d / touch.startDist)));
-          lightbox.classList.toggle('is-zoomed', scale > 1);
-          applyTransform();
-        } else if (touch.mode === 'pan' && e.touches.length === 1) {
-          e.preventDefault();
-          panX = touch.startPanX + (e.touches[0].clientX - touch.startX);
-          panY = touch.startPanY + (e.touches[0].clientY - touch.startY);
-          applyTransform();
+          if (touch.startDist <= 0) {
+            // Fingers started (or briefly read) at the same point — re-baseline
+            // instead of dividing by zero, which would corrupt scale to NaN.
+            touch.startDist = d;
+            touch.startScale = scale;
+          } else if (d > 0) {
+            scale = Math.min(4, Math.max(1, touch.startScale * (d / touch.startDist)));
+            lightbox.classList.toggle('is-zoomed', scale > 1);
+            applyTransform();
+          }
+        } else if (e.touches.length === 1) {
+          if (touch.mode === 'pinch') {
+            // A finger lifted mid-pinch: hand off to pan/swipe from the
+            // remaining finger's current position instead of dropping tracking.
+            touch = startPan(e.touches[0]);
+            return;
+          }
+          if (touch.mode === 'pan') {
+            e.preventDefault();
+            panX = touch.startPanX + (e.touches[0].clientX - touch.startX);
+            panY = touch.startPanY + (e.touches[0].clientY - touch.startY);
+            applyTransform();
+          }
         }
       }, { passive: false });
 
@@ -391,11 +430,11 @@ ${katexJsTag}
           if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
             if (dx < 0) next(); else prev();
           }
-        } else if (touch.mode === 'pinch' && scale <= 1.02) {
-          resetZoom();
         }
+        if (scale <= 1.02) resetZoom();
         touch = null;
       });
+      stage.addEventListener('touchcancel', function() { touch = null; });
     })();
 
     /* ── Mermaid zoom toggle ── */
