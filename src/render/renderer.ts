@@ -1,5 +1,6 @@
 import { App, TFile, MarkdownRenderer, Component, FileSystemAdapter } from "obsidian";
 import { renderBaseAsTable, renderInlineBaseAsTable, resolveBaseEmbeds } from "./base-renderer";
+import { resolveDataviewBlocks, runDataviewQuery } from "./dataview-renderer";
 import { registerImage, processImgsBlocks } from "./imgs-renderer";
 import { stripFrontmatter } from "../core/note-hash";
 import { buildCss } from "./page-css";
@@ -213,7 +214,9 @@ export function resolveInlineBases(content: string): string {
  */
 const PLUGIN_CODE_LANGS = new Set([
   "base",                             // inline Bases block that resolveInlineBases missed
-  "dataview",                         // Dataview DQL → shown as plain code block
+  // "dataview" is deliberately absent: resolveDataviewBlocks() intercepts those
+  // fences earlier (before this protection runs) and renders them via the real
+  // Dataview API — see renderNote's data-dataview-query placeholder resolution.
   "dataviewjs",                       // Dataview JS → shown as plain code block
   "imgs",                             // image-cluster
   "tasks",                            // Tasks
@@ -263,6 +266,7 @@ export async function renderNote(
   content = resolveSelfEmbeds(app, file, content, rawContent);
   content = resolveBaseEmbeds(content);
   content = resolveInlineBases(content);
+  content = resolveDataviewBlocks(content);
   content = protectPluginCodeBlocks(content);
   const { processed, entries } = extractMath(content);
 
@@ -334,6 +338,30 @@ export async function renderNote(
       renderInlineBaseAsTable(app, yaml, file.path, images), "text/html"
     );
     placeholder.replaceWith(...Array.from(parsed.body.childNodes));
+  }
+
+  // Replace ```dataview query placeholders (data-dataview-query attr, base64-
+  // encoded DQL) by running the query through the installed Dataview plugin's
+  // API and rendering its markdown result through a second MarkdownRenderer
+  // pass — so tables/lists/tasks/internal-links match the rest of the page.
+  // Falls back to a plain code block when Dataview isn't installed/enabled.
+  const dataviewPlaceholders = Array.from(el.querySelectorAll<HTMLElement>("[data-dataview-query]"));
+  for (const placeholder of dataviewPlaceholders) {
+    const encoded = placeholder.getAttribute("data-dataview-query") ?? "";
+    const source = Buffer.from(encoded, "base64").toString("utf-8");
+    const markdown = await runDataviewQuery(app, source, file);
+    if (markdown === null) {
+      const pre = createEl("pre");
+      pre.createEl("code", { cls: "language-dataview", text: source });
+      placeholder.replaceWith(pre);
+      continue;
+    }
+    const resultEl = createDiv({ cls: "dataview-export" });
+    placeholder.replaceWith(resultEl);
+    const dvComponent = new Component();
+    dvComponent.load();
+    await MarkdownRenderer.render(app, markdown, resultEl, file.path, dvComponent);
+    dvComponent.unload();
   }
 
   // Fallback: replace any .internal-embed elements pointing to .base files

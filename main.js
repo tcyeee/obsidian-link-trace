@@ -27502,6 +27502,39 @@ function resolveBaseEmbeds(content) {
   );
 }
 
+// src/render/dataview-renderer.ts
+function getDataviewApi(app) {
+  var _a2, _b2, _c;
+  const plugins = (_a2 = app.plugins) == null ? void 0 : _a2.plugins;
+  return (_c = (_b2 = plugins == null ? void 0 : plugins["dataview"]) == null ? void 0 : _b2.api) != null ? _c : null;
+}
+var DATAVIEW_RE = /^(`{3,})dataview[ \t]*\r?\n([\s\S]*?)\r?\n\1[ \t]*$/gim;
+function resolveDataviewBlocks(content) {
+  return content.replace(DATAVIEW_RE, (_match, _fence, source) => {
+    const encoded = Buffer.from(source, "utf-8").toString("base64");
+    return `
+
+<div data-dataview-query="${encoded}"></div>
+
+`;
+  });
+}
+async function runDataviewQuery(app, source, originFile) {
+  var _a2;
+  const api = getDataviewApi(app);
+  if (!api) return null;
+  try {
+    const result = await api.queryMarkdown(source, originFile.path);
+    if (result.successful && result.value !== void 0) return result.value;
+    return `> [!error] Dataview
+> ${((_a2 = result.error) != null ? _a2 : "query failed").replace(/\n/g, "\n> ")}`;
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    return `> [!error] Dataview
+> ${message.replace(/\n/g, "\n> ")}`;
+  }
+}
+
 // src/core/note-hash.ts
 function stripFrontmatter(raw) {
   return raw.replace(/^---[\s\S]*?---\n?/, "");
@@ -28323,8 +28356,9 @@ function resolveInlineBases(content) {
 var PLUGIN_CODE_LANGS = /* @__PURE__ */ new Set([
   "base",
   // inline Bases block that resolveInlineBases missed
-  "dataview",
-  // Dataview DQL → shown as plain code block
+  // "dataview" is deliberately absent: resolveDataviewBlocks() intercepts those
+  // fences earlier (before this protection runs) and renders them via the real
+  // Dataview API — see renderNote's data-dataview-query placeholder resolution.
   "dataviewjs",
   // Dataview JS → shown as plain code block
   "imgs",
@@ -28359,11 +28393,12 @@ function restorePluginCodeLangs(el) {
   });
 }
 async function renderNote(app, file, rawContent) {
-  var _a2, _b2, _c, _d, _e;
+  var _a2, _b2, _c, _d, _e, _f;
   let content = stripFrontmatter(rawContent);
   content = resolveSelfEmbeds(app, file, content, rawContent);
   content = resolveBaseEmbeds(content);
   content = resolveInlineBases(content);
+  content = resolveDataviewBlocks(content);
   content = protectPluginCodeBlocks(content);
   const { processed, entries } = extractMath(content);
   const el = createDiv({ cls: "markdown-preview-view markdown-rendered opal-render-scratch" });
@@ -28421,12 +28456,30 @@ async function renderNote(app, file, rawContent) {
     );
     placeholder.replaceWith(...Array.from(parsed.body.childNodes));
   }
+  const dataviewPlaceholders = Array.from(el.querySelectorAll("[data-dataview-query]"));
+  for (const placeholder of dataviewPlaceholders) {
+    const encoded = (_d = placeholder.getAttribute("data-dataview-query")) != null ? _d : "";
+    const source = Buffer.from(encoded, "base64").toString("utf-8");
+    const markdown = await runDataviewQuery(app, source, file);
+    if (markdown === null) {
+      const pre = createEl("pre");
+      pre.createEl("code", { cls: "language-dataview", text: source });
+      placeholder.replaceWith(pre);
+      continue;
+    }
+    const resultEl = createDiv({ cls: "dataview-export" });
+    placeholder.replaceWith(resultEl);
+    const dvComponent = new import_obsidian4.Component();
+    dvComponent.load();
+    await import_obsidian4.MarkdownRenderer.render(app, markdown, resultEl, file.path, dvComponent);
+    dvComponent.unload();
+  }
   const internalEmbeds = Array.from(el.querySelectorAll(".internal-embed"));
   for (const embed of internalEmbeds) {
-    const rawSrc = (_d = embed.getAttribute("src")) != null ? _d : "";
+    const rawSrc = (_e = embed.getAttribute("src")) != null ? _e : "";
     const [src, viewName] = rawSrc.split("#");
     if (!src.endsWith(".base")) continue;
-    const baseName = (_e = src.split("/").pop()) != null ? _e : src;
+    const baseName = (_f = src.split("/").pop()) != null ? _f : src;
     const baseFile = app.vault.getFiles().find(
       (f) => f.path === src || f.name === baseName
     );
