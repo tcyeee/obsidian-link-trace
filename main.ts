@@ -270,7 +270,15 @@ export default class ShareOnlinePlugin extends Plugin {
 		existingName?: string,
 		successText = t("toast.publishSuccess"),
 		copyToClipboard = true,
-		updateExisting = false
+		updateExisting = false,
+		/**
+		 * When true, drive feedback through toast Notices instead of the status-bar
+		 * share popover. The popover is anchored to the status bar and renders the
+		 * *active editor note's* publish state — misleading when the action was
+		 * triggered from the stats view against some other note (which supplies its
+		 * own per-row progress spinner anyway).
+		 */
+		silent = false
 	): Promise<void> {
 		// Progress + success are shown inside the share popover (anchored to the
 		// status-bar icon) rather than as a separate toast. The popover's bar starts
@@ -285,8 +293,9 @@ export default class ShareOnlinePlugin extends Plugin {
 		const total =
 			(updateExisting ? subNotes.length : subNotes.filter((sn) => !this.isPublished(sn.file)).length) + 1;
 		let done = 0;
-		const progress = (label: string) =>
-			this.sharePopover.showProgress(this.statusBarEl, label, done, total);
+		const progress = (label: string) => {
+			if (!silent) this.sharePopover.showProgress(this.statusBarEl, label, done, total);
+		};
 		progress(t("toast.progress.rendering"));
 		try {
 			// Seed with every name already published to OSS so new names never
@@ -373,16 +382,21 @@ export default class ShareOnlinePlugin extends Plugin {
 			if (copyToClipboard) {
 				await navigator.clipboard.writeText(url);
 			}
-			await this.sharePopover.showResult(this.statusBarEl, file, successText, url);
+			if (silent) new Notice(successText);
+			else await this.sharePopover.showResult(this.statusBarEl, file, successText, url);
 		} catch (err: unknown) {
-			this.sharePopover.showError(this.statusBarEl, t("toast.publishFailed", { error: (err as Error).message }));
+			const msg = t("toast.publishFailed", { error: (err as Error).message });
+			if (silent) new Notice(msg);
+			else this.sharePopover.showError(this.statusBarEl, msg);
 			console.error(err);
 		}
 	}
 
 	private async doUnpublish(
 		file: TFile,
-		subNotesToDelete: { file: TFile; shareLink: string }[]
+		subNotesToDelete: { file: TFile; shareLink: string }[],
+		/** See {@link doPublish}'s `silent` — toast Notices instead of the status-bar popover. */
+		silent = false
 	): Promise<void> {
 		// The bar starts on a fake ramp the moment unpublishing begins; the real step
 		// count here (one step per deleted page: each selected sub-note plus the main
@@ -390,8 +404,9 @@ export default class ShareOnlinePlugin extends Plugin {
 		// it's over either way) only raises a floor, matching the publish flow.
 		const total = subNotesToDelete.length + (this.isPublished(file) ? 1 : 0);
 		let done = 0;
-		const progress = (label: string) =>
-			this.sharePopover.showProgress(this.statusBarEl, label, done, total);
+		const progress = (label: string) => {
+			if (!silent) this.sharePopover.showProgress(this.statusBarEl, label, done, total);
+		};
 		progress(t("toast.stopping"));
 		try {
 			// Delete selected sub-notes first (errors are non-fatal — collected and
@@ -424,9 +439,12 @@ export default class ShareOnlinePlugin extends Plugin {
 				failedSubs.length > 0
 					? t("toast.stoppedWithWarn", { names: failedSubs.join("、") })
 					: t("toast.stopped");
-			await this.sharePopover.showResult(this.statusBarEl, file, successText, null);
+			if (silent) new Notice(successText);
+			else await this.sharePopover.showResult(this.statusBarEl, file, successText, null);
 		} catch (err: unknown) {
-			this.sharePopover.showError(this.statusBarEl, t("toast.stopFailed", { error: (err as Error).message }));
+			const msg = t("toast.stopFailed", { error: (err as Error).message });
+			if (silent) new Notice(msg);
+			else this.sharePopover.showError(this.statusBarEl, msg);
 			console.error(err);
 		}
 	}
@@ -445,7 +463,7 @@ export default class ShareOnlinePlugin extends Plugin {
 		return flattenSubTree(nodes).map((n) => ({ file: n.file, shareLink: n.shareLink }));
 	}
 
-	private async updateNote(file: TFile, successText = t("toast.updateSuccess")) {
+	private async updateNote(file: TFile, successText = t("toast.updateSuccess"), silent = false) {
 		const existingUrl = this.getShareLink(file);
 		const existingName = existingUrl ? this.extractNoteName(existingUrl) : undefined;
 		// Update re-uploads already-published sub-notes too (updateExisting=true), so
@@ -454,7 +472,7 @@ export default class ShareOnlinePlugin extends Plugin {
 		// private, unreviewed content live without explicit confirmation). Sub-notes
 		// dropped from the note simply aren't in `subNotes`, so they're left as-is.
 		const subNotes = (await this.collectSubNotes(file)).filter((sn) => this.isPublished(sn.file));
-		await this.doPublish(file, subNotes, existingName, successText, false, true);
+		await this.doPublish(file, subNotes, existingName, successText, false, true, silent);
 	}
 
 	async updateFromUi(file: TFile): Promise<void> {
@@ -467,19 +485,20 @@ export default class ShareOnlinePlugin extends Plugin {
 	 * `share_link` and current sub-note selection), just a different success label.
 	 */
 	async republishFromUi(file: TFile): Promise<void> {
-		await this.updateNote(file, t("toast.republishSuccess"));
+		await this.updateNote(file, t("toast.republishSuccess"), true);
 	}
 
 	/**
 	 * Stop sharing a note straight from the stats page's "currently sharing"
 	 * list: takes down the main page plus every currently-published sub-note
 	 * (the interactive sub-note picker only lives in the status-bar popover).
-	 * Progress and the result banner still surface on the status-bar icon via
-	 * {@link doUnpublish}.
+	 * Runs `silent` so feedback is a toast Notice, not the status-bar popover —
+	 * that popover reflects the *active editor note*, not this one, and the stats
+	 * row shows its own progress spinner (see {@link doPublish}'s `silent`).
 	 */
 	async unpublishFromStatsUi(file: TFile): Promise<void> {
 		const subNotes = (await this.collectSubNotes(file)).filter((sn) => this.isPublished(sn.file));
-		await this.doUnpublish(file, subNotes);
+		await this.doUnpublish(file, subNotes, true);
 	}
 
 	private async exportCurrentNote() {

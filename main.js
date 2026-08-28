@@ -31732,10 +31732,12 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
     await this.exportFile(file);
   }
   // ── Actions ──────────────────────────────────────────────────────────
-  async doPublish(file, subNotes, existingName, successText = t("toast.publishSuccess"), copyToClipboard = true, updateExisting = false) {
+  async doPublish(file, subNotes, existingName, successText = t("toast.publishSuccess"), copyToClipboard = true, updateExisting = false, silent = false) {
     const total = (updateExisting ? subNotes.length : subNotes.filter((sn) => !this.isPublished(sn.file)).length) + 1;
     let done = 0;
-    const progress = (label) => this.sharePopover.showProgress(this.statusBarEl, label, done, total);
+    const progress = (label) => {
+      if (!silent) this.sharePopover.showProgress(this.statusBarEl, label, done, total);
+    };
     progress(t("toast.progress.rendering"));
     try {
       const usedNames = await listPublishedNames(this.settings);
@@ -31803,16 +31805,21 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
       if (copyToClipboard) {
         await navigator.clipboard.writeText(url);
       }
-      await this.sharePopover.showResult(this.statusBarEl, file, successText, url);
+      if (silent) new import_obsidian12.Notice(successText);
+      else await this.sharePopover.showResult(this.statusBarEl, file, successText, url);
     } catch (err2) {
-      this.sharePopover.showError(this.statusBarEl, t("toast.publishFailed", { error: err2.message }));
+      const msg = t("toast.publishFailed", { error: err2.message });
+      if (silent) new import_obsidian12.Notice(msg);
+      else this.sharePopover.showError(this.statusBarEl, msg);
       console.error(err2);
     }
   }
-  async doUnpublish(file, subNotesToDelete) {
+  async doUnpublish(file, subNotesToDelete, silent = false) {
     const total = subNotesToDelete.length + (this.isPublished(file) ? 1 : 0);
     let done = 0;
-    const progress = (label) => this.sharePopover.showProgress(this.statusBarEl, label, done, total);
+    const progress = (label) => {
+      if (!silent) this.sharePopover.showProgress(this.statusBarEl, label, done, total);
+    };
     progress(t("toast.stopping"));
     try {
       const failedSubs = [];
@@ -31838,9 +31845,12 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
       void this.updateStatusBar();
       this.refreshStatsView();
       const successText = failedSubs.length > 0 ? t("toast.stoppedWithWarn", { names: failedSubs.join("\u3001") }) : t("toast.stopped");
-      await this.sharePopover.showResult(this.statusBarEl, file, successText, null);
+      if (silent) new import_obsidian12.Notice(successText);
+      else await this.sharePopover.showResult(this.statusBarEl, file, successText, null);
     } catch (err2) {
-      this.sharePopover.showError(this.statusBarEl, t("toast.stopFailed", { error: err2.message }));
+      const msg = t("toast.stopFailed", { error: err2.message });
+      if (silent) new import_obsidian12.Notice(msg);
+      else this.sharePopover.showError(this.statusBarEl, msg);
       console.error(err2);
     }
   }
@@ -31856,11 +31866,11 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
     const { nodes } = await collectSubNoteTree(this.app, file, this.settings.exportLevel - 1);
     return flattenSubTree(nodes).map((n) => ({ file: n.file, shareLink: n.shareLink }));
   }
-  async updateNote(file, successText = t("toast.updateSuccess")) {
+  async updateNote(file, successText = t("toast.updateSuccess"), silent = false) {
     const existingUrl = this.getShareLink(file);
     const existingName = existingUrl ? this.extractNoteName(existingUrl) : void 0;
     const subNotes = (await this.collectSubNotes(file)).filter((sn) => this.isPublished(sn.file));
-    await this.doPublish(file, subNotes, existingName, successText, false, true);
+    await this.doPublish(file, subNotes, existingName, successText, false, true, silent);
   }
   async updateFromUi(file) {
     await this.updateNote(file);
@@ -31871,18 +31881,19 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
    * `share_link` and current sub-note selection), just a different success label.
    */
   async republishFromUi(file) {
-    await this.updateNote(file, t("toast.republishSuccess"));
+    await this.updateNote(file, t("toast.republishSuccess"), true);
   }
   /**
    * Stop sharing a note straight from the stats page's "currently sharing"
    * list: takes down the main page plus every currently-published sub-note
    * (the interactive sub-note picker only lives in the status-bar popover).
-   * Progress and the result banner still surface on the status-bar icon via
-   * {@link doUnpublish}.
+   * Runs `silent` so feedback is a toast Notice, not the status-bar popover —
+   * that popover reflects the *active editor note*, not this one, and the stats
+   * row shows its own progress spinner (see {@link doPublish}'s `silent`).
    */
   async unpublishFromStatsUi(file) {
     const subNotes = (await this.collectSubNotes(file)).filter((sn) => this.isPublished(sn.file));
-    await this.doUnpublish(file, subNotes);
+    await this.doUnpublish(file, subNotes, true);
   }
   async exportCurrentNote() {
     const file = this.app.workspace.getActiveFile();
