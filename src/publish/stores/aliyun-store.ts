@@ -53,7 +53,13 @@ export class AliyunStore implements BlobStore {
 		const commonPrefixes: string[] = [];
 		let marker: string | undefined;
 		do {
-			const res = await this.c().list({ prefix, delimiter, "max-keys": 1000, marker }, {});
+			// Only include defined params: ali-oss V4 signing omits `undefined` query
+			// keys from the signature, but `url.format` still emits them as `key=`,
+			// which yields SignatureDoesNotMatch.
+			const query: Record<string, string | number> = { prefix, "max-keys": 1000 };
+			if (delimiter) query.delimiter = delimiter;
+			if (marker) query.marker = marker;
+			const res = await this.c().list(query, {});
 			for (const o of res.objects ?? []) keys.push(o.name);
 			for (const p of res.prefixes ?? []) commonPrefixes.push(p);
 			marker = res.nextMarker;
