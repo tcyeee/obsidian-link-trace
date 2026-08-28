@@ -29433,7 +29433,10 @@ var AliyunStore = class {
     const commonPrefixes = [];
     let marker;
     do {
-      const res = await this.c().list({ prefix, delimiter, "max-keys": 1e3, marker }, {});
+      const query = { prefix, "max-keys": 1e3 };
+      if (delimiter) query.delimiter = delimiter;
+      if (marker) query.marker = marker;
+      const res = await this.c().list(query, {});
       for (const o of (_a2 = res.objects) != null ? _a2 : []) keys.push(o.name);
       for (const p of (_b2 = res.prefixes) != null ? _b2 : []) commonPrefixes.push(p);
       marker = res.nextMarker;
