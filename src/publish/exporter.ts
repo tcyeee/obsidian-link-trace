@@ -1,7 +1,7 @@
 import { App, Vault, TFile } from "obsidian";
 import { zipSync, strToU8 } from "fflate";
 import { renderNote } from "../render/renderer";
-import { queryBaseFiles } from "../render/base-renderer";
+import { queryBaseFiles, queryBaseFilesFromRaw } from "../render/base-renderer";
 import { buildHtml, containsMath } from "../render/page-template";
 import type { GoatCounterInjectConfig } from "../analytics/analytics";
 
@@ -93,7 +93,27 @@ async function collectBaseLinkedNotes(app: App, file: TFile, seen: Set<string>):
 			}
 		}
 	}
+
+	// Inline ```base code blocks: their query resolves to notes too, and the
+	// rendered table links to them, so they must be published as sub-pages.
+	for (const yaml of inlineBaseBlocks(await app.vault.cachedRead(file))) {
+		for (const m of queryBaseFilesFromRaw(app, yaml)) {
+			if (m.extension === "md" && m.path !== file.path && !seen.has(m.path)) {
+				seen.add(m.path);
+				result.push(m);
+			}
+		}
+	}
 	return result;
+}
+
+/** Extract the YAML body of every ```base fenced code block in a note. */
+function inlineBaseBlocks(content: string): string[] {
+	const out: string[] = [];
+	const re = /^(`{3,})base[ \t]*\r?\n([\s\S]*?)\r?\n\1[ \t]*$/gm;
+	let m: RegExpExecArray | null;
+	while ((m = re.exec(content)) !== null) out.push(m[2]);
+	return out;
 }
 
 /**

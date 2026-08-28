@@ -1,5 +1,5 @@
 import { App, TFile, MarkdownRenderer, Component, FileSystemAdapter } from "obsidian";
-import { renderBaseAsTable, resolveBaseEmbeds } from "./base-renderer";
+import { renderBaseAsTable, renderInlineBaseAsTable, resolveBaseEmbeds } from "./base-renderer";
 import { registerImage, processImgsBlocks } from "./imgs-renderer";
 import { stripFrontmatter } from "../core/note-hash";
 import { buildCss } from "./page-css";
@@ -185,6 +185,25 @@ function resolveSelfEmbeds(app: App, file: TFile, content: string, raw: string):
   });
 }
 
+/* ── Inline base code blocks ───────────────────────────────────────────────
+   Obsidian 1.9+ lets a note carry a base query inline as a ```base fenced
+   code block (no `.base` file). The core Bases plugin renders it into a
+   scroll-virtualized table widget that can't be snapshotted from the detached
+   renderer — same failure mode as native `.base` table embeds. So we pull the
+   block out here (before MarkdownRenderer runs) and swap it for a placeholder
+   div carrying the block's YAML; renderNote turns that into a static table via
+   the hand-written engine, exactly like the `![[X.base]]` embed path.
+──────────────────────────────────────────────────────────────────────── */
+
+/** Replace ```base fenced code blocks with data-base-inline placeholder markers. */
+export function resolveInlineBases(content: string): string {
+  return content.replace(
+    /^(`{3,})base[ \t]*\r?\n([\s\S]*?)\r?\n\1[ \t]*$/gm,
+    (_m, _fence, yaml: string) =>
+      `\n\n<div data-base-inline="${encodeURIComponent(yaml)}"></div>\n\n`
+  );
+}
+
 /* ── Plugin code-block protection ──────────────────────────────────────── */
 
 /**
@@ -193,6 +212,7 @@ function resolveSelfEmbeds(app: App, file: TFile, content: string, raw: string):
  * Add more plugin languages here as needed.
  */
 const PLUGIN_CODE_LANGS = new Set([
+  "base",                             // inline Bases block that resolveInlineBases missed
   "dataview",                         // Dataview DQL → shown as plain code block
   "dataviewjs",                       // Dataview JS → shown as plain code block
   "imgs",                             // image-cluster
@@ -242,6 +262,7 @@ export async function renderNote(
   let content = stripFrontmatter(rawContent);
   content = resolveSelfEmbeds(app, file, content, rawContent);
   content = resolveBaseEmbeds(content);
+  content = resolveInlineBases(content);
   content = protectPluginCodeBlocks(content);
   const { processed, entries } = extractMath(content);
 
@@ -303,6 +324,16 @@ export async function renderNote(
       const errorP = createEl("p", { cls: "base-error", text: `Base 未找到: ${name}` });
       placeholder.replaceWith(errorP);
     }
+  }
+
+  // Replace inline ```base placeholders (data-base-inline attr) with static tables
+  const inlineBasePlaceholders = Array.from(el.querySelectorAll<HTMLElement>("[data-base-inline]"));
+  for (const placeholder of inlineBasePlaceholders) {
+    const yaml = decodeURIComponent(placeholder.getAttribute("data-base-inline") ?? "");
+    const parsed = new DOMParser().parseFromString(
+      renderInlineBaseAsTable(app, yaml, file.path, images), "text/html"
+    );
+    placeholder.replaceWith(...Array.from(parsed.body.childNodes));
   }
 
   // Fallback: replace any .internal-embed elements pointing to .base files
