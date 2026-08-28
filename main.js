@@ -29190,7 +29190,7 @@ function generateUniqueName(usedNames, pageLinkLength) {
   while (usedNames.size >= Math.pow(NAME_ALPHABET_SIZE, length) * CROWD_THRESHOLD) {
     length++;
     console.warn(
-      `[publish-as-link] \u77ED\u94FE\u547D\u540D\u7A7A\u95F4\u63A5\u8FD1\u9971\u548C\uFF08\u5DF2\u7528 ${usedNames.size} \u4E2A\uFF09\uFF0C\u957F\u5EA6\u81EA\u52A8\u589E\u52A0\u5230 ${length}`
+      `[link-trace] \u77ED\u94FE\u547D\u540D\u7A7A\u95F4\u63A5\u8FD1\u9971\u548C\uFF08\u5DF2\u7528 ${usedNames.size} \u4E2A\uFF09\uFF0C\u957F\u5EA6\u81EA\u52A8\u589E\u52A0\u5230 ${length}`
     );
   }
   let name;
@@ -29698,7 +29698,7 @@ async function listPublishedNames(settings) {
       if (n) names.add(n);
     }
   } catch (err2) {
-    console.warn("[publish-as-link] \u8BFB\u53D6\u5DF2\u53D1\u5E03\u9875\u9762\u5217\u8868\u5931\u8D25\uFF0C\u672C\u6B21\u4EC5\u5728\u53D1\u5E03\u8303\u56F4\u5185\u53BB\u91CD", err2);
+    console.warn("[link-trace] \u8BFB\u53D6\u5DF2\u53D1\u5E03\u9875\u9762\u5217\u8868\u5931\u8D25\uFF0C\u672C\u6B21\u4EC5\u5728\u53D1\u5E03\u8303\u56F4\u5185\u53BB\u91CD", err2);
   }
   return names;
 }

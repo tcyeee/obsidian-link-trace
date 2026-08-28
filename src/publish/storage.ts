@@ -122,7 +122,7 @@ export async function listPublishedNames(settings: ShareOnlineSettings): Promise
 			if (n) names.add(n);
 		}
 	} catch (err: unknown) {
-		console.warn("[publish-as-link] 读取已发布页面列表失败，本次仅在发布范围内去重", err);
+		console.warn("[link-trace] 读取已发布页面列表失败，本次仅在发布范围内去重", err);
 	}
 	return names;
 }
