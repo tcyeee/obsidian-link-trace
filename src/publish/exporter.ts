@@ -36,7 +36,7 @@ export function generateUniqueName(usedNames: Set<string>, pageLinkLength: numbe
 	while (usedNames.size >= Math.pow(NAME_ALPHABET_SIZE, length) * CROWD_THRESHOLD) {
 		length++;
 		console.warn(
-			`[publish-as-link] 短链命名空间接近饱和（已用 ${usedNames.size} 个），长度自动增加到 ${length}`
+			`[link-trace] 短链命名空间接近饱和（已用 ${usedNames.size} 个），长度自动增加到 ${length}`
 		);
 	}
 	let name: string;
