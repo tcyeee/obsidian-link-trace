@@ -27326,15 +27326,15 @@ function viewOrder(view, formulas) {
   var _a2;
   return ((_a2 = view.order) == null ? void 0 : _a2.length) ? view.order : Object.keys(formulas).map((k) => `formula.${k}`);
 }
-async function queryBase(app, baseFile, viewName) {
+function queryBaseFromRaw(app, raw, viewName) {
   var _a2, _b2, _c, _d, _e;
-  const raw = await app.vault.read(baseFile);
   let config;
   try {
     config = (0, import_obsidian3.parseYaml)(raw);
   } catch (e) {
     return null;
   }
+  if (!config || typeof config !== "object") return null;
   const views = (_a2 = config.views) != null ? _a2 : [];
   const view = (_c = (_b2 = viewName !== void 0 ? views.find((v) => v.name === viewName) : void 0) != null ? _b2 : views[0]) != null ? _c : {};
   const formulas = (_d = config.formulas) != null ? _d : {};
@@ -27373,19 +27373,43 @@ async function queryBase(app, baseFile, viewName) {
   if (view.limit) matched = matched.slice(0, view.limit);
   return { config, view, formulas, properties, vaultName, matched };
 }
+async function queryBase(app, baseFile, viewName) {
+  return queryBaseFromRaw(app, await app.vault.read(baseFile), viewName);
+}
 async function queryBaseFiles(app, baseFile, viewName) {
   var _a2, _b2;
   return (_b2 = (_a2 = await queryBase(app, baseFile, viewName)) == null ? void 0 : _a2.matched) != null ? _b2 : [];
 }
-async function renderBaseAsTable(app, baseFile, images, viewName) {
+function queryBaseFilesFromRaw(app, raw, viewName) {
   var _a2, _b2;
-  const query = await queryBase(app, baseFile, viewName);
-  if (!query) return `<div class="base-error">\u65E0\u6CD5\u89E3\u6790 ${baseFile.name}</div>`;
+  return (_b2 = (_a2 = queryBaseFromRaw(app, raw, viewName)) == null ? void 0 : _a2.matched) != null ? _b2 : [];
+}
+async function renderBaseAsTable(app, baseFile, images, viewName) {
+  return renderBaseQuery(
+    app,
+    queryBaseFromRaw(app, await app.vault.read(baseFile), viewName),
+    baseFile.path,
+    baseFile.name,
+    images
+  );
+}
+function renderInlineBaseAsTable(app, raw, contextPath, images, viewName) {
+  return renderBaseQuery(
+    app,
+    queryBaseFromRaw(app, raw, viewName),
+    contextPath,
+    "base",
+    images
+  );
+}
+function renderBaseQuery(app, query, contextPath, label, images) {
+  var _a2, _b2;
+  if (!query) return `<div class="base-error">\u65E0\u6CD5\u89E3\u6790 ${escapeHtml(label)}</div>`;
   const { config, view, formulas, properties, vaultName, matched } = query;
   if (matched.length === 0) return `<div class="base-empty">\uFF08\u65E0\u5339\u914D\u8BB0\u5F55\uFF09</div>`;
   const viewType = ((_a2 = view.type) != null ? _a2 : "table").toLowerCase();
   if (viewType === "cards") {
-    return renderCards(app, baseFile, config, view, matched, formulas, properties, vaultName, images);
+    return renderCards(app, contextPath, config, view, matched, formulas, properties, vaultName, images);
   }
   if (viewType === "list") {
     return renderList(app, view, matched, formulas, vaultName);
@@ -27408,7 +27432,7 @@ ${tbody}
 </table>
 </div>`;
 }
-function renderCards(app, baseFile, config, view, matched, formulas, properties, vaultName, images) {
+function renderCards(app, contextPath, config, view, matched, formulas, properties, vaultName, images) {
   var _a2, _b2, _c, _d;
   const cardSize = (_a2 = view.cardSize) != null ? _a2 : 200;
   const imageAspectRatio = (_b2 = view.imageAspectRatio) != null ? _b2 : 0.5;
@@ -27423,7 +27447,7 @@ function renderCards(app, baseFile, config, view, matched, formulas, properties,
       const imgFmVal = ctx.fm[imgFmKey];
       const raw = (typeof imgFmVal === "string" ? imgFmVal : "").replace(/^\//, "");
       if (raw) {
-        const imgFile = (_a3 = app.vault.getAbstractFileByPath(raw)) != null ? _a3 : app.metadataCache.getFirstLinkpathDest(raw, baseFile.path);
+        const imgFile = (_a3 = app.vault.getAbstractFileByPath(raw)) != null ? _a3 : app.metadataCache.getFirstLinkpathDest(raw, contextPath);
         if (imgFile instanceof import_obsidian3.TFile) {
           const src = images ? `images/${registerImage(imgFile, images)}` : `app://local/${encodeURIComponent(imgFile.path)}`;
           bannerHtml = `<img class="base-card-banner" src="${src}" alt="${escapeHtml(imgFile.name)}" style="height:${imgHeight}px">`;
@@ -28286,7 +28310,19 @@ ${stripSelf(slice)}
 ` : "";
   });
 }
+function resolveInlineBases(content) {
+  return content.replace(
+    /^(`{3,})base[ \t]*\r?\n([\s\S]*?)\r?\n\1[ \t]*$/gm,
+    (_m, _fence, yaml) => `
+
+<div data-base-inline="${encodeURIComponent(yaml)}"></div>
+
+`
+  );
+}
 var PLUGIN_CODE_LANGS = /* @__PURE__ */ new Set([
+  "base",
+  // inline Bases block that resolveInlineBases missed
   "dataview",
   // Dataview DQL → shown as plain code block
   "dataviewjs",
@@ -28323,10 +28359,11 @@ function restorePluginCodeLangs(el) {
   });
 }
 async function renderNote(app, file, rawContent) {
-  var _a2, _b2, _c, _d;
+  var _a2, _b2, _c, _d, _e;
   let content = stripFrontmatter(rawContent);
   content = resolveSelfEmbeds(app, file, content, rawContent);
   content = resolveBaseEmbeds(content);
+  content = resolveInlineBases(content);
   content = protectPluginCodeBlocks(content);
   const { processed, entries } = extractMath(content);
   const el = createDiv({ cls: "markdown-preview-view markdown-rendered opal-render-scratch" });
@@ -28375,12 +28412,21 @@ async function renderNote(app, file, rawContent) {
       placeholder.replaceWith(errorP);
     }
   }
+  const inlineBasePlaceholders = Array.from(el.querySelectorAll("[data-base-inline]"));
+  for (const placeholder of inlineBasePlaceholders) {
+    const yaml = decodeURIComponent((_c = placeholder.getAttribute("data-base-inline")) != null ? _c : "");
+    const parsed = new DOMParser().parseFromString(
+      renderInlineBaseAsTable(app, yaml, file.path, images),
+      "text/html"
+    );
+    placeholder.replaceWith(...Array.from(parsed.body.childNodes));
+  }
   const internalEmbeds = Array.from(el.querySelectorAll(".internal-embed"));
   for (const embed of internalEmbeds) {
-    const rawSrc = (_c = embed.getAttribute("src")) != null ? _c : "";
+    const rawSrc = (_d = embed.getAttribute("src")) != null ? _d : "";
     const [src, viewName] = rawSrc.split("#");
     if (!src.endsWith(".base")) continue;
-    const baseName = (_d = src.split("/").pop()) != null ? _d : src;
+    const baseName = (_e = src.split("/").pop()) != null ? _e : src;
     const baseFile = app.vault.getFiles().find(
       (f) => f.path === src || f.name === baseName
     );
@@ -29219,7 +29265,22 @@ async function collectBaseLinkedNotes(app, file, seen) {
       }
     }
   }
+  for (const yaml of inlineBaseBlocks(await app.vault.cachedRead(file))) {
+    for (const m of queryBaseFilesFromRaw(app, yaml)) {
+      if (m.extension === "md" && m.path !== file.path && !seen.has(m.path)) {
+        seen.add(m.path);
+        result.push(m);
+      }
+    }
+  }
   return result;
+}
+function inlineBaseBlocks(content) {
+  const out = [];
+  const re = /^(`{3,})base[ \t]*\r?\n([\s\S]*?)\r?\n\1[ \t]*$/gm;
+  let m;
+  while ((m = re.exec(content)) !== null) out.push(m[2]);
+  return out;
 }
 async function directChildNotes(app, file, seen) {
   var _a2, _b2;

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { extractSubpathContent } from "./renderer";
+import { extractSubpathContent, resolveInlineBases } from "./renderer";
 
 // A small note whose offsets we compute directly so the cache entries are honest.
 const raw = [
@@ -61,5 +61,39 @@ describe("extractSubpathContent", () => {
     expect(extractSubpathContent(raw, headings, blocks, "Nope")).toBe("");
     expect(extractSubpathContent(raw, headings, blocks, "^missing")).toBe("");
     expect(extractSubpathContent(raw, headings, blocks, "")).toBe("");
+  });
+});
+
+describe("resolveInlineBases", () => {
+  it("swaps a ```base fenced block for a data-base-inline placeholder", () => {
+    const md = [
+      "intro",
+      "",
+      "```base",
+      "views:",
+      "  - type: table",
+      "```",
+      "",
+      "outro",
+    ].join("\n");
+    const out = resolveInlineBases(md);
+    expect(out).not.toContain("```base");
+    const m = out.match(/data-base-inline="([^"]+)"/);
+    expect(m).not.toBeNull();
+    expect(decodeURIComponent(m![1])).toBe("views:\n  - type: table");
+    expect(out).toContain("intro");
+    expect(out).toContain("outro");
+  });
+
+  it("handles multiple blocks and longer fences", () => {
+    const md = "````base\na\n````\n\ntext\n\n```base\nb\n```";
+    const out = resolveInlineBases(md);
+    const all = [...out.matchAll(/data-base-inline="([^"]+)"/g)].map(x => decodeURIComponent(x[1]));
+    expect(all).toEqual(["a", "b"]);
+  });
+
+  it("leaves non-base fenced blocks untouched", () => {
+    const md = "```js\nconst base = 1;\n```";
+    expect(resolveInlineBases(md)).toBe(md);
   });
 });

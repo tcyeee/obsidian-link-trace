@@ -537,20 +537,20 @@ interface BaseQuery {
 }
 
 /**
- * Parse a `.base` file and run its query (selected view's filter + sort + limit)
- * against the vault. Returns the matched files alongside the parsed view config,
- * or `null` when the YAML can't be parsed. Shared by the renderer and the
- * exporter's sub-page collection so both see exactly the same set of notes.
+ * Parse raw `.base` YAML and run its query (selected view's filter + sort +
+ * limit) against the vault. Returns the matched files alongside the parsed view
+ * config, or `null` when the YAML can't be parsed. Shared by the `.base` embed
+ * path and the inline ```base code-block path so both behave identically.
  */
-async function queryBase(
+function queryBaseFromRaw(
   app: App,
-  baseFile: TFile,
+  raw: string,
   viewName?: string
-): Promise<BaseQuery | null> {
-  const raw = await app.vault.read(baseFile);
+): BaseQuery | null {
   let config: BaseConfig;
   try { config = parseYaml(raw) as BaseConfig; }
   catch { return null; }
+  if (!config || typeof config !== "object") return null;
 
   // Select the requested view (by name) or fall back to the first one.
   const views      = config.views ?? [];
@@ -599,6 +599,15 @@ async function queryBase(
   return { config, view, formulas, properties, vaultName, matched };
 }
 
+/** Parse a `.base` file and run its query. Thin wrapper over `queryBaseFromRaw`. */
+async function queryBase(
+  app: App,
+  baseFile: TFile,
+  viewName?: string
+): Promise<BaseQuery | null> {
+  return queryBaseFromRaw(app, await app.vault.read(baseFile), viewName);
+}
+
 /**
  * The markdown files a `.base` embed resolves to, after applying the view's
  * filter/sort/limit — the same set the renderer displays. Used by the exporter
@@ -612,6 +621,18 @@ export async function queryBaseFiles(
   return (await queryBase(app, baseFile, viewName))?.matched ?? [];
 }
 
+/**
+ * Same as `queryBaseFiles`, but for an inline ```base code block: the query
+ * config comes straight from the block's YAML text rather than a `.base` file.
+ */
+export function queryBaseFilesFromRaw(
+  app: App,
+  raw: string,
+  viewName?: string
+): TFile[] {
+  return queryBaseFromRaw(app, raw, viewName)?.matched ?? [];
+}
+
 /** Build an HTML table from a `.base` file by querying the vault. */
 export async function renderBaseAsTable(
   app: App,
@@ -619,8 +640,37 @@ export async function renderBaseAsTable(
   images?: Map<string, TFile>,
   viewName?: string
 ): Promise<string> {
-  const query = await queryBase(app, baseFile, viewName);
-  if (!query) return `<div class="base-error">无法解析 ${baseFile.name}</div>`;
+  return renderBaseQuery(
+    app, queryBaseFromRaw(app, await app.vault.read(baseFile), viewName),
+    baseFile.path, baseFile.name, images
+  );
+}
+
+/**
+ * Build an HTML table from an inline ```base code block's YAML. `contextPath` is
+ * the host note's path (used to resolve relative image links in card views).
+ */
+export function renderInlineBaseAsTable(
+  app: App,
+  raw: string,
+  contextPath: string,
+  images?: Map<string, TFile>,
+  viewName?: string
+): string {
+  return renderBaseQuery(
+    app, queryBaseFromRaw(app, raw, viewName), contextPath, "base", images
+  );
+}
+
+/** Render an already-run `BaseQuery` to static HTML (table / cards / list). */
+function renderBaseQuery(
+  app: App,
+  query: BaseQuery | null,
+  contextPath: string,
+  label: string,
+  images?: Map<string, TFile>
+): string {
+  if (!query) return `<div class="base-error">无法解析 ${escapeHtml(label)}</div>`;
   const { config, view, formulas, properties, vaultName, matched } = query;
 
   if (matched.length === 0) return `<div class="base-empty">（无匹配记录）</div>`;
@@ -628,7 +678,7 @@ export async function renderBaseAsTable(
   // ── Dispatch by view type ──
   const viewType = (view.type ?? "table").toLowerCase();
   if (viewType === "cards") {
-    return renderCards(app, baseFile, config, view, matched, formulas, properties, vaultName, images);
+    return renderCards(app, contextPath, config, view, matched, formulas, properties, vaultName, images);
   }
   if (viewType === "list") {
     return renderList(app, view, matched, formulas, vaultName);
@@ -656,7 +706,7 @@ export async function renderBaseAsTable(
 
 function renderCards(
   app: App,
-  baseFile: TFile,
+  contextPath: string,
   config: BaseConfig,
   view: NonNullable<BaseConfig["views"]>[number],
   matched: TFile[],
@@ -687,7 +737,7 @@ function renderCards(
       if (raw) {
         const imgFile =
           app.vault.getAbstractFileByPath(raw) ??
-          app.metadataCache.getFirstLinkpathDest(raw, baseFile.path);
+          app.metadataCache.getFirstLinkpathDest(raw, contextPath);
         if (imgFile instanceof TFile) {
           const src = images
             ? `images/${registerImage(imgFile, images)}`
