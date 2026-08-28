@@ -470,6 +470,18 @@ export default class ShareOnlinePlugin extends Plugin {
 		await this.updateNote(file, t("toast.republishSuccess"));
 	}
 
+	/**
+	 * Stop sharing a note straight from the stats page's "currently sharing"
+	 * list: takes down the main page plus every currently-published sub-note
+	 * (the interactive sub-note picker only lives in the status-bar popover).
+	 * Progress and the result banner still surface on the status-bar icon via
+	 * {@link doUnpublish}.
+	 */
+	async unpublishFromStatsUi(file: TFile): Promise<void> {
+		const subNotes = (await this.collectSubNotes(file)).filter((sn) => this.isPublished(sn.file));
+		await this.doUnpublish(file, subNotes);
+	}
+
 	private async exportCurrentNote() {
 		const file = this.app.workspace.getActiveFile();
 		if (!this.isMarkdown(file)) {

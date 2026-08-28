@@ -846,19 +846,46 @@ details[open] > .opal-collapsible-heading::before {
   color: var(--text-accent);
   text-decoration: underline;
 }
-.opal-stats-openlink {
+/* Title-row action cluster (open page / stop sharing), revealed on row hover. */
+.opal-stats-titleactions {
   display: flex;
+  align-items: center;
+  gap: 2px;
   flex-shrink: 0;
   margin-left: auto;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease-out;
+}
+.opal-stats-item:hover .opal-stats-titleactions {
+  opacity: 1;
+  pointer-events: auto;
+}
+.opal-stats-itemaction {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
   color: var(--text-faint);
   cursor: pointer;
 }
-.opal-stats-openlink:hover {
-  color: var(--text-accent);
-}
-.opal-stats-openlink svg {
+.opal-stats-itemaction svg {
   width: 13px;
   height: 13px;
+}
+.opal-stats-itemaction:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+.opal-stats-itemaction--danger:hover {
+  background: rgba(var(--color-red-rgb), 0.15);
+  color: var(--color-red);
+}
+.opal-stats-itemaction.is-loading {
+  pointer-events: none;
+  opacity: 0.5;
 }
 
 .opal-stats-itemmeta {

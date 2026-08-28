@@ -31257,12 +31257,22 @@ var ShareStatsView = class extends import_obsidian11.ItemView {
         e.stopPropagation();
         void this.openNote(row.filePath);
       });
-      const linkEl = titleRow.createDiv({ cls: "opal-stats-openlink" });
+      const actions = titleRow.createDiv({ cls: "opal-stats-titleactions" });
+      const linkEl = actions.createDiv({ cls: "opal-stats-itemaction" });
       (0, import_obsidian11.setIcon)(linkEl, "external-link");
       (0, import_obsidian11.setTooltip)(linkEl, t("stats.openLink"));
       linkEl.addEventListener("click", (e) => {
         e.stopPropagation();
         window.open(row.shareLink, "_blank");
+      });
+      const stopEl = actions.createDiv({
+        cls: "opal-stats-itemaction opal-stats-itemaction--danger"
+      });
+      (0, import_obsidian11.setIcon)(stopEl, "trash-2");
+      (0, import_obsidian11.setTooltip)(stopEl, t("menu.unpublish"));
+      stopEl.addEventListener("click", (e) => {
+        e.stopPropagation();
+        void this.handleStopSharing(row.filePath, stopEl);
       });
       const metaRow = item.createDiv({ cls: "opal-stats-itemmeta" });
       const chip = metaRow.createDiv({ cls: "opal-stats-linkchip" });
@@ -31335,6 +31345,22 @@ var ShareStatsView = class extends import_obsidian11.ItemView {
         void this.refreshList();
       });
     }
+  }
+  /**
+   * Stop sharing a live page straight from the "currently sharing" list, then
+   * sync silently (see {@link handleRepublish}). On the next repaint the row
+   * drops out of this list and into the "unpublished" section.
+   */
+  async handleStopSharing(filePath, trigger) {
+    const file = this.app.vault.getAbstractFileByPath(filePath);
+    if (!(file instanceof import_obsidian11.TFile)) return;
+    trigger.addClass("is-loading");
+    try {
+      await this.plugin.unpublishFromStatsUi(file);
+    } finally {
+      trigger.removeClass("is-loading");
+    }
+    await this.refreshList();
   }
   /**
    * Republish a taken-down note in place, then sync silently — the button's
@@ -31729,6 +31755,17 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
    */
   async republishFromUi(file) {
     await this.updateNote(file, t("toast.republishSuccess"));
+  }
+  /**
+   * Stop sharing a note straight from the stats page's "currently sharing"
+   * list: takes down the main page plus every currently-published sub-note
+   * (the interactive sub-note picker only lives in the status-bar popover).
+   * Progress and the result banner still surface on the status-bar icon via
+   * {@link doUnpublish}.
+   */
+  async unpublishFromStatsUi(file) {
+    const subNotes = (await this.collectSubNotes(file)).filter((sn) => this.isPublished(sn.file));
+    await this.doUnpublish(file, subNotes);
   }
   async exportCurrentNote() {
     const file = this.app.workspace.getActiveFile();
