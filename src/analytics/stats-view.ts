@@ -400,8 +400,9 @@ export class ShareStatsView extends ItemView {
 				new StatsDetailModal(this.app, this.plugin.settings, row, countsAvailable).open()
 			);
 
-			// Title row: note name opens the note; external-link icon opens the page.
-			// Both stop propagation so they don't also trigger the item's detail modal.
+			// Title row: note name opens the note; a hover-revealed action cluster
+			// (open page / stop sharing) sits at the end. Every control stops
+			// propagation so it doesn't also trigger the item's detail modal.
 			const titleRow = item.createDiv({ cls: "opal-stats-itemtitle" });
 			const nameEl = titleRow.createSpan({ cls: "opal-stats-notename", text: row.title });
 			setTooltip(nameEl, t("stats.openNote"));
@@ -409,12 +410,25 @@ export class ShareStatsView extends ItemView {
 				e.stopPropagation();
 				void this.openNote(row.filePath);
 			});
-			const linkEl = titleRow.createDiv({ cls: "opal-stats-openlink" });
+
+			const actions = titleRow.createDiv({ cls: "opal-stats-titleactions" });
+
+			const linkEl = actions.createDiv({ cls: "opal-stats-itemaction" });
 			setIcon(linkEl, "external-link");
 			setTooltip(linkEl, t("stats.openLink"));
 			linkEl.addEventListener("click", (e) => {
 				e.stopPropagation();
 				window.open(row.shareLink, "_blank");
+			});
+
+			const stopEl = actions.createDiv({
+				cls: "opal-stats-itemaction opal-stats-itemaction--danger",
+			});
+			setIcon(stopEl, "trash-2");
+			setTooltip(stopEl, t("menu.unpublish"));
+			stopEl.addEventListener("click", (e) => {
+				e.stopPropagation();
+				void this.handleStopSharing(row.filePath, stopEl);
 			});
 
 			// Meta row: short-link pill, view count, and published date.
@@ -514,6 +528,23 @@ export class ShareStatsView extends ItemView {
 				void this.refreshList();
 			});
 		}
+	}
+
+	/**
+	 * Stop sharing a live page straight from the "currently sharing" list, then
+	 * sync silently (see {@link handleRepublish}). On the next repaint the row
+	 * drops out of this list and into the "unpublished" section.
+	 */
+	private async handleStopSharing(filePath: string, trigger: HTMLElement): Promise<void> {
+		const file = this.app.vault.getAbstractFileByPath(filePath);
+		if (!(file instanceof TFile)) return;
+		trigger.addClass("is-loading");
+		try {
+			await this.plugin.unpublishFromStatsUi(file);
+		} finally {
+			trigger.removeClass("is-loading");
+		}
+		await this.refreshList();
 	}
 
 	/**
