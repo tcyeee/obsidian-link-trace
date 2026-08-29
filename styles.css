@@ -16,6 +16,9 @@
 .opal-status-bar-btn.opal-status-stale svg {
   color: var(--color-orange);
 }
+.opal-status-bar-btn.opal-status-detached svg {
+  color: var(--color-red);
+}
 
 /* ── Offscreen render scratch pad ── */
 .opal-render-scratch {
@@ -893,6 +896,34 @@ details[open] > .opal-collapsible-heading::before {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+/* ── Orphaned ("ghost") pages: live on OSS, but the note lost its publish info ── */
+.opal-stats-listtitle--warn {
+  color: var(--color-red);
+}
+.opal-stats-item--orphan {
+  cursor: default;
+  border-color: rgba(var(--color-red-rgb), 0.4);
+  background: rgba(var(--color-red-rgb), 0.06);
+}
+.opal-stats-item--orphan:hover {
+  background: rgba(var(--color-red-rgb), 0.1);
+}
+.opal-stats-orphan-badge {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border-radius: var(--radius-s);
+  font-size: var(--font-ui-smaller);
+  color: var(--color-red);
+  background: rgba(var(--color-red-rgb), 0.15);
+}
+.opal-stats-orphan-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 .opal-stats-linkchip {
   display: flex;

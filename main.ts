@@ -5,13 +5,26 @@ import { uploadPage, deletePage, listPublishedNames, ensureKatexAssets, katexBas
 import { t, setLanguage } from "./src/core/i18n";
 import { getAnalyticsInjectConfig } from "./src/analytics/analytics";
 import { hashBody, stripFrontmatter } from "./src/core/note-hash";
-import { isPublishedFrontmatter } from "./src/core/share-status";
+import { isPublishedFrontmatter, extractNoteName } from "./src/core/share-status";
+import {
+	type LedgerData,
+	type LedgerEntry,
+	type Orphan,
+	normalizeLedger,
+	recordPublish,
+	markUnpublished,
+	renameNotePath,
+	findLiveByNotePath,
+	findOrphans,
+} from "./src/publish/ledger";
 import { SharePopover } from "./src/ui/share-popover";
 import { ShareStatsView, VIEW_TYPE_SHARE_STATS } from "./src/analytics/stats-view";
 
 export default class ShareOnlinePlugin extends Plugin {
 	settings: ShareOnlineSettings;
 	sharePopover: SharePopover;
+	/** Durable record of every page uploaded to OSS — see src/publish/ledger.ts. */
+	ledger: LedgerData = normalizeLedger(null);
 	private statusBarEl: HTMLElement;
 
 	async onload() {
@@ -76,6 +89,17 @@ export default class ShareOnlinePlugin extends Plugin {
 			this.app.workspace.on("layout-change", () => this.sharePopover.close())
 		);
 
+		// Keep the ledger's notePath back-references valid across note renames/moves,
+		// so a published note doesn't look orphaned just because it was moved.
+		this.registerEvent(
+			this.app.vault.on("rename", (file, oldPath) => {
+				if (file instanceof TFile && renameNotePath(this.ledger, oldPath, file.path)) {
+					void this.persist();
+					this.refreshStatsView();
+				}
+			})
+		);
+
 		// Reflect stale state on the status-bar icon while the note is edited.
 		const debouncedStatusRefresh = debounce(() => void this.updateStatusBar(), 500, true);
 		this.registerEvent(
@@ -84,20 +108,31 @@ export default class ShareOnlinePlugin extends Plugin {
 	}
 
 	async loadSettings() {
-		const raw = (await this.loadData()) as
+		const raw = (await this.loadData()) as Record<string, unknown> | null;
+		// data.json used to be the bare settings object; it's now
+		// `{ settings, ledger }`. Legacy blobs always carry `storageProvider`.
+		const wrapped = !!raw && typeof raw === "object" && "settings" in raw && !("storageProvider" in raw);
+		const rawSettings = (wrapped ? raw!["settings"] : raw) as
 			| (Partial<ShareOnlineSettings> & { includeLinkedNotes?: boolean })
-			| null;
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, raw);
+			| null
+			| undefined;
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, rawSettings);
 		// Migrate the legacy boolean toggle to the export-level dropdown.
-		if (raw && raw.exportLevel === undefined && typeof raw.includeLinkedNotes === "boolean") {
-			this.settings.exportLevel = raw.includeLinkedNotes ? 2 : 1;
+		if (rawSettings && rawSettings.exportLevel === undefined && typeof rawSettings.includeLinkedNotes === "boolean") {
+			this.settings.exportLevel = rawSettings.includeLinkedNotes ? 2 : 1;
 		}
 		delete (this.settings as Partial<ShareOnlineSettings> & { includeLinkedNotes?: boolean }).includeLinkedNotes;
 		setLanguage(this.settings.language);
+		this.ledger = normalizeLedger(wrapped ? raw!["ledger"] : null);
 	}
 
 	async saveSettings() {
-		await this.saveData(this.settings);
+		await this.persist();
+	}
+
+	/** Persist settings + ledger together — they share data.json. */
+	async persist() {
+		await this.saveData({ settings: this.settings, ledger: this.ledger });
 	}
 
 	/** Reveal the share-stats view, reusing an open one or opening it in the right sidebar. */
@@ -145,7 +180,7 @@ export default class ShareOnlinePlugin extends Plugin {
 		return isPublishedFrontmatter(this.app.metadataCache.getFileCache(file)?.frontmatter);
 	}
 
-	private async setShareMeta(file: TFile, url: string): Promise<void> {
+	private async setShareMeta(file: TFile, url: string, sub = false): Promise<void> {
 		const raw = await this.app.vault.read(file);
 		const hash = hashBody(stripFrontmatter(raw));
 		const time = new Date().toISOString();
@@ -155,6 +190,18 @@ export default class ShareOnlinePlugin extends Plugin {
 			fm["share_hash"] = hash;
 			fm["share_status"] = "published";
 		});
+		// Record in the ledger too — the durable copy that survives an undo of the
+		// frontmatter write above (see src/publish/ledger.ts).
+		recordPublish(this.ledger, {
+			name: extractNoteName(url),
+			url,
+			notePath: file.path,
+			publishedAt: time,
+			bodyHash: hash,
+			live: true,
+			sub,
+		});
+		await this.persist();
 	}
 
 	/** Mark the note as taken down without deleting `share_link`, so republishing can reuse it. */
@@ -162,6 +209,8 @@ export default class ShareOnlinePlugin extends Plugin {
 		await this.app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
 			fm["share_status"] = "unpublished";
 		});
+		const name = extractNoteName(this.getShareLink(file));
+		if (name && markUnpublished(this.ledger, name)) await this.persist();
 	}
 
 	/**
@@ -195,14 +244,72 @@ export default class ShareOnlinePlugin extends Plugin {
 		this.statusBarEl.show();
 		const published = this.isPublished(file);
 		const stale = published ? await this.isStale(file) : false;
+		// The ledger still says this note has a live page, but its frontmatter no
+		// longer does — a "ghost page" (usually a Cmd+Z right after publishing).
+		const detached = !published && !!findLiveByNotePath(this.ledger, file.path);
 		// Active file may have changed during the async read — re-check before painting.
 		if (this.app.workspace.getActiveFile()?.path !== file.path) return;
 		this.statusBarEl.toggleClass("opal-status-published", published && !stale);
 		this.statusBarEl.toggleClass("opal-status-stale", published && stale);
+		this.statusBarEl.toggleClass("opal-status-detached", detached);
 		setTooltip(
 			this.statusBarEl,
-			!published ? t("statusbar.shareNote") : stale ? t("statusbar.stale") : t("statusbar.published")
+			detached
+				? t("statusbar.detached")
+				: !published
+					? t("statusbar.shareNote")
+					: stale
+						? t("statusbar.stale")
+						: t("statusbar.published")
 		);
+	}
+
+	// ── Orphan ("ghost page") recovery ────────────────────────────────────
+
+	/** Live ledger pages the vault no longer accounts for — see {@link findOrphans}. */
+	detectOrphans(): Orphan[] {
+		return findOrphans(
+			this.ledger,
+			(path) => {
+				const f = this.app.vault.getAbstractFileByPath(path);
+				return f instanceof TFile ? this.app.metadataCache.getFileCache(f)?.frontmatter : null;
+			},
+			(path) => this.app.vault.getAbstractFileByPath(path) instanceof TFile
+		);
+	}
+
+	/** Write the publish frontmatter a detached note lost back from the ledger record. */
+	async recoverOrphan(entry: LedgerEntry): Promise<void> {
+		const file = this.app.vault.getAbstractFileByPath(entry.notePath);
+		if (!(file instanceof TFile)) {
+			new Notice(t("orphan.recover.missing"));
+			return;
+		}
+		await this.app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
+			fm["share_link"] = entry.url;
+			fm["share_time"] = entry.publishedAt;
+			fm["share_hash"] = entry.bodyHash;
+			fm["share_status"] = "published";
+		});
+		void this.updateStatusBar();
+		this.refreshStatsView();
+		new Notice(t("orphan.recover.done"));
+	}
+
+	/** Take a ghost page down on OSS and close out its ledger record. */
+	async takeDownOrphan(entry: LedgerEntry): Promise<void> {
+		await deletePage(this.settings, entry.name);
+		markUnpublished(this.ledger, entry.name);
+		await this.persist();
+		const file = this.app.vault.getAbstractFileByPath(entry.notePath);
+		if (file instanceof TFile && this.getShareLink(file)) {
+			await this.app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
+				fm["share_status"] = "unpublished";
+			});
+		}
+		void this.updateStatusBar();
+		this.refreshStatsView();
+		new Notice(t("orphan.takedown.done"));
 	}
 
 	/** True when a publish route is selected and its credentials are all present. */
@@ -249,7 +356,7 @@ export default class ShareOnlinePlugin extends Plugin {
 			return;
 		}
 		const existingUrl = this.getShareLink(file);
-		const existingName = existingUrl ? this.extractNoteName(existingUrl) : undefined;
+		const existingName = existingUrl ? extractNoteName(existingUrl) : undefined;
 		void this.doPublish(file, subNotes, existingName);
 	}
 
@@ -317,7 +424,7 @@ export default class ShareOnlinePlugin extends Plugin {
 			type Pending = { file: TFile; result: ExportResult } | null;
 			const pending: Pending[] = [];
 			for (const sn of subNotes) {
-				const reuseName = sn.shareLink ? this.extractNoteName(sn.shareLink) : undefined;
+				const reuseName = sn.shareLink ? extractNoteName(sn.shareLink) : undefined;
 				if (reuseName && !updateExisting && this.isPublished(sn.file)) {
 					// Fresh publish, sub-note still live: reuse the already-published
 					// page as-is, only register its name so links resolve to it.
@@ -352,7 +459,7 @@ export default class ShareOnlinePlugin extends Plugin {
 					subHtml,
 					p.result.images
 				);
-				await this.setShareMeta(p.file, subUrl);
+				await this.setShareMeta(p.file, subUrl, true);
 				done++;
 				progress(t("toast.progress.subPage", { done: String(done), total: String(total) }));
 			}
@@ -398,7 +505,7 @@ export default class ShareOnlinePlugin extends Plugin {
 			// surfaced in the result banner rather than as a separate notice)
 			const failedSubs: string[] = [];
 			for (const sn of subNotesToDelete) {
-				const snName = this.extractNoteName(sn.shareLink);
+				const snName = extractNoteName(sn.shareLink);
 				progress(t("toast.progress.deleteSub", { done: String(done + 1), total: String(total) }));
 				try {
 					await deletePage(this.settings, snName);
@@ -414,7 +521,7 @@ export default class ShareOnlinePlugin extends Plugin {
 			// Delete main note (fatal on failure)
 			if (this.isPublished(file)) {
 				progress(t("toast.progress.deleteMain"));
-				const existingName = this.extractNoteName(this.getShareLink(file));
+				const existingName = extractNoteName(this.getShareLink(file));
 				await deletePage(this.settings, existingName);
 			}
 			await this.setUnpublished(file);
@@ -431,13 +538,6 @@ export default class ShareOnlinePlugin extends Plugin {
 		}
 	}
 
-	private extractNoteName(url: string): string {
-		const parts = url.split("/");
-		const last = parts[parts.length - 1];
-		// Old format: .../noteName/index.html — new format: .../noteName.html
-		return last === "index.html" ? (parts[parts.length - 2] ?? "") : last.replace(/\.html$/i, "");
-	}
-
 	/** Flatten the export hierarchy (per the configured level) into a publish list. */
 	private async collectSubNotes(file: TFile): Promise<{ file: TFile; shareLink: string }[]> {
 		if (this.settings.exportLevel <= 1) return [];
@@ -447,7 +547,7 @@ export default class ShareOnlinePlugin extends Plugin {
 
 	private async updateNote(file: TFile, successText = t("toast.updateSuccess")) {
 		const existingUrl = this.getShareLink(file);
-		const existingName = existingUrl ? this.extractNoteName(existingUrl) : undefined;
+		const existingName = existingUrl ? extractNoteName(existingUrl) : undefined;
 		// Update re-uploads already-published sub-notes too (updateExisting=true), so
 		// their content stays current — but it must NEVER publish a linked note for the
 		// first time as a silent side effect of updating the main note (that would push
