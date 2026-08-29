@@ -71,7 +71,7 @@ export async function runDataviewQuery(
     const result = await api.queryMarkdown(source, originFile.path);
     if (result.successful && result.value !== undefined) return result.value;
     return `> [!error] Dataview\n> ${(result.error ?? "query failed").replace(/\n/g, "\n> ")}`;
-  } catch (e) {
+  } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e);
     return `> [!error] Dataview\n> ${message.replace(/\n/g, "\n> ")}`;
   }

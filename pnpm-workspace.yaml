@@ -1,2 +1,5 @@
 allowBuilds:
   esbuild: false
+
+overrides:
+  urllib: "^2.44.1"   # GHSA-hq3h-g68c-hp78, transitive via ali-oss

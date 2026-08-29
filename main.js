@@ -31437,30 +31437,14 @@ var ShareStatsView = class extends import_obsidian11.ItemView {
         const recoverEl = actions.createDiv({ cls: "opal-stats-itemaction" });
         (0, import_obsidian11.setIcon)(recoverEl, "rotate-ccw");
         (0, import_obsidian11.setTooltip)(recoverEl, t("stats.orphan.recover"));
-        recoverEl.addEventListener("click", async () => {
-          recoverEl.addClass("is-loading");
-          try {
-            await this.plugin.recoverOrphan(orphan.entry);
-          } finally {
-            recoverEl.removeClass("is-loading");
-          }
-          await this.refreshList();
-        });
+        recoverEl.addEventListener("click", () => void this.handleRecoverOrphan(orphan.entry, recoverEl));
       }
       const takedownEl = actions.createDiv({
         cls: "opal-stats-itemaction opal-stats-itemaction--danger"
       });
       (0, import_obsidian11.setIcon)(takedownEl, "trash-2");
       (0, import_obsidian11.setTooltip)(takedownEl, t("stats.orphan.takedown"));
-      takedownEl.addEventListener("click", async () => {
-        takedownEl.addClass("is-loading");
-        try {
-          await this.plugin.takeDownOrphan(orphan.entry);
-        } finally {
-          takedownEl.removeClass("is-loading");
-        }
-        await this.refreshList();
-      });
+      takedownEl.addEventListener("click", () => void this.handleTakeDownOrphan(orphan.entry, takedownEl));
       const metaRow = item.createDiv({ cls: "opal-stats-itemmeta" });
       const chip = metaRow.createDiv({ cls: "opal-stats-linkchip" });
       (0, import_obsidian11.setIcon)(chip.createSpan({ cls: "opal-stats-linkchip-icon" }), "link");
@@ -31674,6 +31658,26 @@ var ShareStatsView = class extends import_obsidian11.ItemView {
     const file = this.app.vault.getAbstractFileByPath(filePath);
     if (!(file instanceof import_obsidian11.TFile)) return;
     await this.plugin.hideShareRecordFromUi(file);
+    await this.refreshList();
+  }
+  /** Re-adopt a detached ledger entry (see {@link handleRepublish}). */
+  async handleRecoverOrphan(entry, trigger) {
+    trigger.addClass("is-loading");
+    try {
+      await this.plugin.recoverOrphan(entry);
+    } finally {
+      trigger.removeClass("is-loading");
+    }
+    await this.refreshList();
+  }
+  /** Delete an orphaned ledger entry's OSS page (see {@link handleRepublish}). */
+  async handleTakeDownOrphan(entry, trigger) {
+    trigger.addClass("is-loading");
+    try {
+      await this.plugin.takeDownOrphan(entry);
+    } finally {
+      trigger.removeClass("is-loading");
+    }
     await this.refreshList();
   }
   /**

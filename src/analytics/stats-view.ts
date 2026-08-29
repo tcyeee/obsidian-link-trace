@@ -12,7 +12,7 @@ import {
 import { fetchAllPathHits } from "./analytics-client";
 import { StatsDetailModal } from "./stats-detail-modal";
 import { isPublishedFrontmatter, isUnpublishedVisibleFrontmatter } from "../core/share-status";
-import type { Orphan } from "../publish/ledger";
+import type { Orphan, LedgerEntry } from "../publish/ledger";
 import { makeUniquePrefixStripper } from "../publish/exporter";
 
 export const VIEW_TYPE_SHARE_STATS = "share-stats-view";
@@ -377,15 +377,7 @@ export class ShareStatsView extends ItemView {
 				const recoverEl = actions.createDiv({ cls: "opal-stats-itemaction" });
 				setIcon(recoverEl, "rotate-ccw");
 				setTooltip(recoverEl, t("stats.orphan.recover"));
-				recoverEl.addEventListener("click", async () => {
-					recoverEl.addClass("is-loading");
-					try {
-						await this.plugin.recoverOrphan(orphan.entry);
-					} finally {
-						recoverEl.removeClass("is-loading");
-					}
-					await this.refreshList();
-				});
+				recoverEl.addEventListener("click", () => void this.handleRecoverOrphan(orphan.entry, recoverEl));
 			}
 
 			const takedownEl = actions.createDiv({
@@ -393,15 +385,7 @@ export class ShareStatsView extends ItemView {
 			});
 			setIcon(takedownEl, "trash-2");
 			setTooltip(takedownEl, t("stats.orphan.takedown"));
-			takedownEl.addEventListener("click", async () => {
-				takedownEl.addClass("is-loading");
-				try {
-					await this.plugin.takeDownOrphan(orphan.entry);
-				} finally {
-					takedownEl.removeClass("is-loading");
-				}
-				await this.refreshList();
-			});
+			takedownEl.addEventListener("click", () => void this.handleTakeDownOrphan(orphan.entry, takedownEl));
 
 			const metaRow = item.createDiv({ cls: "opal-stats-itemmeta" });
 			const chip = metaRow.createDiv({ cls: "opal-stats-linkchip" });
@@ -662,6 +646,28 @@ export class ShareStatsView extends ItemView {
 		const file = this.app.vault.getAbstractFileByPath(filePath);
 		if (!(file instanceof TFile)) return;
 		await this.plugin.hideShareRecordFromUi(file);
+		await this.refreshList();
+	}
+
+	/** Re-adopt a detached ledger entry (see {@link handleRepublish}). */
+	private async handleRecoverOrphan(entry: LedgerEntry, trigger: HTMLElement): Promise<void> {
+		trigger.addClass("is-loading");
+		try {
+			await this.plugin.recoverOrphan(entry);
+		} finally {
+			trigger.removeClass("is-loading");
+		}
+		await this.refreshList();
+	}
+
+	/** Delete an orphaned ledger entry's OSS page (see {@link handleRepublish}). */
+	private async handleTakeDownOrphan(entry: LedgerEntry, trigger: HTMLElement): Promise<void> {
+		trigger.addClass("is-loading");
+		try {
+			await this.plugin.takeDownOrphan(entry);
+		} finally {
+			trigger.removeClass("is-loading");
+		}
 		await this.refreshList();
 	}
 
