@@ -25725,6 +25725,16 @@ var zh = {
   "statusbar.shareNote": "\u5206\u4EAB\u7B14\u8BB0",
   "statusbar.published": "\u5DF2\u53D1\u5E03 \u2014 \u70B9\u51FB\u7BA1\u7406",
   "statusbar.stale": "\u5185\u5BB9\u6709\u66F4\u65B0 \u2014 \u70B9\u51FB\u7BA1\u7406",
+  "statusbar.detached": "\u53D1\u5E03\u8BB0\u5F55\u4E22\u5931 \u2014 \u6253\u5F00\u5206\u4EAB\u7EDF\u8BA1\u9875\u6062\u590D",
+  "stats.orphan.title": "\u5F02\u5E38\u9875\u9762",
+  "stats.orphan.hint": "\u8FD9\u4E9B\u9875\u9762\u4ECD\u5728\u7EBF\u4E0A\uFF0C\u4F46\u7B14\u8BB0\u91CC\u7684\u53D1\u5E03\u4FE1\u606F\u5DF2\u4E22\u5931\uFF08\u53EF\u80FD\u56E0\u64A4\u9500\u64CD\u4F5C\u3001\u540C\u6B65\u51B2\u7A81\u6216\u5220\u9664\u7B14\u8BB0\uFF09\u3002\u300C\u6062\u590D\u300D\u4F1A\u628A\u53D1\u5E03\u5C5E\u6027\u5199\u56DE\u7B14\u8BB0\uFF1B\u300C\u4E0B\u67B6\u300D\u4F1A\u4ECE\u7EBF\u4E0A\u5220\u9664\u8BE5\u9875\u9762\u3002",
+  "stats.orphan.badge.detached": "\u5C5E\u6027\u4E22\u5931",
+  "stats.orphan.badge.missing": "\u7B14\u8BB0\u5DF2\u5220\u9664",
+  "stats.orphan.recover": "\u6062\u590D\u53D1\u5E03\u5C5E\u6027",
+  "stats.orphan.takedown": "\u4E0B\u67B6\uFF08\u4ECE\u7EBF\u4E0A\u5220\u9664\uFF09",
+  "orphan.recover.done": "\u5DF2\u6062\u590D\u53D1\u5E03\u5C5E\u6027",
+  "orphan.recover.missing": "\u7B14\u8BB0\u4E0D\u5B58\u5728\uFF0C\u65E0\u6CD5\u6062\u590D\uFF1B\u53EF\u6539\u7528\u300C\u4E0B\u67B6\u300D",
+  "orphan.takedown.done": "\u9875\u9762\u5DF2\u4E0B\u67B6",
   "toast.uploading": "\u4E0A\u4F20\u4E2D...",
   "toast.progress.rendering": "\u6B63\u5728\u6E32\u67D3\u9875\u9762...",
   "toast.progress.subPage": "\u4E0A\u4F20\u5173\u8054\u9875 {done}/{total}...",
@@ -25874,6 +25884,16 @@ var en = {
   "statusbar.shareNote": "Share note",
   "statusbar.published": "Published \u2014 click to manage",
   "statusbar.stale": "Content changed \u2014 click to manage",
+  "statusbar.detached": "Publish record lost \u2014 open Share Stats to recover",
+  "stats.orphan.title": "Orphaned pages",
+  "stats.orphan.hint": 'These pages are still online, but their note lost its publish info (an undo, a Sync conflict, or a deleted note). "Recover" writes the publish properties back to the note; "Take down" deletes the page online.',
+  "stats.orphan.badge.detached": "Detached",
+  "stats.orphan.badge.missing": "Note deleted",
+  "stats.orphan.recover": "Restore publish properties",
+  "stats.orphan.takedown": "Take down (delete online)",
+  "orphan.recover.done": "Publish properties restored",
+  "orphan.recover.missing": 'Note not found \u2014 use "Take down" instead',
+  "orphan.takedown.done": "Page taken down",
   "toast.uploading": "Uploading...",
   "toast.progress.rendering": "Rendering page...",
   "toast.progress.subPage": "Uploading linked page {done}/{total}...",
@@ -29863,10 +29883,85 @@ function isPublishedFrontmatter(fm) {
   const status = fm == null ? void 0 : fm[SHARE_STATUS_KEY];
   return status === void 0 || status === "published";
 }
+function extractNoteName(shareLink) {
+  var _a2, _b2;
+  const parts = (shareLink || "").split("/");
+  const last = (_a2 = parts[parts.length - 1]) != null ? _a2 : "";
+  return last === "index.html" ? (_b2 = parts[parts.length - 2]) != null ? _b2 : "" : last.replace(/\.html$/i, "");
+}
 function isUnpublishedVisibleFrontmatter(fm) {
   const shareLink = fm == null ? void 0 : fm["share_link"];
   if (typeof shareLink !== "string" || !shareLink) return false;
   return (fm == null ? void 0 : fm[SHARE_STATUS_KEY]) === "unpublished";
+}
+
+// src/publish/ledger.ts
+function emptyLedger() {
+  return { version: 1, entries: [] };
+}
+function normalizeLedger(raw) {
+  const ledger = emptyLedger();
+  if (!raw || typeof raw !== "object") return ledger;
+  const entries = raw.entries;
+  if (!Array.isArray(entries)) return ledger;
+  for (const e of entries) {
+    if (!e || typeof e !== "object") continue;
+    const { name, url, notePath, publishedAt, bodyHash, live, sub } = e;
+    if (typeof name !== "string" || !name) continue;
+    if (typeof url !== "string" || typeof notePath !== "string") continue;
+    ledger.entries.push({
+      name,
+      url,
+      notePath,
+      publishedAt: typeof publishedAt === "string" ? publishedAt : "",
+      bodyHash: typeof bodyHash === "string" ? bodyHash : "",
+      live: live !== false,
+      sub: sub === true
+    });
+  }
+  return ledger;
+}
+function findByName(ledger, name) {
+  return ledger.entries.find((e) => e.name === name);
+}
+function findLiveByNotePath(ledger, notePath) {
+  return ledger.entries.find((e) => e.live && e.notePath === notePath);
+}
+function recordPublish(ledger, entry) {
+  const existing = findByName(ledger, entry.name);
+  if (existing) Object.assign(existing, entry);
+  else ledger.entries.push(entry);
+}
+function markUnpublished(ledger, name) {
+  const e = findByName(ledger, name);
+  if (!e || !e.live) return false;
+  e.live = false;
+  return true;
+}
+function renameNotePath(ledger, oldPath, newPath) {
+  let changed = false;
+  for (const e of ledger.entries) {
+    if (e.notePath === oldPath) {
+      e.notePath = newPath;
+      changed = true;
+    }
+  }
+  return changed;
+}
+function findOrphans(ledger, getFrontmatter, noteExists) {
+  const orphans = [];
+  for (const entry of ledger.entries) {
+    if (!entry.live) continue;
+    if (!noteExists(entry.notePath)) {
+      orphans.push({ entry, kind: "note-missing" });
+      continue;
+    }
+    const fm = getFrontmatter(entry.notePath);
+    const link = fm == null ? void 0 : fm["share_link"];
+    const healthy = isPublishedFrontmatter(fm) && typeof link === "string" && extractNoteName(link) === entry.name;
+    if (!healthy) orphans.push({ entry, kind: "detached" });
+  }
+  return orphans;
 }
 
 // src/ui/share-popover.ts
@@ -31296,6 +31391,83 @@ var ShareStatsView = class extends import_obsidian11.ItemView {
     if (unpublishedRows.length > 0) {
       this.renderUnpublishedSection(body, unpublishedRows, countsAvailable);
     }
+    const orphans = this.plugin.detectOrphans();
+    if (orphans.length > 0) this.renderOrphanSection(body, orphans);
+  }
+  /**
+   * The "orphaned pages" section: pages the plugin uploaded that the vault has
+   * since lost track of (a Cmd+Z right after publish, a Sync conflict, a
+   * deleted note). Each row offers "recover" — write the publish frontmatter
+   * back from the ledger — and "take down" — delete it from OSS. Actions are
+   * always visible here (not hover-gated); this is a state that wants
+   * attention.
+   */
+  renderOrphanSection(parent, orphans) {
+    var _a2;
+    const header = parent.createDiv({ cls: "opal-stats-listheader" });
+    header.createDiv({
+      cls: "opal-stats-listtitle opal-stats-listtitle--warn",
+      text: t("stats.orphan.title")
+    });
+    header.createDiv({
+      cls: "opal-stats-listcount",
+      text: t("stats.list.count", { count: orphans.length.toLocaleString() })
+    });
+    parent.createDiv({ cls: "opal-stats-notice", text: t("stats.orphan.hint") });
+    const list = parent.createDiv({ cls: "opal-stats-list" });
+    for (const orphan of orphans) {
+      const item = list.createDiv({ cls: "opal-stats-item opal-stats-item--orphan" });
+      const titleRow = item.createDiv({ cls: "opal-stats-itemtitle" });
+      const noteName = orphan.entry.notePath.replace(/\.md$/i, "").split("/").pop() || orphan.entry.name;
+      const nameEl = titleRow.createSpan({ cls: "opal-stats-notename", text: noteName });
+      (0, import_obsidian11.setTooltip)(nameEl, t("stats.openNote"));
+      nameEl.addEventListener("click", () => void this.openNote(orphan.entry.notePath));
+      titleRow.createSpan({
+        cls: "opal-stats-orphan-badge",
+        text: t(
+          orphan.kind === "detached" ? "stats.orphan.badge.detached" : "stats.orphan.badge.missing"
+        )
+      });
+      const actions = titleRow.createDiv({ cls: "opal-stats-orphan-actions" });
+      const linkEl = actions.createDiv({ cls: "opal-stats-itemaction" });
+      (0, import_obsidian11.setIcon)(linkEl, "external-link");
+      (0, import_obsidian11.setTooltip)(linkEl, t("stats.openLink"));
+      linkEl.addEventListener("click", () => window.open(orphan.entry.url, "_blank"));
+      if (orphan.kind === "detached") {
+        const recoverEl = actions.createDiv({ cls: "opal-stats-itemaction" });
+        (0, import_obsidian11.setIcon)(recoverEl, "rotate-ccw");
+        (0, import_obsidian11.setTooltip)(recoverEl, t("stats.orphan.recover"));
+        recoverEl.addEventListener("click", async () => {
+          recoverEl.addClass("is-loading");
+          try {
+            await this.plugin.recoverOrphan(orphan.entry);
+          } finally {
+            recoverEl.removeClass("is-loading");
+          }
+          await this.refreshList();
+        });
+      }
+      const takedownEl = actions.createDiv({
+        cls: "opal-stats-itemaction opal-stats-itemaction--danger"
+      });
+      (0, import_obsidian11.setIcon)(takedownEl, "trash-2");
+      (0, import_obsidian11.setTooltip)(takedownEl, t("stats.orphan.takedown"));
+      takedownEl.addEventListener("click", async () => {
+        takedownEl.addClass("is-loading");
+        try {
+          await this.plugin.takeDownOrphan(orphan.entry);
+        } finally {
+          takedownEl.removeClass("is-loading");
+        }
+        await this.refreshList();
+      });
+      const metaRow = item.createDiv({ cls: "opal-stats-itemmeta" });
+      const chip = metaRow.createDiv({ cls: "opal-stats-linkchip" });
+      (0, import_obsidian11.setIcon)(chip.createSpan({ cls: "opal-stats-linkchip-icon" }), "link");
+      chip.createSpan({ text: (_a2 = extractPathname(orphan.entry.url)) != null ? _a2 : orphan.entry.url });
+      (0, import_obsidian11.setTooltip)(chip, orphan.entry.url);
+      chip.addEventListener("click", () => window.open(orphan.entry.url, "_blank"));
+    }
   }
   /** Render the two header stat cards: published page count + total views. */
   renderCards(parent, pageCount, totalViews) {
@@ -31529,6 +31701,11 @@ var ShareStatsView = class extends import_obsidian11.ItemView {
 
 // main.ts
 var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
+  constructor() {
+    super(...arguments);
+    /** Durable record of every page uploaded to OSS — see src/publish/ledger.ts. */
+    this.ledger = normalizeLedger(null);
+  }
   async onload() {
     await this.loadSettings();
     this.addSettingTab(new ShareOnlineSettingTab(this.app, this));
@@ -31576,6 +31753,14 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
     this.registerEvent(
       this.app.workspace.on("layout-change", () => this.sharePopover.close())
     );
+    this.registerEvent(
+      this.app.vault.on("rename", (file, oldPath) => {
+        if (file instanceof import_obsidian12.TFile && renameNotePath(this.ledger, oldPath, file.path)) {
+          void this.persist();
+          this.refreshStatsView();
+        }
+      })
+    );
     const debouncedStatusRefresh = (0, import_obsidian12.debounce)(() => void this.updateStatusBar(), 500, true);
     this.registerEvent(
       this.app.workspace.on("editor-change", () => debouncedStatusRefresh())
@@ -31583,15 +31768,22 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
   }
   async loadSettings() {
     const raw = await this.loadData();
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, raw);
-    if (raw && raw.exportLevel === void 0 && typeof raw.includeLinkedNotes === "boolean") {
-      this.settings.exportLevel = raw.includeLinkedNotes ? 2 : 1;
+    const wrapped = !!raw && typeof raw === "object" && "settings" in raw && !("storageProvider" in raw);
+    const rawSettings = wrapped ? raw["settings"] : raw;
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, rawSettings);
+    if (rawSettings && rawSettings.exportLevel === void 0 && typeof rawSettings.includeLinkedNotes === "boolean") {
+      this.settings.exportLevel = rawSettings.includeLinkedNotes ? 2 : 1;
     }
     delete this.settings.includeLinkedNotes;
     setLanguage(this.settings.language);
+    this.ledger = normalizeLedger(wrapped ? raw["ledger"] : null);
   }
   async saveSettings() {
-    await this.saveData(this.settings);
+    await this.persist();
+  }
+  /** Persist settings + ledger together — they share data.json. */
+  async persist() {
+    await this.saveData({ settings: this.settings, ledger: this.ledger });
   }
   /** Reveal the share-stats view, reusing an open one or opening it in the right sidebar. */
   async activateStatsView() {
@@ -31633,7 +31825,7 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
     var _a2;
     return isPublishedFrontmatter((_a2 = this.app.metadataCache.getFileCache(file)) == null ? void 0 : _a2.frontmatter);
   }
-  async setShareMeta(file, url) {
+  async setShareMeta(file, url, sub = false) {
     const raw = await this.app.vault.read(file);
     const hash = hashBody(stripFrontmatter(raw));
     const time = (/* @__PURE__ */ new Date()).toISOString();
@@ -31643,12 +31835,24 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
       fm["share_hash"] = hash;
       fm["share_status"] = "published";
     });
+    recordPublish(this.ledger, {
+      name: extractNoteName(url),
+      url,
+      notePath: file.path,
+      publishedAt: time,
+      bodyHash: hash,
+      live: true,
+      sub
+    });
+    await this.persist();
   }
   /** Mark the note as taken down without deleting `share_link`, so republishing can reuse it. */
   async setUnpublished(file) {
     await this.app.fileManager.processFrontMatter(file, (fm) => {
       fm["share_status"] = "unpublished";
     });
+    const name = extractNoteName(this.getShareLink(file));
+    if (name && markUnpublished(this.ledger, name)) await this.persist();
   }
   /**
    * Hide a taken-down note's record from the stats page's "unpublished" list
@@ -31677,13 +31881,60 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
     this.statusBarEl.show();
     const published = this.isPublished(file);
     const stale = published ? await this.isStale(file) : false;
+    const detached = !published && !!findLiveByNotePath(this.ledger, file.path);
     if (((_a2 = this.app.workspace.getActiveFile()) == null ? void 0 : _a2.path) !== file.path) return;
     this.statusBarEl.toggleClass("opal-status-published", published && !stale);
     this.statusBarEl.toggleClass("opal-status-stale", published && stale);
+    this.statusBarEl.toggleClass("opal-status-detached", detached);
     (0, import_obsidian12.setTooltip)(
       this.statusBarEl,
-      !published ? t("statusbar.shareNote") : stale ? t("statusbar.stale") : t("statusbar.published")
+      detached ? t("statusbar.detached") : !published ? t("statusbar.shareNote") : stale ? t("statusbar.stale") : t("statusbar.published")
     );
+  }
+  // ── Orphan ("ghost page") recovery ────────────────────────────────────
+  /** Live ledger pages the vault no longer accounts for — see {@link findOrphans}. */
+  detectOrphans() {
+    return findOrphans(
+      this.ledger,
+      (path) => {
+        var _a2;
+        const f = this.app.vault.getAbstractFileByPath(path);
+        return f instanceof import_obsidian12.TFile ? (_a2 = this.app.metadataCache.getFileCache(f)) == null ? void 0 : _a2.frontmatter : null;
+      },
+      (path) => this.app.vault.getAbstractFileByPath(path) instanceof import_obsidian12.TFile
+    );
+  }
+  /** Write the publish frontmatter a detached note lost back from the ledger record. */
+  async recoverOrphan(entry) {
+    const file = this.app.vault.getAbstractFileByPath(entry.notePath);
+    if (!(file instanceof import_obsidian12.TFile)) {
+      new import_obsidian12.Notice(t("orphan.recover.missing"));
+      return;
+    }
+    await this.app.fileManager.processFrontMatter(file, (fm) => {
+      fm["share_link"] = entry.url;
+      fm["share_time"] = entry.publishedAt;
+      fm["share_hash"] = entry.bodyHash;
+      fm["share_status"] = "published";
+    });
+    void this.updateStatusBar();
+    this.refreshStatsView();
+    new import_obsidian12.Notice(t("orphan.recover.done"));
+  }
+  /** Take a ghost page down on OSS and close out its ledger record. */
+  async takeDownOrphan(entry) {
+    await deletePage(this.settings, entry.name);
+    markUnpublished(this.ledger, entry.name);
+    await this.persist();
+    const file = this.app.vault.getAbstractFileByPath(entry.notePath);
+    if (file instanceof import_obsidian12.TFile && this.getShareLink(file)) {
+      await this.app.fileManager.processFrontMatter(file, (fm) => {
+        fm["share_status"] = "unpublished";
+      });
+    }
+    void this.updateStatusBar();
+    this.refreshStatsView();
+    new import_obsidian12.Notice(t("orphan.takedown.done"));
   }
   /** True when a publish route is selected and its credentials are all present. */
   isPublishReady() {
@@ -31721,7 +31972,7 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
       return;
     }
     const existingUrl = this.getShareLink(file);
-    const existingName = existingUrl ? this.extractNoteName(existingUrl) : void 0;
+    const existingName = existingUrl ? extractNoteName(existingUrl) : void 0;
     void this.doPublish(file, subNotes, existingName);
   }
   /** Unpublish the note plus the sub-notes the user ticked in the popover's confirm panel. */
@@ -31758,7 +32009,7 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
       subFolderMap.set(file.path.replace(/\.md$/i, ""), mainName);
       const pending = [];
       for (const sn of subNotes) {
-        const reuseName = sn.shareLink ? this.extractNoteName(sn.shareLink) : void 0;
+        const reuseName = sn.shareLink ? extractNoteName(sn.shareLink) : void 0;
         if (reuseName && !updateExisting && this.isPublished(sn.file)) {
           usedNames.add(reuseName);
           subFolderMap.set(sn.file.basename, reuseName);
@@ -31785,7 +32036,7 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
           subHtml,
           p.result.images
         );
-        await this.setShareMeta(p.file, subUrl);
+        await this.setShareMeta(p.file, subUrl, true);
         done++;
         progress(t("toast.progress.subPage", { done: String(done), total: String(total) }));
       }
@@ -31824,7 +32075,7 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
     try {
       const failedSubs = [];
       for (const sn of subNotesToDelete) {
-        const snName = this.extractNoteName(sn.shareLink);
+        const snName = extractNoteName(sn.shareLink);
         progress(t("toast.progress.deleteSub", { done: String(done + 1), total: String(total) }));
         try {
           await deletePage(this.settings, snName);
@@ -31838,7 +32089,7 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
       }
       if (this.isPublished(file)) {
         progress(t("toast.progress.deleteMain"));
-        const existingName = this.extractNoteName(this.getShareLink(file));
+        const existingName = extractNoteName(this.getShareLink(file));
         await deletePage(this.settings, existingName);
       }
       await this.setUnpublished(file);
@@ -31854,12 +32105,6 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
       console.error(err2);
     }
   }
-  extractNoteName(url) {
-    var _a2;
-    const parts = url.split("/");
-    const last = parts[parts.length - 1];
-    return last === "index.html" ? (_a2 = parts[parts.length - 2]) != null ? _a2 : "" : last.replace(/\.html$/i, "");
-  }
   /** Flatten the export hierarchy (per the configured level) into a publish list. */
   async collectSubNotes(file) {
     if (this.settings.exportLevel <= 1) return [];
@@ -31868,7 +32113,7 @@ var ShareOnlinePlugin = class extends import_obsidian12.Plugin {
   }
   async updateNote(file, successText = t("toast.updateSuccess"), silent = false) {
     const existingUrl = this.getShareLink(file);
-    const existingName = existingUrl ? this.extractNoteName(existingUrl) : void 0;
+    const existingName = existingUrl ? extractNoteName(existingUrl) : void 0;
     const subNotes = (await this.collectSubNotes(file)).filter((sn) => this.isPublished(sn.file));
     await this.doPublish(file, subNotes, existingName, successText, false, true, silent);
   }

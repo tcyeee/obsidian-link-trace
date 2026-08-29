@@ -20,6 +20,18 @@ export function isPublishedFrontmatter(fm: Record<string, unknown> | null | unde
 }
 
 /**
+ * The short page name embedded in a share link — the stable OSS key segment,
+ * and the key the publish ledger is stored under. Handles both the current
+ * `.../{name}.html` (or bare `.../{name}`) form and the legacy
+ * `.../{name}/index.html` form. Returns "" for an empty/garbage link.
+ */
+export function extractNoteName(shareLink: string): string {
+	const parts = (shareLink || "").split("/");
+	const last = parts[parts.length - 1] ?? "";
+	return last === "index.html" ? (parts[parts.length - 2] ?? "") : last.replace(/\.html$/i, "");
+}
+
+/**
  * True when frontmatter represents a taken-down page that should still show up
  * in the stats page's "unpublished" list (so it can be republished or hidden).
  * `"hidden"` is a further, user-chosen state on top of `"unpublished"` — once

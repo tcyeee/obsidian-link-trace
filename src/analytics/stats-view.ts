@@ -12,6 +12,7 @@ import {
 import { fetchAllPathHits } from "./analytics-client";
 import { StatsDetailModal } from "./stats-detail-modal";
 import { isPublishedFrontmatter, isUnpublishedVisibleFrontmatter } from "../core/share-status";
+import type { Orphan } from "../publish/ledger";
 import { makeUniquePrefixStripper } from "../publish/exporter";
 
 export const VIEW_TYPE_SHARE_STATS = "share-stats-view";
@@ -318,6 +319,96 @@ export class ShareStatsView extends ItemView {
 
 		if (unpublishedRows.length > 0) {
 			this.renderUnpublishedSection(body, unpublishedRows, countsAvailable);
+		}
+
+		// "Ghost pages": live on OSS per the ledger, but the note no longer says so.
+		const orphans = this.plugin.detectOrphans();
+		if (orphans.length > 0) this.renderOrphanSection(body, orphans);
+	}
+
+	/**
+	 * The "orphaned pages" section: pages the plugin uploaded that the vault has
+	 * since lost track of (a Cmd+Z right after publish, a Sync conflict, a
+	 * deleted note). Each row offers "recover" — write the publish frontmatter
+	 * back from the ledger — and "take down" — delete it from OSS. Actions are
+	 * always visible here (not hover-gated); this is a state that wants
+	 * attention.
+	 */
+	private renderOrphanSection(parent: HTMLElement, orphans: Orphan[]): void {
+		const header = parent.createDiv({ cls: "opal-stats-listheader" });
+		header.createDiv({
+			cls: "opal-stats-listtitle opal-stats-listtitle--warn",
+			text: t("stats.orphan.title"),
+		});
+		header.createDiv({
+			cls: "opal-stats-listcount",
+			text: t("stats.list.count", { count: orphans.length.toLocaleString() }),
+		});
+		parent.createDiv({ cls: "opal-stats-notice", text: t("stats.orphan.hint") });
+
+		const list = parent.createDiv({ cls: "opal-stats-list" });
+		for (const orphan of orphans) {
+			const item = list.createDiv({ cls: "opal-stats-item opal-stats-item--orphan" });
+
+			const titleRow = item.createDiv({ cls: "opal-stats-itemtitle" });
+			const noteName =
+				orphan.entry.notePath.replace(/\.md$/i, "").split("/").pop() || orphan.entry.name;
+			const nameEl = titleRow.createSpan({ cls: "opal-stats-notename", text: noteName });
+			setTooltip(nameEl, t("stats.openNote"));
+			nameEl.addEventListener("click", () => void this.openNote(orphan.entry.notePath));
+
+			titleRow.createSpan({
+				cls: "opal-stats-orphan-badge",
+				text: t(
+					orphan.kind === "detached"
+						? "stats.orphan.badge.detached"
+						: "stats.orphan.badge.missing"
+				),
+			});
+
+			const actions = titleRow.createDiv({ cls: "opal-stats-orphan-actions" });
+
+			const linkEl = actions.createDiv({ cls: "opal-stats-itemaction" });
+			setIcon(linkEl, "external-link");
+			setTooltip(linkEl, t("stats.openLink"));
+			linkEl.addEventListener("click", () => window.open(orphan.entry.url, "_blank"));
+
+			if (orphan.kind === "detached") {
+				const recoverEl = actions.createDiv({ cls: "opal-stats-itemaction" });
+				setIcon(recoverEl, "rotate-ccw");
+				setTooltip(recoverEl, t("stats.orphan.recover"));
+				recoverEl.addEventListener("click", async () => {
+					recoverEl.addClass("is-loading");
+					try {
+						await this.plugin.recoverOrphan(orphan.entry);
+					} finally {
+						recoverEl.removeClass("is-loading");
+					}
+					await this.refreshList();
+				});
+			}
+
+			const takedownEl = actions.createDiv({
+				cls: "opal-stats-itemaction opal-stats-itemaction--danger",
+			});
+			setIcon(takedownEl, "trash-2");
+			setTooltip(takedownEl, t("stats.orphan.takedown"));
+			takedownEl.addEventListener("click", async () => {
+				takedownEl.addClass("is-loading");
+				try {
+					await this.plugin.takeDownOrphan(orphan.entry);
+				} finally {
+					takedownEl.removeClass("is-loading");
+				}
+				await this.refreshList();
+			});
+
+			const metaRow = item.createDiv({ cls: "opal-stats-itemmeta" });
+			const chip = metaRow.createDiv({ cls: "opal-stats-linkchip" });
+			setIcon(chip.createSpan({ cls: "opal-stats-linkchip-icon" }), "link");
+			chip.createSpan({ text: extractPathname(orphan.entry.url) ?? orphan.entry.url });
+			setTooltip(chip, orphan.entry.url);
+			chip.addEventListener("click", () => window.open(orphan.entry.url, "_blank"));
 		}
 	}
 
