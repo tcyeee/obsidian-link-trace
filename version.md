@@ -1,3 +1,7 @@
+# 0.1.24
+
+- fix: bump qs to patch advisories and drop unnecessary type assertions (bb577d8)
+
 # 0.1.23
 
 - feat: support video thumbnails in image-cluster galleries + lightbox (#8) (29b469a)
