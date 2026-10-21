@@ -1,3 +1,7 @@
+# 0.1.25
+
+- feat: migrate settings tab to declarative getSettingDefinitions() API, bump minAppVersion to 1.13.0 (f89d905)
+
 # 0.1.24
 
 - fix: bump qs to patch advisories and drop unnecessary type assertions (bb577d8)
