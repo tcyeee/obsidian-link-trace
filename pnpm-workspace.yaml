@@ -3,3 +3,4 @@ allowBuilds:
 
 overrides:
   urllib: "^2.44.1"   # GHSA-hq3h-g68c-hp78, transitive via ali-oss
+  qs: "^6.16.1"        # GHSA-x5fp-wj9c-mxmx, GHSA-4mjr-xmp4-gh2g, transitive via ali-oss/urllib

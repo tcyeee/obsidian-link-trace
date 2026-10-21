@@ -112,7 +112,7 @@ export default class ShareOnlinePlugin extends Plugin {
 		// data.json used to be the bare settings object; it's now
 		// `{ settings, ledger }`. Legacy blobs always carry `storageProvider`.
 		const wrapped = !!raw && typeof raw === "object" && "settings" in raw && !("storageProvider" in raw);
-		const rawSettings = (wrapped ? raw!["settings"] : raw) as
+		const rawSettings = (wrapped ? raw["settings"] : raw) as
 			| (Partial<ShareOnlineSettings> & { includeLinkedNotes?: boolean })
 			| null
 			| undefined;
@@ -123,7 +123,7 @@ export default class ShareOnlinePlugin extends Plugin {
 		}
 		delete (this.settings as Partial<ShareOnlineSettings> & { includeLinkedNotes?: boolean }).includeLinkedNotes;
 		setLanguage(this.settings.language);
-		this.ledger = normalizeLedger(wrapped ? raw!["ledger"] : null);
+		this.ledger = normalizeLedger(wrapped ? raw["ledger"] : null);
 	}
 
 	async saveSettings() {
