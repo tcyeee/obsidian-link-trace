@@ -1,4 +1,10 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
+import {
+	App,
+	PluginSettingTab,
+	Setting,
+	SettingDefinitionItem,
+	SettingGroupItem,
+} from "obsidian";
 import type ShareOnlinePlugin from "../../main";
 import { Language, t, setLanguage, formatPageCount } from "../core/i18n";
 
@@ -49,6 +55,9 @@ export const DEFAULT_SETTINGS: ShareOnlineSettings = {
 export class ShareOnlineSettingTab extends PluginSettingTab {
 	plugin: ShareOnlinePlugin;
 
+	/** Live URL-preview span, set by whichever route's config items are rendered. */
+	private previewEl?: HTMLElement;
+
 	constructor(app: App, plugin: ShareOnlinePlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
@@ -77,322 +86,386 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 		return `${base}/${prefix}/${sample}`;
 	}
 
-	display(): void {
-		this.buildUI();
+	getSettingDefinitions(): SettingDefinitionItem[] {
+		return [
+			{
+				type: "group",
+				heading: t("settings.general.heading"),
+				items: this.generalItems(),
+			},
+			{
+				type: "group",
+				heading: t("settings.export.heading"),
+				items: this.exportItems(),
+			},
+			{
+				type: "group",
+				heading: t("settings.route.heading"),
+				items: this.routeItems(),
+			},
+		];
 	}
 
-	private buildUI(): void {
-		const { containerEl } = this;
-		containerEl.empty();
+	// ── 通用 / General ────────────────────────
+	private generalItems(): SettingGroupItem[] {
+		return [
+			{
+				name: t("settings.language"),
+				desc: t("settings.language.desc"),
+				render: (setting: Setting) => {
+					setting.addDropdown((dropdown) =>
+						dropdown
+							.addOption("zh", "中文")
+							.addOption("en", "English")
+							.setValue(this.plugin.settings.language)
+							.onChange(async (value) => {
+								this.plugin.settings.language = value as Language;
+								setLanguage(value as Language);
+								await this.plugin.saveSettings();
+								this.update();
+							})
+					);
+				},
+			},
+		];
+	}
 
-		// previewEl is created inside the selected route's config block (if any),
-		// so it stays undefined when no route is chosen. Captured by closure here
-		// so the page-length dropdown below can refresh it too.
-		let previewEl: HTMLElement | undefined;
-
-		// ── 通用 / General ────────────────────────
-		const generalDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
-		generalDetails.setAttribute("open", "");
-		generalDetails.createEl("summary", {
-			cls: "opal-collapsible-heading",
-			text: t("settings.general.heading"),
-		});
-
-		new Setting(generalDetails)
-			.setName(t("settings.language"))
-			.setDesc(t("settings.language.desc"))
-			.addDropdown((dropdown) =>
-				dropdown
-					.addOption("zh", "中文")
-					.addOption("en", "English")
-					.setValue(this.plugin.settings.language)
-					.onChange(async (value) => {
-						this.plugin.settings.language = value as Language;
-						setLanguage(value as Language);
-						await this.plugin.saveSettings();
-						this.buildUI();
-					})
-			);
-
-		// ── 导出设置 / Export Settings ────────────
-		const exportDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
-		exportDetails.setAttribute("open", "");
-		exportDetails.createEl("summary", {
-			cls: "opal-collapsible-heading",
-			text: t("settings.export.heading"),
-		});
-
-		new Setting(exportDetails)
-			.setName(t("settings.exportLevel.name"))
-			.setDesc(t("settings.exportLevel.desc"))
-			.addDropdown((dropdown) =>
-				dropdown
-					.addOption("1", t("settings.exportLevel.option.1"))
-					.addOption("2", t("settings.exportLevel.option.2"))
-					.addOption("3", t("settings.exportLevel.option.3"))
-					.setValue(String(this.plugin.settings.exportLevel))
-					.onChange(async (value) => {
-						this.plugin.settings.exportLevel = parseInt(value, 10);
-						await this.plugin.saveSettings();
-					})
-			);
-
-		new Setting(exportDetails)
-			.setName(t("settings.pageLinkLength.name"))
-			.setDesc(t("settings.pageLinkLength.desc"))
-			.addDropdown((dropdown) => {
-				const capacities: Record<number, string> = {
-					2: formatPageCount(36 ** 2),
-					3: formatPageCount(36 ** 3),
-					4: formatPageCount(36 ** 4),
-					5: formatPageCount(36 ** 5),
-					6: formatPageCount(36 ** 6),
-				};
-				for (const len of [2, 3, 4, 5, 6]) {
-					dropdown.addOption(String(len), `${len} — ${capacities[len]}`);
-				}
-				dropdown
-					.setValue(String(this.plugin.settings.pageLinkLength))
-					.onChange(async (value) => {
-						this.plugin.settings.pageLinkLength = parseInt(value, 10);
-						await this.plugin.saveSettings();
-						previewEl?.setText(this.buildPreviewUrl());
+	// ── 导出设置 / Export Settings ────────────
+	private exportItems(): SettingGroupItem[] {
+		return [
+			{
+				name: t("settings.exportLevel.name"),
+				desc: t("settings.exportLevel.desc"),
+				render: (setting: Setting) => {
+					setting.addDropdown((dropdown) =>
+						dropdown
+							.addOption("1", t("settings.exportLevel.option.1"))
+							.addOption("2", t("settings.exportLevel.option.2"))
+							.addOption("3", t("settings.exportLevel.option.3"))
+							.setValue(String(this.plugin.settings.exportLevel))
+							.onChange(async (value) => {
+								this.plugin.settings.exportLevel = parseInt(value, 10);
+								await this.plugin.saveSettings();
+							})
+					);
+				},
+			},
+			{
+				name: t("settings.pageLinkLength.name"),
+				desc: t("settings.pageLinkLength.desc"),
+				render: (setting: Setting) => {
+					setting.addDropdown((dropdown) => {
+						const capacities: Record<number, string> = {
+							2: formatPageCount(36 ** 2),
+							3: formatPageCount(36 ** 3),
+							4: formatPageCount(36 ** 4),
+							5: formatPageCount(36 ** 5),
+							6: formatPageCount(36 ** 6),
+						};
+						for (const len of [2, 3, 4, 5, 6]) {
+							dropdown.addOption(String(len), `${len} — ${capacities[len]}`);
+						}
+						dropdown
+							.setValue(String(this.plugin.settings.pageLinkLength))
+							.onChange(async (value) => {
+								this.plugin.settings.pageLinkLength = parseInt(value, 10);
+								await this.plugin.saveSettings();
+								this.previewEl?.setText(this.buildPreviewUrl());
+							});
 					});
-			});
+				},
+			},
+			{
+				name: t("settings.stripUniquePrefix.name"),
+				desc: t("settings.stripUniquePrefix.desc"),
+				render: (setting: Setting) => {
+					setting.addToggle((toggle) =>
+						toggle
+							.setValue(this.plugin.settings.stripUniquePrefix)
+							.onChange(async (value) => {
+								this.plugin.settings.stripUniquePrefix = value;
+								await this.plugin.saveSettings();
+							})
+					);
+				},
+			},
+		];
+	}
 
-		new Setting(exportDetails)
-			.setName(t("settings.stripUniquePrefix.name"))
-			.setDesc(t("settings.stripUniquePrefix.desc"))
-			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.settings.stripUniquePrefix)
-					.onChange(async (value) => {
-						this.plugin.settings.stripUniquePrefix = value;
-						await this.plugin.saveSettings();
-					})
-			);
-
-		// ── 发布路线配置 / Publish Route ──────────
-		// One route, two choices (Aliyun OSS / Tencent COS). The matching credential
-		// block only appears once a route is picked; "none" shows just the selector.
-		const routeDetails = containerEl.createEl("details", { cls: "opal-collapsible" });
-		routeDetails.setAttribute("open", "");
-		routeDetails.createEl("summary", {
-			cls: "opal-collapsible-heading",
-			text: t("settings.route.heading"),
-		});
-
-		new Setting(routeDetails)
-			.setName(t("settings.route.name"))
-			.setDesc(t("settings.route.desc"))
-			.addDropdown((dropdown) =>
-				dropdown
-					.addOption("none", t("settings.route.option.none"))
-					.addOption("aliyun", "阿里云 OSS")
-					.addOption("tencent", "腾讯云 COS")
-					.setValue(this.plugin.settings.storageProvider)
-					.onChange(async (value) => {
-						this.plugin.settings.storageProvider = value as ShareOnlineSettings["storageProvider"];
-						await this.plugin.saveSettings();
-						this.buildUI();
-					})
-			);
+	// ── 发布路线配置 / Publish Route ──────────
+	// One route, two choices (Aliyun OSS / Tencent COS). The matching credential
+	// items only appear once a route is picked; "none" shows just the selector.
+	private routeItems(): SettingGroupItem[] {
+		const items: SettingGroupItem[] = [
+			{
+				name: t("settings.route.name"),
+				desc: t("settings.route.desc"),
+				render: (setting: Setting) => {
+					setting.addDropdown((dropdown) =>
+						dropdown
+							.addOption("none", t("settings.route.option.none"))
+							.addOption("aliyun", "阿里云 OSS")
+							.addOption("tencent", "腾讯云 COS")
+							.setValue(this.plugin.settings.storageProvider)
+							.onChange(async (value) => {
+								this.plugin.settings.storageProvider = value as ShareOnlineSettings["storageProvider"];
+								await this.plugin.saveSettings();
+								this.update();
+							})
+					);
+				},
+			},
+		];
 
 		if (this.plugin.settings.storageProvider === "aliyun") {
-			previewEl = this.renderAliyunConfig(routeDetails);
+			items.push(...this.aliyunConfigItems());
 		} else if (this.plugin.settings.storageProvider === "tencent") {
-			previewEl = this.renderTencentConfig(routeDetails);
+			items.push(...this.tencentConfigItems());
 		}
+
+		return items;
 	}
 
-	/** Render the Aliyun OSS credential block; returns the live URL-preview span. */
-	private renderAliyunConfig(parent: HTMLElement): HTMLElement {
-		const callout = parent.createDiv({ cls: "opal-oss-callout" });
-		const calloutList = callout.createEl("ul");
-		calloutList.createEl("li", { text: t("settings.oss.callout.item1") });
-		calloutList.createEl("li", { text: t("settings.oss.callout.item2") });
-
-		const previewWrap = parent.createDiv({ cls: "opal-url-preview" });
-		previewWrap.createSpan({ cls: "opal-url-preview-label", text: t("settings.urlPreview.label") });
-		const preview = previewWrap.createSpan({ cls: "opal-url-preview-url", text: this.buildPreviewUrl() });
-
-		new Setting(parent)
-			.setName(t("settings.ossRegion.name"))
-			.setDesc(t("settings.ossRegion.desc"))
-			.addText((text) =>
-				text
-					.setPlaceholder("oss-cn-hangzhou")
-					.setValue(this.plugin.settings.ossRegion)
-					.onChange(async (value) => {
-						this.plugin.settings.ossRegion = value.trim();
-						await this.plugin.saveSettings();
-						preview.setText(this.buildPreviewUrl());
-					})
-			);
-
-		new Setting(parent)
-			.setName(t("settings.ossBucket.name"))
-			.addText((text) =>
-				text
-					.setPlaceholder("my-bucket")
-					.setValue(this.plugin.settings.ossBucket)
-					.onChange(async (value) => {
-						this.plugin.settings.ossBucket = value.trim();
-						await this.plugin.saveSettings();
-						preview.setText(this.buildPreviewUrl());
-					})
-			);
-
-		new Setting(parent)
-			.setName(t("settings.ossKeyId.name"))
-			.addText((text) => {
-				text
-					.setPlaceholder("AccessKey ID")
-					.setValue(this.plugin.settings.ossAccessKeyId)
-					.onChange(async (value) => {
-						this.plugin.settings.ossAccessKeyId = value.trim();
-						await this.plugin.saveSettings();
+	/** Aliyun OSS credential items; the second item captures the live URL-preview span. */
+	private aliyunConfigItems(): SettingGroupItem[] {
+		return [
+			{
+				name: t("settings.oss.heading"),
+				render: (setting: Setting) => {
+					setting.settingEl.empty();
+					setting.settingEl.addClass("opal-oss-callout");
+					const calloutList = setting.settingEl.createEl("ul");
+					calloutList.createEl("li", { text: t("settings.oss.callout.item1") });
+					calloutList.createEl("li", { text: t("settings.oss.callout.item2") });
+				},
+			},
+			{
+				name: t("settings.urlPreview.label"),
+				render: (setting: Setting) => {
+					setting.settingEl.empty();
+					setting.settingEl.addClass("opal-url-preview");
+					setting.settingEl.createSpan({ cls: "opal-url-preview-label", text: t("settings.urlPreview.label") });
+					this.previewEl = setting.settingEl.createSpan({
+						cls: "opal-url-preview-url",
+						text: this.buildPreviewUrl(),
 					});
-				text.inputEl.type = "password";
-			});
-
-		new Setting(parent)
-			.setName(t("settings.ossKeySecret.name"))
-			.addText((text) => {
-				text
-					.setPlaceholder("AccessKey Secret")
-					.setValue(this.plugin.settings.ossAccessKeySecret)
-					.onChange(async (value) => {
-						this.plugin.settings.ossAccessKeySecret = value.trim();
-						await this.plugin.saveSettings();
+				},
+			},
+			{
+				name: t("settings.ossRegion.name"),
+				desc: t("settings.ossRegion.desc"),
+				render: (setting: Setting) => {
+					setting.addText((text) =>
+						text
+							.setPlaceholder("oss-cn-hangzhou")
+							.setValue(this.plugin.settings.ossRegion)
+							.onChange(async (value) => {
+								this.plugin.settings.ossRegion = value.trim();
+								await this.plugin.saveSettings();
+								this.previewEl?.setText(this.buildPreviewUrl());
+							})
+					);
+				},
+			},
+			{
+				name: t("settings.ossBucket.name"),
+				render: (setting: Setting) => {
+					setting.addText((text) =>
+						text
+							.setPlaceholder("my-bucket")
+							.setValue(this.plugin.settings.ossBucket)
+							.onChange(async (value) => {
+								this.plugin.settings.ossBucket = value.trim();
+								await this.plugin.saveSettings();
+								this.previewEl?.setText(this.buildPreviewUrl());
+							})
+					);
+				},
+			},
+			{
+				name: t("settings.ossKeyId.name"),
+				render: (setting: Setting) => {
+					setting.addText((text) => {
+						text
+							.setPlaceholder("AccessKey ID")
+							.setValue(this.plugin.settings.ossAccessKeyId)
+							.onChange(async (value) => {
+								this.plugin.settings.ossAccessKeyId = value.trim();
+								await this.plugin.saveSettings();
+							});
+						text.inputEl.type = "password";
 					});
-				text.inputEl.type = "password";
-			});
-
-		new Setting(parent)
-			.setName(t("settings.ossPrefix.name"))
-			.setDesc(t("settings.ossPrefix.desc"))
-			.addText((text) =>
-				text
-					.setPlaceholder("notes")
-					.setValue(this.plugin.settings.ossPrefix)
-					.onChange(async (value) => {
-						this.plugin.settings.ossPrefix = value.trim() || DEFAULT_SETTINGS.ossPrefix;
-						await this.plugin.saveSettings();
-						preview.setText(this.buildPreviewUrl());
-					})
-			);
-
-		new Setting(parent)
-			.setName(t("settings.ossDomain.name"))
-			.setDesc(t("settings.ossDomain.desc"))
-			.addText((text) =>
-				text
-					.setPlaceholder("https://cdn.example.com")
-					.setValue(this.plugin.settings.ossDomain)
-					.onChange(async (value) => {
-						this.plugin.settings.ossDomain = value.trim().replace(/\/$/, "");
-						await this.plugin.saveSettings();
-						preview.setText(this.buildPreviewUrl());
-					})
-			);
-
-		return preview;
+				},
+			},
+			{
+				name: t("settings.ossKeySecret.name"),
+				render: (setting: Setting) => {
+					setting.addText((text) => {
+						text
+							.setPlaceholder("AccessKey Secret")
+							.setValue(this.plugin.settings.ossAccessKeySecret)
+							.onChange(async (value) => {
+								this.plugin.settings.ossAccessKeySecret = value.trim();
+								await this.plugin.saveSettings();
+							});
+						text.inputEl.type = "password";
+					});
+				},
+			},
+			{
+				name: t("settings.ossPrefix.name"),
+				desc: t("settings.ossPrefix.desc"),
+				render: (setting: Setting) => {
+					setting.addText((text) =>
+						text
+							.setPlaceholder("notes")
+							.setValue(this.plugin.settings.ossPrefix)
+							.onChange(async (value) => {
+								this.plugin.settings.ossPrefix = value.trim() || DEFAULT_SETTINGS.ossPrefix;
+								await this.plugin.saveSettings();
+								this.previewEl?.setText(this.buildPreviewUrl());
+							})
+					);
+				},
+			},
+			{
+				name: t("settings.ossDomain.name"),
+				desc: t("settings.ossDomain.desc"),
+				render: (setting: Setting) => {
+					setting.addText((text) =>
+						text
+							.setPlaceholder("https://cdn.example.com")
+							.setValue(this.plugin.settings.ossDomain)
+							.onChange(async (value) => {
+								this.plugin.settings.ossDomain = value.trim().replace(/\/$/, "");
+								await this.plugin.saveSettings();
+								this.previewEl?.setText(this.buildPreviewUrl());
+							})
+					);
+				},
+			},
+		];
 	}
 
-	/** Render the Tencent COS credential block; returns the live URL-preview span. */
-	private renderTencentConfig(parent: HTMLElement): HTMLElement {
-		const callout = parent.createDiv({ cls: "opal-oss-callout" });
-		const calloutList = callout.createEl("ul");
-		calloutList.createEl("li", { text: t("settings.cos.callout.item1") });
-		calloutList.createEl("li", { text: t("settings.cos.callout.item2") });
-
-		const previewWrap = parent.createDiv({ cls: "opal-url-preview" });
-		previewWrap.createSpan({ cls: "opal-url-preview-label", text: t("settings.urlPreview.label") });
-		const preview = previewWrap.createSpan({ cls: "opal-url-preview-url", text: this.buildPreviewUrl() });
-
-		new Setting(parent)
-			.setName(t("settings.cosRegion.name"))
-			.setDesc(t("settings.cosRegion.desc"))
-			.addText((text) =>
-				text
-					.setPlaceholder("ap-guangzhou")
-					.setValue(this.plugin.settings.cosRegion)
-					.onChange(async (value) => {
-						this.plugin.settings.cosRegion = value.trim();
-						await this.plugin.saveSettings();
-						preview.setText(this.buildPreviewUrl());
-					})
-			);
-
-		new Setting(parent)
-			.setName(t("settings.cosBucket.name"))
-			.setDesc(t("settings.cosBucket.desc"))
-			.addText((text) =>
-				text
-					.setPlaceholder("my-bucket-1250000000")
-					.setValue(this.plugin.settings.cosBucket)
-					.onChange(async (value) => {
-						this.plugin.settings.cosBucket = value.trim();
-						await this.plugin.saveSettings();
-						preview.setText(this.buildPreviewUrl());
-					})
-			);
-
-		new Setting(parent)
-			.setName(t("settings.cosSecretId.name"))
-			.addText((text) => {
-				text
-					.setPlaceholder("SecretId")
-					.setValue(this.plugin.settings.cosSecretId)
-					.onChange(async (value) => {
-						this.plugin.settings.cosSecretId = value.trim();
-						await this.plugin.saveSettings();
+	/** Tencent COS credential items; the second item captures the live URL-preview span. */
+	private tencentConfigItems(): SettingGroupItem[] {
+		return [
+			{
+				name: t("settings.cos.heading"),
+				render: (setting: Setting) => {
+					setting.settingEl.empty();
+					setting.settingEl.addClass("opal-oss-callout");
+					const calloutList = setting.settingEl.createEl("ul");
+					calloutList.createEl("li", { text: t("settings.cos.callout.item1") });
+					calloutList.createEl("li", { text: t("settings.cos.callout.item2") });
+				},
+			},
+			{
+				name: t("settings.urlPreview.label"),
+				render: (setting: Setting) => {
+					setting.settingEl.empty();
+					setting.settingEl.addClass("opal-url-preview");
+					setting.settingEl.createSpan({ cls: "opal-url-preview-label", text: t("settings.urlPreview.label") });
+					this.previewEl = setting.settingEl.createSpan({
+						cls: "opal-url-preview-url",
+						text: this.buildPreviewUrl(),
 					});
-				text.inputEl.type = "password";
-			});
-
-		new Setting(parent)
-			.setName(t("settings.cosSecretKey.name"))
-			.addText((text) => {
-				text
-					.setPlaceholder("SecretKey")
-					.setValue(this.plugin.settings.cosSecretKey)
-					.onChange(async (value) => {
-						this.plugin.settings.cosSecretKey = value.trim();
-						await this.plugin.saveSettings();
+				},
+			},
+			{
+				name: t("settings.cosRegion.name"),
+				desc: t("settings.cosRegion.desc"),
+				render: (setting: Setting) => {
+					setting.addText((text) =>
+						text
+							.setPlaceholder("ap-guangzhou")
+							.setValue(this.plugin.settings.cosRegion)
+							.onChange(async (value) => {
+								this.plugin.settings.cosRegion = value.trim();
+								await this.plugin.saveSettings();
+								this.previewEl?.setText(this.buildPreviewUrl());
+							})
+					);
+				},
+			},
+			{
+				name: t("settings.cosBucket.name"),
+				desc: t("settings.cosBucket.desc"),
+				render: (setting: Setting) => {
+					setting.addText((text) =>
+						text
+							.setPlaceholder("my-bucket-1250000000")
+							.setValue(this.plugin.settings.cosBucket)
+							.onChange(async (value) => {
+								this.plugin.settings.cosBucket = value.trim();
+								await this.plugin.saveSettings();
+								this.previewEl?.setText(this.buildPreviewUrl());
+							})
+					);
+				},
+			},
+			{
+				name: t("settings.cosSecretId.name"),
+				render: (setting: Setting) => {
+					setting.addText((text) => {
+						text
+							.setPlaceholder("SecretId")
+							.setValue(this.plugin.settings.cosSecretId)
+							.onChange(async (value) => {
+								this.plugin.settings.cosSecretId = value.trim();
+								await this.plugin.saveSettings();
+							});
+						text.inputEl.type = "password";
 					});
-				text.inputEl.type = "password";
-			});
-
-		new Setting(parent)
-			.setName(t("settings.cosPrefix.name"))
-			.setDesc(t("settings.cosPrefix.desc"))
-			.addText((text) =>
-				text
-					.setPlaceholder("notes")
-					.setValue(this.plugin.settings.cosPrefix)
-					.onChange(async (value) => {
-						this.plugin.settings.cosPrefix = value.trim() || DEFAULT_SETTINGS.cosPrefix;
-						await this.plugin.saveSettings();
-						preview.setText(this.buildPreviewUrl());
-					})
-			);
-
-		new Setting(parent)
-			.setName(t("settings.cosDomain.name"))
-			.setDesc(t("settings.cosDomain.desc"))
-			.addText((text) =>
-				text
-					.setPlaceholder("https://cdn.example.com")
-					.setValue(this.plugin.settings.cosDomain)
-					.onChange(async (value) => {
-						this.plugin.settings.cosDomain = value.trim().replace(/\/$/, "");
-						await this.plugin.saveSettings();
-						preview.setText(this.buildPreviewUrl());
-					})
-			);
-
-		return preview;
+				},
+			},
+			{
+				name: t("settings.cosSecretKey.name"),
+				render: (setting: Setting) => {
+					setting.addText((text) => {
+						text
+							.setPlaceholder("SecretKey")
+							.setValue(this.plugin.settings.cosSecretKey)
+							.onChange(async (value) => {
+								this.plugin.settings.cosSecretKey = value.trim();
+								await this.plugin.saveSettings();
+							});
+						text.inputEl.type = "password";
+					});
+				},
+			},
+			{
+				name: t("settings.cosPrefix.name"),
+				desc: t("settings.cosPrefix.desc"),
+				render: (setting: Setting) => {
+					setting.addText((text) =>
+						text
+							.setPlaceholder("notes")
+							.setValue(this.plugin.settings.cosPrefix)
+							.onChange(async (value) => {
+								this.plugin.settings.cosPrefix = value.trim() || DEFAULT_SETTINGS.cosPrefix;
+								await this.plugin.saveSettings();
+								this.previewEl?.setText(this.buildPreviewUrl());
+							})
+					);
+				},
+			},
+			{
+				name: t("settings.cosDomain.name"),
+				desc: t("settings.cosDomain.desc"),
+				render: (setting: Setting) => {
+					setting.addText((text) =>
+						text
+							.setPlaceholder("https://cdn.example.com")
+							.setValue(this.plugin.settings.cosDomain)
+							.onChange(async (value) => {
+								this.plugin.settings.cosDomain = value.trim().replace(/\/$/, "");
+								await this.plugin.saveSettings();
+								this.previewEl?.setText(this.buildPreviewUrl());
+							})
+					);
+				},
+			},
+		];
 	}
 }
