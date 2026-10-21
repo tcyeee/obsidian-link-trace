@@ -1,3 +1,8 @@
+# 0.1.23
+
+- feat: support video thumbnails in image-cluster galleries + lightbox (#8) (29b469a)
+- fix: avoid unsafe innerHTML assignment for video play badge icon (61bb2e9)
+
 # 0.1.22
 
 - feat: durable publish ledger to recover "ghost pages" (#7) (d67de11)
