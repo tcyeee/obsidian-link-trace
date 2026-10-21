@@ -540,7 +540,12 @@ export class SharePopover {
 			cls: "opal-share-popover-textbtn mod-cta",
 			text: t("menu.publish"),
 		});
-		publishBtn.addEventListener("click", () => this.openPublishConfirm(this.anchor));
+		const publishReady = this.plugin.isPublishReady();
+		if (publishReady) {
+			publishBtn.addEventListener("click", () => this.openPublishConfirm(this.anchor));
+		} else {
+			publishBtn.disabled = true;
+		}
 		const exportBtn = actions.createEl("button", {
 			cls: "opal-share-popover-textbtn",
 			text: t("menu.exportLocal"),
@@ -549,6 +554,26 @@ export class SharePopover {
 			this.close();
 			void this.plugin.exportFromUi(file);
 		});
+
+		if (!publishReady) {
+			const hint = card.createDiv({ cls: "opal-stats-notice opal-share-popover-config-hint" });
+			hint.createSpan({ text: t("popover.unpublished.notConfigured") });
+			const link = hint.createEl("a", { text: t("popover.unpublished.goSettings"), href: "#" });
+			link.addEventListener("click", (e) => {
+				e.preventDefault();
+				this.close();
+				this.openPluginSettings();
+			});
+		}
+	}
+
+	/** Open Obsidian's settings modal, jumped straight to this plugin's tab. */
+	private openPluginSettings(): void {
+		const app = this.plugin.app as unknown as {
+			setting: { open(): void; openTabById(id: string): void };
+		};
+		app.setting.open();
+		app.setting.openTabById(this.plugin.manifest.id);
 	}
 
 	// ── Inline publish/unpublish confirmation (replaces the old ShareModal) ──

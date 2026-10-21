@@ -13259,9 +13259,9 @@ var require_formstream = __commonJS({
   }
 });
 
-// node_modules/.pnpm/urllib@2.44.0/node_modules/urllib/lib/get_proxy_from_uri.js
+// node_modules/.pnpm/urllib@2.44.1/node_modules/urllib/lib/get_proxy_from_uri.js
 var require_get_proxy_from_uri = __commonJS({
-  "node_modules/.pnpm/urllib@2.44.0/node_modules/urllib/lib/get_proxy_from_uri.js"(exports2, module2) {
+  "node_modules/.pnpm/urllib@2.44.1/node_modules/urllib/lib/get_proxy_from_uri.js"(exports2, module2) {
     "use strict";
     function formatHostname(hostname) {
       return hostname.replace(/^\.*/, ".").toLowerCase();
@@ -13301,9 +13301,9 @@ var require_get_proxy_from_uri = __commonJS({
   }
 });
 
-// node_modules/.pnpm/urllib@2.44.0/node_modules/urllib/lib/detect_proxy_agent.js
+// node_modules/.pnpm/urllib@2.44.1/node_modules/urllib/lib/detect_proxy_agent.js
 var require_detect_proxy_agent = __commonJS({
-  "node_modules/.pnpm/urllib@2.44.0/node_modules/urllib/lib/detect_proxy_agent.js"(exports2, module2) {
+  "node_modules/.pnpm/urllib@2.44.1/node_modules/urllib/lib/detect_proxy_agent.js"(exports2, module2) {
     "use strict";
     var debug = require("util").debuglog("urllib:detect_proxy_agent");
     var getProxyFromURI = require_get_proxy_from_uri();
@@ -13332,12 +13332,12 @@ var require_detect_proxy_agent = __commonJS({
   }
 });
 
-// node_modules/.pnpm/urllib@2.44.0/node_modules/urllib/package.json
+// node_modules/.pnpm/urllib@2.44.1/node_modules/urllib/package.json
 var require_package = __commonJS({
-  "node_modules/.pnpm/urllib@2.44.0/node_modules/urllib/package.json"(exports2, module2) {
+  "node_modules/.pnpm/urllib@2.44.1/node_modules/urllib/package.json"(exports2, module2) {
     module2.exports = {
       name: "urllib",
-      version: "2.44.0",
+      version: "2.44.1",
       publishConfig: {
         tag: "latest-2"
       },
@@ -17062,9 +17062,9 @@ var require_lib4 = __commonJS({
   }
 });
 
-// node_modules/.pnpm/urllib@2.44.0/node_modules/urllib/lib/urllib.js
+// node_modules/.pnpm/urllib@2.44.1/node_modules/urllib/lib/urllib.js
 var require_urllib = __commonJS({
-  "node_modules/.pnpm/urllib@2.44.0/node_modules/urllib/lib/urllib.js"(exports2) {
+  "node_modules/.pnpm/urllib@2.44.1/node_modules/urllib/lib/urllib.js"(exports2) {
     "use strict";
     var debug = require("util").debuglog("urllib");
     var path = require("path");
@@ -17109,6 +17109,56 @@ var require_urllib = __commonJS({
       "text"
     ];
     var PROTO_RE = /^https?:\/\//i;
+    var CROSS_ORIGIN_SENSITIVE_HEADERS = ["authorization", "cookie", "proxy-authorization"];
+    function resolveOriginHref(currentUrl) {
+      if (currentUrl.href) {
+        return currentUrl.href;
+      }
+      var host = currentUrl.host || currentUrl.hostname;
+      if (!host) {
+        return null;
+      }
+      var protocol = currentUrl.protocol || "http:";
+      if (protocol.charAt(protocol.length - 1) !== ":") {
+        protocol += ":";
+      }
+      if (currentUrl.port && String(host).indexOf(":") === -1) {
+        host += ":" + currentUrl.port;
+      }
+      return protocol + "//" + host + (currentUrl.path || currentUrl.pathname || "/");
+    }
+    function isCrossOriginRedirect(currentUrl, toUrl) {
+      try {
+        var fromHref = resolveOriginHref(currentUrl);
+        if (!fromHref) {
+          return true;
+        }
+        if (URL2) {
+          return new URL2(fromHref).origin !== new URL2(toUrl, fromHref).origin;
+        }
+        var from = urlutil.parse(fromHref);
+        var to = urlutil.parse(urlutil.resolve(fromHref, toUrl));
+        var fromPort = from.port || (from.protocol === "https:" ? "443" : "80");
+        var toPort = to.port || (to.protocol === "https:" ? "443" : "80");
+        return from.protocol !== to.protocol || from.hostname !== to.hostname || fromPort !== toPort;
+      } catch (err2) {
+        return true;
+      }
+    }
+    function cleanCrossOriginHeaders(headers, sensitive) {
+      var list = sensitive || CROSS_ORIGIN_SENSITIVE_HEADERS;
+      var cleaned = {};
+      if (headers) {
+        var names = utility.getOwnEnumerables(headers, true);
+        for (var i2 = 0; i2 < names.length; i2++) {
+          var name = names[i2];
+          if (list.indexOf(name.toLowerCase()) === -1) {
+            cleaned[name] = headers[name];
+          }
+        }
+      }
+      return cleaned;
+    }
     var KEEP_ALIVE_RE = /^timeout=(\d+)/i;
     var SOCKET_REQUEST_COUNT = "_URLLIB_SOCKET_REQUEST_COUNT";
     var SOCKET_RESPONSE_COUNT = "_URLLIB_SOCKET_RESPONSE_COUNT";
@@ -17592,6 +17642,19 @@ var require_urllib = __commonJS({
             if (options.headers.host && PROTO_RE.test(location)) {
               options.headers.host = null;
               args.headers = options.headers;
+            }
+            if (isCrossOriginRedirect(parsedUrl, newUrl)) {
+              var redirectArgs = Object.assign({}, args);
+              var sensitiveHeaders = CROSS_ORIGIN_SENSITIVE_HEADERS;
+              if (proxyTunnelAgent) {
+                sensitiveHeaders = sensitiveHeaders.filter(function(name2) {
+                  return name2 !== "proxy-authorization";
+                });
+              }
+              redirectArgs.headers = cleanCrossOriginHeaders(args.headers || options.headers, sensitiveHeaders);
+              redirectArgs.auth = null;
+              redirectArgs.digestAuth = null;
+              args = redirectArgs;
             }
             var cb = callback;
             callback = null;
@@ -18133,9 +18196,9 @@ var require_urllib = __commonJS({
   }
 });
 
-// node_modules/.pnpm/urllib@2.44.0/node_modules/urllib/lib/httpclient.js
+// node_modules/.pnpm/urllib@2.44.1/node_modules/urllib/lib/httpclient.js
 var require_httpclient = __commonJS({
-  "node_modules/.pnpm/urllib@2.44.0/node_modules/urllib/lib/httpclient.js"(exports2, module2) {
+  "node_modules/.pnpm/urllib@2.44.1/node_modules/urllib/lib/httpclient.js"(exports2, module2) {
     "use strict";
     var EventEmitter = require("events").EventEmitter;
     var util = require("util");
@@ -18192,9 +18255,9 @@ var require_httpclient = __commonJS({
   }
 });
 
-// node_modules/.pnpm/urllib@2.44.0/node_modules/urllib/lib/httpclient2.js
+// node_modules/.pnpm/urllib@2.44.1/node_modules/urllib/lib/httpclient2.js
 var require_httpclient2 = __commonJS({
-  "node_modules/.pnpm/urllib@2.44.0/node_modules/urllib/lib/httpclient2.js"(exports2, module2) {
+  "node_modules/.pnpm/urllib@2.44.1/node_modules/urllib/lib/httpclient2.js"(exports2, module2) {
     "use strict";
     var util = require("util");
     var debug = require("util").debuglog("urllib");
@@ -18270,9 +18333,9 @@ var require_httpclient2 = __commonJS({
   }
 });
 
-// node_modules/.pnpm/urllib@2.44.0/node_modules/urllib/lib/index.js
+// node_modules/.pnpm/urllib@2.44.1/node_modules/urllib/lib/index.js
 var require_lib5 = __commonJS({
-  "node_modules/.pnpm/urllib@2.44.0/node_modules/urllib/lib/index.js"(exports2) {
+  "node_modules/.pnpm/urllib@2.44.1/node_modules/urllib/lib/index.js"(exports2) {
     "use strict";
     var urllib = require_urllib();
     exports2.USER_AGENT = urllib.USER_AGENT;
@@ -25786,6 +25849,8 @@ var zh = {
   "popover.copy": "\u590D\u5236\u94FE\u63A5",
   "popover.unpublished.title": "\u5C1A\u672A\u53D1\u5E03",
   "popover.unpublished.subline": "\u53D1\u5E03\u540E\u53EF\u83B7\u5F97\u5206\u4EAB\u94FE\u63A5",
+  "popover.unpublished.notConfigured": "\u53D1\u5E03\u524D\u9700\u5148\u914D\u7F6E\u5B58\u50A8\u8DEF\u7EBF",
+  "popover.unpublished.goSettings": "\u524D\u5F80\u8BBE\u7F6E",
   "popover.stats.views": "\u9605\u8BFB\u91CF",
   "popover.stats.refresh": "\u5237\u65B0\u9605\u8BFB\u91CF",
   "popover.stats.noTrend": "\u8FD1 14 \u5929\u6682\u65E0\u8BBF\u95EE",
@@ -25945,6 +26010,8 @@ var en = {
   "popover.copy": "Copy link",
   "popover.unpublished.title": "Not published yet",
   "popover.unpublished.subline": "Publish to get a shareable link",
+  "popover.unpublished.notConfigured": "Configure a publish route before publishing",
+  "popover.unpublished.goSettings": "Go to settings",
   "popover.stats.views": "Views",
   "popover.stats.refresh": "Refresh views",
   "popover.stats.noTrend": "No visits in the last 14 days",
@@ -26959,8 +27026,13 @@ function registerImage(imgFile, images) {
   images.set(name, imgFile);
   return name;
 }
+var VIDEO_EXTENSIONS = /* @__PURE__ */ new Set(["mp4", "webm", "mov", "m4v", "ogv"]);
+function extensionOf(path) {
+  const match = path.match(/\.([a-zA-Z0-9]+)$/);
+  return match ? match[1].toLowerCase() : "";
+}
 function parseImgsBlock(raw) {
-  const config = { border: false, shadow: false };
+  const config = { border: true, shadow: false };
   const paths = [];
   for (const line of raw.split(/\r?\n/)) {
     const trimmed = line.trim();
@@ -26996,16 +27068,27 @@ function processImgsBlocks(app, sourceFile, el, images) {
     if (config.shadow) gallery.dataset.shadow = "true";
     for (const vaultPath of paths) {
       const imgFile = (_c = app.vault.getAbstractFileByPath(vaultPath)) != null ? _c : app.metadataCache.getFirstLinkpathDest(vaultPath, sourceFile.path);
-      const img = createEl("img");
-      if (imgFile instanceof import_obsidian2.TFile) {
-        const name = registerImage(imgFile, images);
-        img.setAttribute("src", `images/${name}`);
-        img.setAttribute("alt", imgFile.name);
+      const extension = imgFile instanceof import_obsidian2.TFile ? imgFile.extension : extensionOf(vaultPath);
+      const isVideo = VIDEO_EXTENSIONS.has(extension.toLowerCase());
+      const src = imgFile instanceof import_obsidian2.TFile ? `images/${registerImage(imgFile, images)}` : vaultPath;
+      if (isVideo) {
+        const item = createDiv({ cls: "imgs-video-item" });
+        const video = createEl("video");
+        video.setAttribute("muted", "");
+        video.setAttribute("playsinline", "");
+        video.setAttribute("preload", "metadata");
+        video.setAttribute("src", src);
+        item.appendChild(video);
+        const badge = createSpan({ cls: "imgs-play-badge" });
+        badge.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>';
+        item.appendChild(badge);
+        gallery.appendChild(item);
       } else {
-        img.setAttribute("src", vaultPath);
-        img.setAttribute("alt", vaultPath);
+        const img = createEl("img");
+        img.setAttribute("src", src);
+        img.setAttribute("alt", imgFile instanceof import_obsidian2.TFile ? imgFile.name : vaultPath);
+        gallery.appendChild(img);
       }
-      gallery.appendChild(img);
     }
     pre.replaceWith(gallery);
   });
@@ -28038,18 +28121,51 @@ img { max-width: 100%; border-radius: 4px; }
   gap: 8px;
   margin: 1em 0;
 }
-.imgs-gallery img {
+.imgs-gallery img,
+.imgs-gallery .imgs-video-item {
   width: 120px;
   height: 120px;
   object-fit: cover;
   border-radius: 4px;
-  cursor: zoom-in;
   transition: opacity 0.15s;
   flex-shrink: 0;
+  cursor: zoom-in;
 }
-.imgs-gallery img:hover { opacity: 0.85; }
-.imgs-gallery[data-border="true"] img { border: 1px solid #DADCDE; }
-.imgs-gallery[data-shadow="true"] img { box-shadow: 0 2px 8px rgba(0,0,0,0.18); }
+.imgs-gallery img:hover,
+.imgs-gallery .imgs-video-item:hover { opacity: 0.85; }
+.imgs-gallery[data-border="true"] img,
+.imgs-gallery[data-border="true"] .imgs-video-item { border: 1px solid #DADCDE; }
+.imgs-gallery[data-shadow="true"] img,
+.imgs-gallery[data-shadow="true"] .imgs-video-item { box-shadow: 0 2px 8px rgba(0,0,0,0.18); }
+
+/* Video thumbnail: cover-frame <video> (no controls, never autoplays) with a
+   play-badge overlay so it reads as "video" without looking like a live player. */
+.imgs-video-item {
+  position: relative;
+  overflow: hidden;
+}
+.imgs-video-item video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+.imgs-play-badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
 
 /* \u2500\u2500 Lightbox \u2500\u2500 */
 .lightbox {
@@ -28085,6 +28201,13 @@ img { max-width: 100%; border-radius: 4px; }
   user-select: none;
 }
 .lightbox.is-zoomed img { cursor: move; transition: none; }
+.lightbox video {
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 6px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+}
+#lightbox-video { display: none; }
 .lightbox-close,
 .lightbox-nav {
   position: absolute;
@@ -28800,6 +28923,7 @@ function buildHtml(title, htmlBody, css, katexBase, analytics) {
     </button>
     <div class="lightbox-stage" id="lightbox-stage">
       <img id="lightbox-img" src="" alt="">
+      <video id="lightbox-video" controls playsinline></video>
     </div>
     <button class="lightbox-nav lightbox-next" id="lightbox-next" title="\u4E0B\u4E00\u5F20" aria-label="Next">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
@@ -28968,18 +29092,22 @@ ${katexJsTag}
     (function() {
       var lightbox = document.getElementById('lightbox');
       var lbImg    = document.getElementById('lightbox-img');
+      var lbVideo  = document.getElementById('lightbox-video');
       var stage    = document.getElementById('lightbox-stage');
       var prevBtn  = document.getElementById('lightbox-prev');
       var nextBtn  = document.getElementById('lightbox-next');
       var closeBtn = document.getElementById('lightbox-close');
       var counter  = document.getElementById('lightbox-counter');
-      if (!lightbox || !lbImg || !stage) return;
+      if (!lightbox || !lbImg || !lbVideo || !stage) return;
 
       // .base-card-banner thumbnails are decorative card identifiers in a Bases
       // grid/table, not standalone gallery photos \u2014 excluded so they don't get
       // swept into the same prev/next index as unrelated note content.
-      var images = Array.prototype.slice.call(document.querySelectorAll('.markdown-preview-view img:not(.base-card-banner)'));
+      var items = Array.prototype.slice.call(document.querySelectorAll(
+        '.markdown-preview-view img:not(.base-card-banner), .markdown-preview-view .imgs-video-item'
+      ));
       var current = -1;
+      var currentIsVideo = false;
       var scale = 1, panX = 0, panY = 0;
 
       function applyTransform() {
@@ -28996,17 +29124,34 @@ ${katexJsTag}
         lightbox.classList.remove('is-zoomed');
       }
       function show(index) {
-        if (!images.length) return;
-        current = (index + images.length) % images.length;
+        if (!items.length) return;
+        current = (index + items.length) % items.length;
         resetZoom();
-        lbImg.setAttribute('src', images[current].getAttribute('src') || '');
-        lbImg.setAttribute('alt', images[current].getAttribute('alt') || '');
-        var multi = images.length > 1;
+        var item = items[current];
+        currentIsVideo = !!(item.classList && item.classList.contains('imgs-video-item'));
+        stage.style.touchAction = currentIsVideo ? 'auto' : 'none';
+        if (currentIsVideo) {
+          var vid = item.querySelector('video');
+          lbVideo.setAttribute('src', vid ? (vid.getAttribute('src') || '') : '');
+          lbVideo.style.display = 'block';
+          lbImg.style.display = 'none';
+          lbImg.setAttribute('src', '');
+          try { lbVideo.play().catch(function() {}); } catch (e) {}
+        } else {
+          lbVideo.pause();
+          lbVideo.removeAttribute('src');
+          lbVideo.load();
+          lbVideo.style.display = 'none';
+          lbImg.style.display = '';
+          lbImg.setAttribute('src', item.getAttribute('src') || '');
+          lbImg.setAttribute('alt', item.getAttribute('alt') || '');
+        }
+        var multi = items.length > 1;
         if (prevBtn) prevBtn.style.display = multi ? '' : 'none';
         if (nextBtn) nextBtn.style.display = multi ? '' : 'none';
         if (counter) {
           counter.style.display = multi ? '' : 'none';
-          counter.textContent = (current + 1) + ' / ' + images.length;
+          counter.textContent = (current + 1) + ' / ' + items.length;
         }
       }
       function open(index) {
@@ -29018,6 +29163,9 @@ ${katexJsTag}
         lightbox.classList.remove('is-open');
         document.body.style.overflow = '';
         lbImg.setAttribute('src', '');
+        lbVideo.pause();
+        lbVideo.removeAttribute('src');
+        lbVideo.load();
         resetZoom();
       }
       function next() { show(current + 1); }
@@ -29027,9 +29175,9 @@ ${katexJsTag}
         return Math.sqrt(dx * dx + dy * dy);
       }
 
-      images.forEach(function(img, i) {
-        img.classList.add('lt-zoomable');
-        img.addEventListener('click', function(e) {
+      items.forEach(function(item, i) {
+        item.classList.add('lt-zoomable');
+        item.addEventListener('click', function(e) {
           // preventDefault too: a content image may be wrapped in a real <a href>
           // (e.g. markdown [![alt](img)](url)) \u2014 without this the browser still
           // follows the link's default navigation while the lightbox opens.
@@ -29044,7 +29192,7 @@ ${katexJsTag}
       if (closeBtn) closeBtn.addEventListener('click', function(e) { e.stopPropagation(); close(); });
 
       lightbox.addEventListener('click', function(e) {
-        if (e.target === lbImg || e.target === prevBtn || e.target === nextBtn ||
+        if (e.target === lbImg || e.target === lbVideo || e.target === prevBtn || e.target === nextBtn ||
             e.target === closeBtn || e.target === counter ||
             (prevBtn && prevBtn.contains(e.target)) || (nextBtn && nextBtn.contains(e.target)) ||
             (closeBtn && closeBtn.contains(e.target)) || (counter && counter.contains(e.target))) return;
@@ -29073,6 +29221,7 @@ ${katexJsTag}
 
       /* Mouse wheel zoom (desktop) */
       stage.addEventListener('wheel', function(e) {
+        if (currentIsVideo) return;
         e.preventDefault();
         var delta = e.deltaY < 0 ? 0.2 : -0.2;
         scale = Math.min(4, Math.max(1, scale + delta));
@@ -29100,6 +29249,7 @@ ${katexJsTag}
         };
       }
       stage.addEventListener('touchstart', function(e) {
+        if (currentIsVideo) return;
         if (e.touches.length >= 2) {
           touch = startPinch();
           touch.startDist = dist(e.touches[0], e.touches[1]);
@@ -29786,7 +29936,12 @@ function getMimeType(ext) {
     webp: "image/webp",
     svg: "image/svg+xml",
     bmp: "image/bmp",
-    avif: "image/avif"
+    avif: "image/avif",
+    mp4: "video/mp4",
+    webm: "video/webm",
+    mov: "video/quicktime",
+    m4v: "video/x-m4v",
+    ogv: "video/ogg"
   };
   return (_a2 = map[ext.toLowerCase()]) != null ? _a2 : "application/octet-stream";
 }
@@ -30727,7 +30882,12 @@ var SharePopover = class {
       cls: "opal-share-popover-textbtn mod-cta",
       text: t("menu.publish")
     });
-    publishBtn.addEventListener("click", () => this.openPublishConfirm(this.anchor));
+    const publishReady = this.plugin.isPublishReady();
+    if (publishReady) {
+      publishBtn.addEventListener("click", () => this.openPublishConfirm(this.anchor));
+    } else {
+      publishBtn.disabled = true;
+    }
     const exportBtn = actions.createEl("button", {
       cls: "opal-share-popover-textbtn",
       text: t("menu.exportLocal")
@@ -30736,6 +30896,22 @@ var SharePopover = class {
       this.close();
       void this.plugin.exportFromUi(file);
     });
+    if (!publishReady) {
+      const hint = card.createDiv({ cls: "opal-stats-notice opal-share-popover-config-hint" });
+      hint.createSpan({ text: t("popover.unpublished.notConfigured") });
+      const link = hint.createEl("a", { text: t("popover.unpublished.goSettings"), href: "#" });
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        this.close();
+        this.openPluginSettings();
+      });
+    }
+  }
+  /** Open Obsidian's settings modal, jumped straight to this plugin's tab. */
+  openPluginSettings() {
+    const app = this.plugin.app;
+    app.setting.open();
+    app.setting.openTabById(this.plugin.manifest.id);
   }
   // ── Inline publish/unpublish confirmation (replaces the old ShareModal) ──
   /**
