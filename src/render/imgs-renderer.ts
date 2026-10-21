@@ -32,6 +32,17 @@ export function registerImage(imgFile: TFile, images: Map<string, TFile>): strin
  */
 const VIDEO_EXTENSIONS = new Set(["mp4", "webm", "mov", "m4v", "ogv"]);
 
+const PLAY_BADGE_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">' +
+  '<path d="M8 5v14l11-7z" fill="currentColor"/></svg>';
+let playBadgeSvgEl: Element | undefined;
+
+/** Lazily parsed so module import doesn't require a DOM (e.g. under vitest's node env). */
+function getPlayBadgeSvgEl(): Element {
+  playBadgeSvgEl ??= new DOMParser().parseFromString(PLAY_BADGE_SVG, "image/svg+xml").documentElement;
+  return playBadgeSvgEl;
+}
+
 function extensionOf(path: string): string {
   const match = path.match(/\.([a-zA-Z0-9]+)$/);
   return match ? match[1].toLowerCase() : "";
@@ -143,7 +154,7 @@ export function processImgsBlocks(
         video.setAttribute("src", src);
         item.appendChild(video);
         const badge = createSpan({ cls: "imgs-play-badge" });
-        badge.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>';
+        badge.appendChild(getPlayBadgeSvgEl().cloneNode(true));
         item.appendChild(badge);
         gallery.appendChild(item);
       } else {
