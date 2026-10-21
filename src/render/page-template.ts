@@ -82,6 +82,7 @@ export function buildHtml(title: string, htmlBody: string, css: string, katexBas
     </button>
     <div class="lightbox-stage" id="lightbox-stage">
       <img id="lightbox-img" src="" alt="">
+      <video id="lightbox-video" controls playsinline></video>
     </div>
     <button class="lightbox-nav lightbox-next" id="lightbox-next" title="下一张" aria-label="Next">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
@@ -250,18 +251,22 @@ ${katexJsTag}
     (function() {
       var lightbox = document.getElementById('lightbox');
       var lbImg    = document.getElementById('lightbox-img');
+      var lbVideo  = document.getElementById('lightbox-video');
       var stage    = document.getElementById('lightbox-stage');
       var prevBtn  = document.getElementById('lightbox-prev');
       var nextBtn  = document.getElementById('lightbox-next');
       var closeBtn = document.getElementById('lightbox-close');
       var counter  = document.getElementById('lightbox-counter');
-      if (!lightbox || !lbImg || !stage) return;
+      if (!lightbox || !lbImg || !lbVideo || !stage) return;
 
       // .base-card-banner thumbnails are decorative card identifiers in a Bases
       // grid/table, not standalone gallery photos — excluded so they don't get
       // swept into the same prev/next index as unrelated note content.
-      var images = Array.prototype.slice.call(document.querySelectorAll('.markdown-preview-view img:not(.base-card-banner)'));
+      var items = Array.prototype.slice.call(document.querySelectorAll(
+        '.markdown-preview-view img:not(.base-card-banner), .markdown-preview-view .imgs-video-item'
+      ));
       var current = -1;
+      var currentIsVideo = false;
       var scale = 1, panX = 0, panY = 0;
 
       function applyTransform() {
@@ -278,17 +283,34 @@ ${katexJsTag}
         lightbox.classList.remove('is-zoomed');
       }
       function show(index) {
-        if (!images.length) return;
-        current = (index + images.length) % images.length;
+        if (!items.length) return;
+        current = (index + items.length) % items.length;
         resetZoom();
-        lbImg.setAttribute('src', images[current].getAttribute('src') || '');
-        lbImg.setAttribute('alt', images[current].getAttribute('alt') || '');
-        var multi = images.length > 1;
+        var item = items[current];
+        currentIsVideo = !!(item.classList && item.classList.contains('imgs-video-item'));
+        stage.style.touchAction = currentIsVideo ? 'auto' : 'none';
+        if (currentIsVideo) {
+          var vid = item.querySelector('video');
+          lbVideo.setAttribute('src', vid ? (vid.getAttribute('src') || '') : '');
+          lbVideo.style.display = 'block';
+          lbImg.style.display = 'none';
+          lbImg.setAttribute('src', '');
+          try { lbVideo.play().catch(function() {}); } catch (e) {}
+        } else {
+          lbVideo.pause();
+          lbVideo.removeAttribute('src');
+          lbVideo.load();
+          lbVideo.style.display = 'none';
+          lbImg.style.display = '';
+          lbImg.setAttribute('src', item.getAttribute('src') || '');
+          lbImg.setAttribute('alt', item.getAttribute('alt') || '');
+        }
+        var multi = items.length > 1;
         if (prevBtn) prevBtn.style.display = multi ? '' : 'none';
         if (nextBtn) nextBtn.style.display = multi ? '' : 'none';
         if (counter) {
           counter.style.display = multi ? '' : 'none';
-          counter.textContent = (current + 1) + ' / ' + images.length;
+          counter.textContent = (current + 1) + ' / ' + items.length;
         }
       }
       function open(index) {
@@ -300,6 +322,9 @@ ${katexJsTag}
         lightbox.classList.remove('is-open');
         document.body.style.overflow = '';
         lbImg.setAttribute('src', '');
+        lbVideo.pause();
+        lbVideo.removeAttribute('src');
+        lbVideo.load();
         resetZoom();
       }
       function next() { show(current + 1); }
@@ -309,9 +334,9 @@ ${katexJsTag}
         return Math.sqrt(dx * dx + dy * dy);
       }
 
-      images.forEach(function(img, i) {
-        img.classList.add('lt-zoomable');
-        img.addEventListener('click', function(e) {
+      items.forEach(function(item, i) {
+        item.classList.add('lt-zoomable');
+        item.addEventListener('click', function(e) {
           // preventDefault too: a content image may be wrapped in a real <a href>
           // (e.g. markdown [![alt](img)](url)) — without this the browser still
           // follows the link's default navigation while the lightbox opens.
@@ -326,7 +351,7 @@ ${katexJsTag}
       if (closeBtn) closeBtn.addEventListener('click', function(e) { e.stopPropagation(); close(); });
 
       lightbox.addEventListener('click', function(e) {
-        if (e.target === lbImg || e.target === prevBtn || e.target === nextBtn ||
+        if (e.target === lbImg || e.target === lbVideo || e.target === prevBtn || e.target === nextBtn ||
             e.target === closeBtn || e.target === counter ||
             (prevBtn && prevBtn.contains(e.target)) || (nextBtn && nextBtn.contains(e.target)) ||
             (closeBtn && closeBtn.contains(e.target)) || (counter && counter.contains(e.target))) return;
@@ -355,6 +380,7 @@ ${katexJsTag}
 
       /* Mouse wheel zoom (desktop) */
       stage.addEventListener('wheel', function(e) {
+        if (currentIsVideo) return;
         e.preventDefault();
         var delta = e.deltaY < 0 ? 0.2 : -0.2;
         scale = Math.min(4, Math.max(1, scale + delta));
@@ -382,6 +408,7 @@ ${katexJsTag}
         };
       }
       stage.addEventListener('touchstart', function(e) {
+        if (currentIsVideo) return;
         if (e.touches.length >= 2) {
           touch = startPinch();
           touch.startDist = dist(e.touches[0], e.touches[1]);

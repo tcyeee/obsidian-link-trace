@@ -546,6 +546,21 @@ details[open] > .opal-collapsible-heading::before {
   opacity: 0.5;
   cursor: not-allowed;
 }
+.opal-share-popover-config-hint {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.opal-share-popover-config-hint a {
+  color: var(--text-accent);
+  white-space: nowrap;
+  text-decoration: none;
+}
+.opal-share-popover-config-hint a:hover {
+  text-decoration: underline;
+}
 
 /* Success banner above the published details after a publish/update */
 .opal-share-popover-success {

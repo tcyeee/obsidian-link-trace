@@ -472,18 +472,51 @@ img { max-width: 100%; border-radius: 4px; }
   gap: 8px;
   margin: 1em 0;
 }
-.imgs-gallery img {
+.imgs-gallery img,
+.imgs-gallery .imgs-video-item {
   width: 120px;
   height: 120px;
   object-fit: cover;
   border-radius: 4px;
-  cursor: zoom-in;
   transition: opacity 0.15s;
   flex-shrink: 0;
+  cursor: zoom-in;
 }
-.imgs-gallery img:hover { opacity: 0.85; }
-.imgs-gallery[data-border="true"] img { border: 1px solid #DADCDE; }
-.imgs-gallery[data-shadow="true"] img { box-shadow: 0 2px 8px rgba(0,0,0,0.18); }
+.imgs-gallery img:hover,
+.imgs-gallery .imgs-video-item:hover { opacity: 0.85; }
+.imgs-gallery[data-border="true"] img,
+.imgs-gallery[data-border="true"] .imgs-video-item { border: 1px solid #DADCDE; }
+.imgs-gallery[data-shadow="true"] img,
+.imgs-gallery[data-shadow="true"] .imgs-video-item { box-shadow: 0 2px 8px rgba(0,0,0,0.18); }
+
+/* Video thumbnail: cover-frame <video> (no controls, never autoplays) with a
+   play-badge overlay so it reads as "video" without looking like a live player. */
+.imgs-video-item {
+  position: relative;
+  overflow: hidden;
+}
+.imgs-video-item video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+.imgs-play-badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
 
 /* ── Lightbox ── */
 .lightbox {
@@ -519,6 +552,13 @@ img { max-width: 100%; border-radius: 4px; }
   user-select: none;
 }
 .lightbox.is-zoomed img { cursor: move; transition: none; }
+.lightbox video {
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 6px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+}
+#lightbox-video { display: none; }
 .lightbox-close,
 .lightbox-nav {
   position: absolute;

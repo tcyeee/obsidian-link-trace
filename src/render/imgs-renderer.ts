@@ -24,6 +24,19 @@ export function registerImage(imgFile: TFile, images: Map<string, TFile>): strin
 
 /* ── imgs block parser ───────────────────────────────────────────────────── */
 
+/**
+ * Extensions the image-cluster plugin now embeds as `<video>` (cover-frame
+ * thumbnail + play badge) rather than `<img>`. Mirrors that plugin's
+ * `VIDEO_EXTENSIONS` — mkv/avi deliberately excluded, same reasoning: browser
+ * `<video>` codec support for them is unreliable.
+ */
+const VIDEO_EXTENSIONS = new Set(["mp4", "webm", "mov", "m4v", "ogv"]);
+
+function extensionOf(path: string): string {
+  const match = path.match(/\.([a-zA-Z0-9]+)$/);
+  return match ? match[1].toLowerCase() : "";
+}
+
 interface ImgsConfig {
   border: boolean;
   shadow: boolean;
@@ -44,7 +57,8 @@ interface ImgsBlock {
  *                      OR bare vault paths     /assets/foo.webp
  */
 function parseImgsBlock(raw: string): ImgsBlock {
-  const config: ImgsConfig = { border: false, shadow: false };
+  // border defaults on; only an explicit `border=false` turns it off.
+  const config: ImgsConfig = { border: true, shadow: false };
   const paths: string[] = [];
 
   for (const line of raw.split(/\r?\n/)) {
@@ -82,9 +96,15 @@ function parseImgsBlock(raw: string): ImgsBlock {
 
 /**
  * Find all `code.language-imgs` blocks (image-cluster syntax), resolve each
- * image path to a vault TFile, register it in `images`, and replace the
- * `<pre><code>` with a `<div class="imgs-gallery">` of `<img>` elements
- * pointing to the exported `images/{name}` paths.
+ * path to a vault TFile, register it in `images`, and replace the
+ * `<pre><code>` with a `<div class="imgs-gallery">` of thumbnails pointing
+ * to the exported `images/{name}` paths.
+ *
+ * Plain images become `<img>`. Videos (`VIDEO_EXTENSIONS`) become a
+ * `div.imgs-video-item` wrapping a muted, controls-less `<video>` (so only
+ * its first frame shows, never autoplaying inline) plus a play-badge
+ * overlay — the lightbox script in `page-template.ts` is what actually
+ * plays them, once the user clicks through to preview.
  *
  * Applies `data-border` and `data-shadow` attributes to the gallery div
  * so CSS can style thumbnails accordingly.
@@ -110,16 +130,28 @@ export function processImgsBlocks(
         app.vault.getAbstractFileByPath(vaultPath) ??
         app.metadataCache.getFirstLinkpathDest(vaultPath, sourceFile.path);
 
-      const img = createEl("img");
-      if (imgFile instanceof TFile) {
-        const name = registerImage(imgFile, images);
-        img.setAttribute("src", `images/${name}`);
-        img.setAttribute("alt", imgFile.name);
+      const extension = imgFile instanceof TFile ? imgFile.extension : extensionOf(vaultPath);
+      const isVideo = VIDEO_EXTENSIONS.has(extension.toLowerCase());
+      const src = imgFile instanceof TFile ? `images/${registerImage(imgFile, images)}` : vaultPath;
+
+      if (isVideo) {
+        const item = createDiv({ cls: "imgs-video-item" });
+        const video = createEl("video");
+        video.setAttribute("muted", "");
+        video.setAttribute("playsinline", "");
+        video.setAttribute("preload", "metadata");
+        video.setAttribute("src", src);
+        item.appendChild(video);
+        const badge = createSpan({ cls: "imgs-play-badge" });
+        badge.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>';
+        item.appendChild(badge);
+        gallery.appendChild(item);
       } else {
-        img.setAttribute("src", vaultPath);
-        img.setAttribute("alt", vaultPath);
+        const img = createEl("img");
+        img.setAttribute("src", src);
+        img.setAttribute("alt", imgFile instanceof TFile ? imgFile.name : vaultPath);
+        gallery.appendChild(img);
       }
-      gallery.appendChild(img);
     }
 
     pre.replaceWith(gallery);
