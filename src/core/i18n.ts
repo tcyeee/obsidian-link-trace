@@ -7,7 +7,7 @@ const zh: Translations = {
 
 	"settings.general.heading": "通用",
 	"settings.export.heading": "导出设置",
-	"settings.oss.heading": "通过阿里云OSS发布",
+	"settings.oss.hint": "使用提示",
 	"settings.oss.callout.item1": "请确保 OSS Bucket 权限为「公共读」",
 	"settings.oss.callout.item2": "OSS 必须配置域名，否则链接打开只会触发下载",
 
@@ -30,7 +30,7 @@ const zh: Translations = {
 
 	"settings.route.heading": "发布路线配置",
 	"settings.route.name": "发布路线",
-	"settings.cos.heading": "通过腾讯云COS发布",
+	"settings.cos.hint": "使用提示",
 	"settings.cos.callout.item1": "请确保 COS 存储桶访问权限为「公有读私有写」",
 	"settings.cos.callout.item2": "COS 必须配置自定义域名，否则链接打开只会触发下载",
 	"settings.cosRegion.name": "Region",
@@ -172,7 +172,7 @@ const en: Translations = {
 
 	"settings.general.heading": "General",
 	"settings.export.heading": "Export Settings",
-	"settings.oss.heading": "Publish via Aliyun OSS",
+	"settings.oss.hint": "Usage tips",
 	"settings.oss.callout.item1": "Ensure your OSS Bucket ACL is set to \"Public Read\"",
 	"settings.oss.callout.item2": "OSS must have a custom domain configured; otherwise links will trigger a download instead of opening",
 
@@ -195,7 +195,7 @@ const en: Translations = {
 
 	"settings.route.heading": "Publish Route",
 	"settings.route.name": "Publish route",
-	"settings.cos.heading": "Publish via Tencent COS",
+	"settings.cos.hint": "Usage tips",
 	"settings.cos.callout.item1": "Ensure your COS bucket permission is \"Public Read / Private Write\"",
 	"settings.cos.callout.item2": "COS must have a custom domain configured; otherwise links will trigger a download instead of opening",
 	"settings.cosRegion.name": "Region",

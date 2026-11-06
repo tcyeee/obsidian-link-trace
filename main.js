@@ -25933,7 +25933,7 @@ var zh = {
   "settings.language": "\u8BED\u8A00 / Language",
   "settings.general.heading": "\u901A\u7528",
   "settings.export.heading": "\u5BFC\u51FA\u8BBE\u7F6E",
-  "settings.oss.heading": "\u901A\u8FC7\u963F\u91CC\u4E91OSS\u53D1\u5E03",
+  "settings.oss.hint": "\u4F7F\u7528\u63D0\u793A",
   "settings.oss.callout.item1": "\u8BF7\u786E\u4FDD OSS Bucket \u6743\u9650\u4E3A\u300C\u516C\u5171\u8BFB\u300D",
   "settings.oss.callout.item2": "OSS \u5FC5\u987B\u914D\u7F6E\u57DF\u540D\uFF0C\u5426\u5219\u94FE\u63A5\u6253\u5F00\u53EA\u4F1A\u89E6\u53D1\u4E0B\u8F7D",
   "settings.exportLevel.name": "\u5BFC\u51FA\u5C42\u7EA7",
@@ -25952,7 +25952,7 @@ var zh = {
   "settings.urlPreview.label": "\u9884\u89C8\uFF1A",
   "settings.route.heading": "\u53D1\u5E03\u8DEF\u7EBF\u914D\u7F6E",
   "settings.route.name": "\u53D1\u5E03\u8DEF\u7EBF",
-  "settings.cos.heading": "\u901A\u8FC7\u817E\u8BAF\u4E91COS\u53D1\u5E03",
+  "settings.cos.hint": "\u4F7F\u7528\u63D0\u793A",
   "settings.cos.callout.item1": "\u8BF7\u786E\u4FDD COS \u5B58\u50A8\u6876\u8BBF\u95EE\u6743\u9650\u4E3A\u300C\u516C\u6709\u8BFB\u79C1\u6709\u5199\u300D",
   "settings.cos.callout.item2": "COS \u5FC5\u987B\u914D\u7F6E\u81EA\u5B9A\u4E49\u57DF\u540D\uFF0C\u5426\u5219\u94FE\u63A5\u6253\u5F00\u53EA\u4F1A\u89E6\u53D1\u4E0B\u8F7D",
   "settings.cosRegion.name": "Region",
@@ -26082,7 +26082,7 @@ var en = {
   "settings.language": "\u8BED\u8A00 / Language",
   "settings.general.heading": "General",
   "settings.export.heading": "Export Settings",
-  "settings.oss.heading": "Publish via Aliyun OSS",
+  "settings.oss.hint": "Usage tips",
   "settings.oss.callout.item1": 'Ensure your OSS Bucket ACL is set to "Public Read"',
   "settings.oss.callout.item2": "OSS must have a custom domain configured; otherwise links will trigger a download instead of opening",
   "settings.exportLevel.name": "Export depth",
@@ -26101,7 +26101,7 @@ var en = {
   "settings.urlPreview.label": "Preview: ",
   "settings.route.heading": "Publish Route",
   "settings.route.name": "Publish route",
-  "settings.cos.heading": "Publish via Tencent COS",
+  "settings.cos.hint": "Usage tips",
   "settings.cos.callout.item1": 'Ensure your COS bucket permission is "Public Read / Private Write"',
   "settings.cos.callout.item2": "COS must have a custom domain configured; otherwise links will trigger a download instead of opening",
   "settings.cosRegion.name": "Region",
@@ -26310,20 +26310,25 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
     const sample = "ab3c5d7e9f2x".slice(0, Math.max(1, s.pageLinkLength));
     return `${base}/${prefix}/${sample}`;
   }
-  /** Renders the heading + usage tips + live URL preview as a single callout box. */
-  renderRouteCallout(setting, heading, tips) {
+  /** Renders the usage tips + live URL preview as a standalone hint card. */
+  renderRouteHint(setting, tips) {
     setting.settingEl.empty();
-    setting.settingEl.addClass("opal-route-callout");
-    setting.settingEl.createDiv({ cls: "opal-route-callout-heading", text: heading });
+    setting.settingEl.addClass("opal-route-hint");
     for (const tip of tips) {
-      setting.settingEl.createDiv({ cls: "opal-route-callout-item", text: tip });
+      setting.settingEl.createDiv({ cls: "opal-route-hint-item", text: tip });
     }
-    const previewRow = setting.settingEl.createDiv({ cls: "opal-route-callout-preview" });
+    const previewRow = setting.settingEl.createDiv({ cls: "opal-route-hint-preview" });
     previewRow.createSpan({ cls: "opal-url-preview-label", text: t("settings.urlPreview.label") });
     this.previewEl = previewRow.createSpan({
       cls: "opal-url-preview-url",
       text: this.buildPreviewUrl()
     });
+  }
+  /** Marks a config row as part of the grouped config card. */
+  markConfigRow(setting, position) {
+    setting.settingEl.addClass("opal-config-row");
+    if (position === "first") setting.settingEl.addClass("opal-config-row-first");
+    if (position === "last") setting.settingEl.addClass("opal-config-row-last");
   }
   getSettingDefinitions() {
     return [
@@ -26418,32 +26423,33 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
   // group instead of a dropdown. Switching plays a small animation on the
   // active button only; the config fields below just appear/disappear.
   routeItems() {
-    const items = [
-      {
-        name: t("settings.route.name"),
-        render: (setting) => {
-          const group = setting.controlEl.createDiv({ cls: "opal-route-buttongroup" });
-          const options = [
-            { value: "aliyun", label: "\u963F\u91CC\u4E91 OSS" },
-            { value: "tencent", label: "\u817E\u8BAF\u4E91 COS" }
-          ];
-          for (const opt of options) {
-            const btn = group.createEl("button", {
-              cls: "opal-route-btn",
-              text: opt.label,
-              attr: { type: "button" }
-            });
-            btn.toggleClass("is-active", this.plugin.settings.storageProvider === opt.value);
-            btn.addEventListener("click", async () => {
-              if (this.plugin.settings.storageProvider === opt.value) return;
-              this.plugin.settings.storageProvider = opt.value;
-              await this.plugin.saveSettings();
-              this.update();
-            });
-          }
+    const items = [];
+    const hint = this.routeHintItem();
+    if (hint) items.push(hint);
+    items.push({
+      name: t("settings.route.name"),
+      render: (setting) => {
+        const group = setting.controlEl.createDiv({ cls: "opal-route-buttongroup" });
+        const options = [
+          { value: "aliyun", label: "\u963F\u91CC\u4E91 OSS" },
+          { value: "tencent", label: "\u817E\u8BAF\u4E91 COS" }
+        ];
+        for (const opt of options) {
+          const btn = group.createEl("button", {
+            cls: "opal-route-btn",
+            text: opt.label,
+            attr: { type: "button" }
+          });
+          btn.toggleClass("is-active", this.plugin.settings.storageProvider === opt.value);
+          btn.addEventListener("click", async () => {
+            if (this.plugin.settings.storageProvider === opt.value) return;
+            this.plugin.settings.storageProvider = opt.value;
+            await this.plugin.saveSettings();
+            this.update();
+          });
         }
       }
-    ];
+    });
     if (this.plugin.settings.storageProvider === "aliyun") {
       items.push(...this.aliyunConfigItems());
     } else if (this.plugin.settings.storageProvider === "tencent") {
@@ -26451,21 +26457,39 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
     }
     return items;
   }
-  /** Aliyun OSS credential items; the second item captures the live URL-preview span. */
-  aliyunConfigItems() {
-    return [
-      {
-        name: t("settings.oss.heading"),
+  /** The hint card (usage tips + URL preview) for the currently selected route. */
+  routeHintItem() {
+    if (this.plugin.settings.storageProvider === "aliyun") {
+      return {
+        name: t("settings.oss.hint"),
         render: (setting) => {
-          this.renderRouteCallout(setting, t("settings.oss.heading"), [
+          this.renderRouteHint(setting, [
             t("settings.oss.callout.item1"),
             t("settings.oss.callout.item2")
           ]);
         }
-      },
+      };
+    }
+    if (this.plugin.settings.storageProvider === "tencent") {
+      return {
+        name: t("settings.cos.hint"),
+        render: (setting) => {
+          this.renderRouteHint(setting, [
+            t("settings.cos.callout.item1"),
+            t("settings.cos.callout.item2")
+          ]);
+        }
+      };
+    }
+    return null;
+  }
+  /** Aliyun OSS config: the six grouped credential fields. */
+  aliyunConfigItems() {
+    return [
       {
         name: t("settings.ossRegion.name"),
         render: (setting) => {
+          this.markConfigRow(setting, "first");
           setting.addText(
             (text) => text.setPlaceholder("oss-cn-hangzhou").setValue(this.plugin.settings.ossRegion).onChange(async (value) => {
               var _a2;
@@ -26479,6 +26503,7 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
       {
         name: t("settings.ossBucket.name"),
         render: (setting) => {
+          this.markConfigRow(setting, "middle");
           setting.addText(
             (text) => text.setPlaceholder("my-bucket").setValue(this.plugin.settings.ossBucket).onChange(async (value) => {
               var _a2;
@@ -26492,6 +26517,7 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
       {
         name: t("settings.ossKeyId.name"),
         render: (setting) => {
+          this.markConfigRow(setting, "middle");
           setting.addText((text) => {
             text.setPlaceholder("AccessKey ID").setValue(this.plugin.settings.ossAccessKeyId).onChange(async (value) => {
               this.plugin.settings.ossAccessKeyId = value.trim();
@@ -26504,6 +26530,7 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
       {
         name: t("settings.ossKeySecret.name"),
         render: (setting) => {
+          this.markConfigRow(setting, "middle");
           setting.addText((text) => {
             text.setPlaceholder("AccessKey Secret").setValue(this.plugin.settings.ossAccessKeySecret).onChange(async (value) => {
               this.plugin.settings.ossAccessKeySecret = value.trim();
@@ -26516,6 +26543,7 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
       {
         name: t("settings.ossPrefix.name"),
         render: (setting) => {
+          this.markConfigRow(setting, "middle");
           setting.addText(
             (text) => text.setPlaceholder("notes").setValue(this.plugin.settings.ossPrefix).onChange(async (value) => {
               var _a2;
@@ -26529,6 +26557,7 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
       {
         name: t("settings.ossDomain.name"),
         render: (setting) => {
+          this.markConfigRow(setting, "last");
           setting.addText(
             (text) => text.setPlaceholder("https://cdn.example.com").setValue(this.plugin.settings.ossDomain).onChange(async (value) => {
               var _a2;
@@ -26541,21 +26570,13 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
       }
     ];
   }
-  /** Tencent COS credential items; the second item captures the live URL-preview span. */
+  /** Tencent COS config: the six grouped credential fields. */
   tencentConfigItems() {
     return [
       {
-        name: t("settings.cos.heading"),
-        render: (setting) => {
-          this.renderRouteCallout(setting, t("settings.cos.heading"), [
-            t("settings.cos.callout.item1"),
-            t("settings.cos.callout.item2")
-          ]);
-        }
-      },
-      {
         name: t("settings.cosRegion.name"),
         render: (setting) => {
+          this.markConfigRow(setting, "first");
           setting.addText(
             (text) => text.setPlaceholder("ap-guangzhou").setValue(this.plugin.settings.cosRegion).onChange(async (value) => {
               var _a2;
@@ -26569,6 +26590,7 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
       {
         name: t("settings.cosBucket.name"),
         render: (setting) => {
+          this.markConfigRow(setting, "middle");
           setting.addText(
             (text) => text.setPlaceholder("my-bucket-1250000000").setValue(this.plugin.settings.cosBucket).onChange(async (value) => {
               var _a2;
@@ -26582,6 +26604,7 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
       {
         name: t("settings.cosSecretId.name"),
         render: (setting) => {
+          this.markConfigRow(setting, "middle");
           setting.addText((text) => {
             text.setPlaceholder("SecretId").setValue(this.plugin.settings.cosSecretId).onChange(async (value) => {
               this.plugin.settings.cosSecretId = value.trim();
@@ -26594,6 +26617,7 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
       {
         name: t("settings.cosSecretKey.name"),
         render: (setting) => {
+          this.markConfigRow(setting, "middle");
           setting.addText((text) => {
             text.setPlaceholder("SecretKey").setValue(this.plugin.settings.cosSecretKey).onChange(async (value) => {
               this.plugin.settings.cosSecretKey = value.trim();
@@ -26606,6 +26630,7 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
       {
         name: t("settings.cosPrefix.name"),
         render: (setting) => {
+          this.markConfigRow(setting, "middle");
           setting.addText(
             (text) => text.setPlaceholder("notes").setValue(this.plugin.settings.cosPrefix).onChange(async (value) => {
               var _a2;
@@ -26619,6 +26644,7 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
       {
         name: t("settings.cosDomain.name"),
         render: (setting) => {
+          this.markConfigRow(setting, "last");
           setting.addText(
             (text) => text.setPlaceholder("https://cdn.example.com").setValue(this.plugin.settings.cosDomain).onChange(async (value) => {
               var _a2;

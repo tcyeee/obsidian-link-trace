@@ -86,20 +86,26 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 		return `${base}/${prefix}/${sample}`;
 	}
 
-	/** Renders the heading + usage tips + live URL preview as a single callout box. */
-	private renderRouteCallout(setting: Setting, heading: string, tips: string[]): void {
+	/** Renders the usage tips + live URL preview as a standalone hint card. */
+	private renderRouteHint(setting: Setting, tips: string[]): void {
 		setting.settingEl.empty();
-		setting.settingEl.addClass("opal-route-callout");
-		setting.settingEl.createDiv({ cls: "opal-route-callout-heading", text: heading });
+		setting.settingEl.addClass("opal-route-hint");
 		for (const tip of tips) {
-			setting.settingEl.createDiv({ cls: "opal-route-callout-item", text: tip });
+			setting.settingEl.createDiv({ cls: "opal-route-hint-item", text: tip });
 		}
-		const previewRow = setting.settingEl.createDiv({ cls: "opal-route-callout-preview" });
+		const previewRow = setting.settingEl.createDiv({ cls: "opal-route-hint-preview" });
 		previewRow.createSpan({ cls: "opal-url-preview-label", text: t("settings.urlPreview.label") });
 		this.previewEl = previewRow.createSpan({
 			cls: "opal-url-preview-url",
 			text: this.buildPreviewUrl(),
 		});
+	}
+
+	/** Marks a config row as part of the grouped config card. */
+	private markConfigRow(setting: Setting, position: "first" | "middle" | "last"): void {
+		setting.settingEl.addClass("opal-config-row");
+		if (position === "first") setting.settingEl.addClass("opal-config-row-first");
+		if (position === "last") setting.settingEl.addClass("opal-config-row-last");
 	}
 
 	getSettingDefinitions(): SettingDefinitionItem[] {
@@ -210,32 +216,38 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 	// group instead of a dropdown. Switching plays a small animation on the
 	// active button only; the config fields below just appear/disappear.
 	private routeItems(): SettingGroupItem[] {
-		const items: SettingGroupItem[] = [
-			{
-				name: t("settings.route.name"),
-				render: (setting: Setting) => {
-					const group = setting.controlEl.createDiv({ cls: "opal-route-buttongroup" });
-					const options: { value: ShareOnlineSettings["storageProvider"]; label: string }[] = [
-						{ value: "aliyun", label: "阿里云 OSS" },
-						{ value: "tencent", label: "腾讯云 COS" },
-					];
-					for (const opt of options) {
-						const btn = group.createEl("button", {
-							cls: "opal-route-btn",
-							text: opt.label,
-							attr: { type: "button" },
-						});
-						btn.toggleClass("is-active", this.plugin.settings.storageProvider === opt.value);
-						btn.addEventListener("click", async () => {
-							if (this.plugin.settings.storageProvider === opt.value) return;
-							this.plugin.settings.storageProvider = opt.value;
-							await this.plugin.saveSettings();
-							this.update();
-						});
-					}
-				},
+		const items: SettingGroupItem[] = [];
+
+		// The hint card sits directly under the group heading, before the
+		// route selector and its config fields. It is route-specific, so it only
+		// renders once a provider has been chosen.
+		const hint = this.routeHintItem();
+		if (hint) items.push(hint);
+
+		items.push({
+			name: t("settings.route.name"),
+			render: (setting: Setting) => {
+				const group = setting.controlEl.createDiv({ cls: "opal-route-buttongroup" });
+				const options: { value: ShareOnlineSettings["storageProvider"]; label: string }[] = [
+					{ value: "aliyun", label: "阿里云 OSS" },
+					{ value: "tencent", label: "腾讯云 COS" },
+				];
+				for (const opt of options) {
+					const btn = group.createEl("button", {
+						cls: "opal-route-btn",
+						text: opt.label,
+						attr: { type: "button" },
+					});
+					btn.toggleClass("is-active", this.plugin.settings.storageProvider === opt.value);
+					btn.addEventListener("click", async () => {
+						if (this.plugin.settings.storageProvider === opt.value) return;
+						this.plugin.settings.storageProvider = opt.value;
+						await this.plugin.saveSettings();
+						this.update();
+					});
+				}
 			},
-		];
+		});
 
 		if (this.plugin.settings.storageProvider === "aliyun") {
 			items.push(...this.aliyunConfigItems());
@@ -246,21 +258,40 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 		return items;
 	}
 
-	/** Aliyun OSS credential items; the second item captures the live URL-preview span. */
-	private aliyunConfigItems(): SettingGroupItem[] {
-		return [
-			{
-				name: t("settings.oss.heading"),
+	/** The hint card (usage tips + URL preview) for the currently selected route. */
+	private routeHintItem(): SettingGroupItem | null {
+		if (this.plugin.settings.storageProvider === "aliyun") {
+			return {
+				name: t("settings.oss.hint"),
 				render: (setting: Setting) => {
-					this.renderRouteCallout(setting, t("settings.oss.heading"), [
+					this.renderRouteHint(setting, [
 						t("settings.oss.callout.item1"),
 						t("settings.oss.callout.item2"),
 					]);
 				},
-			},
+			};
+		}
+		if (this.plugin.settings.storageProvider === "tencent") {
+			return {
+				name: t("settings.cos.hint"),
+				render: (setting: Setting) => {
+					this.renderRouteHint(setting, [
+						t("settings.cos.callout.item1"),
+						t("settings.cos.callout.item2"),
+					]);
+				},
+			};
+		}
+		return null;
+	}
+
+	/** Aliyun OSS config: the six grouped credential fields. */
+	private aliyunConfigItems(): SettingGroupItem[] {
+		return [
 			{
 				name: t("settings.ossRegion.name"),
 				render: (setting: Setting) => {
+					this.markConfigRow(setting, "first");
 					setting.addText((text) =>
 						text
 							.setPlaceholder("oss-cn-hangzhou")
@@ -276,6 +307,7 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 			{
 				name: t("settings.ossBucket.name"),
 				render: (setting: Setting) => {
+					this.markConfigRow(setting, "middle");
 					setting.addText((text) =>
 						text
 							.setPlaceholder("my-bucket")
@@ -291,6 +323,7 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 			{
 				name: t("settings.ossKeyId.name"),
 				render: (setting: Setting) => {
+					this.markConfigRow(setting, "middle");
 					setting.addText((text) => {
 						text
 							.setPlaceholder("AccessKey ID")
@@ -306,6 +339,7 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 			{
 				name: t("settings.ossKeySecret.name"),
 				render: (setting: Setting) => {
+					this.markConfigRow(setting, "middle");
 					setting.addText((text) => {
 						text
 							.setPlaceholder("AccessKey Secret")
@@ -321,6 +355,7 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 			{
 				name: t("settings.ossPrefix.name"),
 				render: (setting: Setting) => {
+					this.markConfigRow(setting, "middle");
 					setting.addText((text) =>
 						text
 							.setPlaceholder("notes")
@@ -336,6 +371,7 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 			{
 				name: t("settings.ossDomain.name"),
 				render: (setting: Setting) => {
+					this.markConfigRow(setting, "last");
 					setting.addText((text) =>
 						text
 							.setPlaceholder("https://cdn.example.com")
@@ -351,21 +387,13 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 		];
 	}
 
-	/** Tencent COS credential items; the second item captures the live URL-preview span. */
+	/** Tencent COS config: the six grouped credential fields. */
 	private tencentConfigItems(): SettingGroupItem[] {
 		return [
 			{
-				name: t("settings.cos.heading"),
-				render: (setting: Setting) => {
-					this.renderRouteCallout(setting, t("settings.cos.heading"), [
-						t("settings.cos.callout.item1"),
-						t("settings.cos.callout.item2"),
-					]);
-				},
-			},
-			{
 				name: t("settings.cosRegion.name"),
 				render: (setting: Setting) => {
+					this.markConfigRow(setting, "first");
 					setting.addText((text) =>
 						text
 							.setPlaceholder("ap-guangzhou")
@@ -381,6 +409,7 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 			{
 				name: t("settings.cosBucket.name"),
 				render: (setting: Setting) => {
+					this.markConfigRow(setting, "middle");
 					setting.addText((text) =>
 						text
 							.setPlaceholder("my-bucket-1250000000")
@@ -396,6 +425,7 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 			{
 				name: t("settings.cosSecretId.name"),
 				render: (setting: Setting) => {
+					this.markConfigRow(setting, "middle");
 					setting.addText((text) => {
 						text
 							.setPlaceholder("SecretId")
@@ -411,6 +441,7 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 			{
 				name: t("settings.cosSecretKey.name"),
 				render: (setting: Setting) => {
+					this.markConfigRow(setting, "middle");
 					setting.addText((text) => {
 						text
 							.setPlaceholder("SecretKey")
@@ -426,6 +457,7 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 			{
 				name: t("settings.cosPrefix.name"),
 				render: (setting: Setting) => {
+					this.markConfigRow(setting, "middle");
 					setting.addText((text) =>
 						text
 							.setPlaceholder("notes")
@@ -441,6 +473,7 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 			{
 				name: t("settings.cosDomain.name"),
 				render: (setting: Setting) => {
+					this.markConfigRow(setting, "last");
 					setting.addText((text) =>
 						text
 							.setPlaceholder("https://cdn.example.com")
