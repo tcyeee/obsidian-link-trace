@@ -86,6 +86,22 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 		return `${base}/${prefix}/${sample}`;
 	}
 
+	/** Renders the heading + usage tips + live URL preview as a single callout box. */
+	private renderRouteCallout(setting: Setting, heading: string, tips: string[]): void {
+		setting.settingEl.empty();
+		setting.settingEl.addClass("opal-route-callout");
+		setting.settingEl.createDiv({ cls: "opal-route-callout-heading", text: heading });
+		for (const tip of tips) {
+			setting.settingEl.createDiv({ cls: "opal-route-callout-item", text: tip });
+		}
+		const previewRow = setting.settingEl.createDiv({ cls: "opal-route-callout-preview" });
+		previewRow.createSpan({ cls: "opal-url-preview-label", text: t("settings.urlPreview.label") });
+		this.previewEl = previewRow.createSpan({
+			cls: "opal-url-preview-url",
+			text: this.buildPreviewUrl(),
+		});
+	}
+
 	getSettingDefinitions(): SettingDefinitionItem[] {
 		return [
 			{
@@ -111,7 +127,6 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 		return [
 			{
 				name: t("settings.language"),
-				desc: t("settings.language.desc"),
 				render: (setting: Setting) => {
 					setting.addDropdown((dropdown) =>
 						dropdown
@@ -135,7 +150,6 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 		return [
 			{
 				name: t("settings.exportLevel.name"),
-				desc: t("settings.exportLevel.desc"),
 				render: (setting: Setting) => {
 					setting.addDropdown((dropdown) =>
 						dropdown
@@ -152,7 +166,6 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 			},
 			{
 				name: t("settings.pageLinkLength.name"),
-				desc: t("settings.pageLinkLength.desc"),
 				render: (setting: Setting) => {
 					setting.addDropdown((dropdown) => {
 						const capacities: Record<number, string> = {
@@ -193,26 +206,33 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 	}
 
 	// ── 发布路线配置 / Publish Route ──────────
-	// One route, two choices (Aliyun OSS / Tencent COS). The matching credential
-	// items only appear once a route is picked; "none" shows just the selector.
+	// Two choices (Aliyun OSS / Tencent COS), rendered as a segmented button
+	// group instead of a dropdown. Switching plays a small animation on the
+	// active button only; the config fields below just appear/disappear.
 	private routeItems(): SettingGroupItem[] {
 		const items: SettingGroupItem[] = [
 			{
 				name: t("settings.route.name"),
-				desc: t("settings.route.desc"),
 				render: (setting: Setting) => {
-					setting.addDropdown((dropdown) =>
-						dropdown
-							.addOption("none", t("settings.route.option.none"))
-							.addOption("aliyun", "阿里云 OSS")
-							.addOption("tencent", "腾讯云 COS")
-							.setValue(this.plugin.settings.storageProvider)
-							.onChange(async (value) => {
-								this.plugin.settings.storageProvider = value as ShareOnlineSettings["storageProvider"];
-								await this.plugin.saveSettings();
-								this.update();
-							})
-					);
+					const group = setting.controlEl.createDiv({ cls: "opal-route-buttongroup" });
+					const options: { value: ShareOnlineSettings["storageProvider"]; label: string }[] = [
+						{ value: "aliyun", label: "阿里云 OSS" },
+						{ value: "tencent", label: "腾讯云 COS" },
+					];
+					for (const opt of options) {
+						const btn = group.createEl("button", {
+							cls: "opal-route-btn",
+							text: opt.label,
+							attr: { type: "button" },
+						});
+						btn.toggleClass("is-active", this.plugin.settings.storageProvider === opt.value);
+						btn.addEventListener("click", async () => {
+							if (this.plugin.settings.storageProvider === opt.value) return;
+							this.plugin.settings.storageProvider = opt.value;
+							await this.plugin.saveSettings();
+							this.update();
+						});
+					}
 				},
 			},
 		];
@@ -232,28 +252,14 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 			{
 				name: t("settings.oss.heading"),
 				render: (setting: Setting) => {
-					setting.settingEl.empty();
-					setting.settingEl.addClass("opal-oss-callout");
-					const calloutList = setting.settingEl.createEl("ul");
-					calloutList.createEl("li", { text: t("settings.oss.callout.item1") });
-					calloutList.createEl("li", { text: t("settings.oss.callout.item2") });
-				},
-			},
-			{
-				name: t("settings.urlPreview.label"),
-				render: (setting: Setting) => {
-					setting.settingEl.empty();
-					setting.settingEl.addClass("opal-url-preview");
-					setting.settingEl.createSpan({ cls: "opal-url-preview-label", text: t("settings.urlPreview.label") });
-					this.previewEl = setting.settingEl.createSpan({
-						cls: "opal-url-preview-url",
-						text: this.buildPreviewUrl(),
-					});
+					this.renderRouteCallout(setting, t("settings.oss.heading"), [
+						t("settings.oss.callout.item1"),
+						t("settings.oss.callout.item2"),
+					]);
 				},
 			},
 			{
 				name: t("settings.ossRegion.name"),
-				desc: t("settings.ossRegion.desc"),
 				render: (setting: Setting) => {
 					setting.addText((text) =>
 						text
@@ -314,7 +320,6 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 			},
 			{
 				name: t("settings.ossPrefix.name"),
-				desc: t("settings.ossPrefix.desc"),
 				render: (setting: Setting) => {
 					setting.addText((text) =>
 						text
@@ -330,7 +335,6 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 			},
 			{
 				name: t("settings.ossDomain.name"),
-				desc: t("settings.ossDomain.desc"),
 				render: (setting: Setting) => {
 					setting.addText((text) =>
 						text
@@ -353,28 +357,14 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 			{
 				name: t("settings.cos.heading"),
 				render: (setting: Setting) => {
-					setting.settingEl.empty();
-					setting.settingEl.addClass("opal-oss-callout");
-					const calloutList = setting.settingEl.createEl("ul");
-					calloutList.createEl("li", { text: t("settings.cos.callout.item1") });
-					calloutList.createEl("li", { text: t("settings.cos.callout.item2") });
-				},
-			},
-			{
-				name: t("settings.urlPreview.label"),
-				render: (setting: Setting) => {
-					setting.settingEl.empty();
-					setting.settingEl.addClass("opal-url-preview");
-					setting.settingEl.createSpan({ cls: "opal-url-preview-label", text: t("settings.urlPreview.label") });
-					this.previewEl = setting.settingEl.createSpan({
-						cls: "opal-url-preview-url",
-						text: this.buildPreviewUrl(),
-					});
+					this.renderRouteCallout(setting, t("settings.cos.heading"), [
+						t("settings.cos.callout.item1"),
+						t("settings.cos.callout.item2"),
+					]);
 				},
 			},
 			{
 				name: t("settings.cosRegion.name"),
-				desc: t("settings.cosRegion.desc"),
 				render: (setting: Setting) => {
 					setting.addText((text) =>
 						text
@@ -390,7 +380,6 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 			},
 			{
 				name: t("settings.cosBucket.name"),
-				desc: t("settings.cosBucket.desc"),
 				render: (setting: Setting) => {
 					setting.addText((text) =>
 						text
@@ -436,7 +425,6 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 			},
 			{
 				name: t("settings.cosPrefix.name"),
-				desc: t("settings.cosPrefix.desc"),
 				render: (setting: Setting) => {
 					setting.addText((text) =>
 						text
@@ -452,7 +440,6 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 			},
 			{
 				name: t("settings.cosDomain.name"),
-				desc: t("settings.cosDomain.desc"),
 				render: (setting: Setting) => {
 					setting.addText((text) =>
 						text
