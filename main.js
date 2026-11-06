@@ -25931,48 +25931,36 @@ var import_obsidian = require("obsidian");
 // src/core/i18n.ts
 var zh = {
   "settings.language": "\u8BED\u8A00 / Language",
-  "settings.language.desc": "\u5207\u6362\u754C\u9762\u8BED\u8A00",
   "settings.general.heading": "\u901A\u7528",
   "settings.export.heading": "\u5BFC\u51FA\u8BBE\u7F6E",
   "settings.oss.heading": "\u901A\u8FC7\u963F\u91CC\u4E91OSS\u53D1\u5E03",
   "settings.oss.callout.item1": "\u8BF7\u786E\u4FDD OSS Bucket \u6743\u9650\u4E3A\u300C\u516C\u5171\u8BFB\u300D",
   "settings.oss.callout.item2": "OSS \u5FC5\u987B\u914D\u7F6E\u57DF\u540D\uFF0C\u5426\u5219\u94FE\u63A5\u6253\u5F00\u53EA\u4F1A\u89E6\u53D1\u4E0B\u8F7D",
   "settings.exportLevel.name": "\u5BFC\u51FA\u5C42\u7EA7",
-  "settings.exportLevel.desc": "\u5BFC\u51FA\u65F6\u5411\u4E0B\u5C55\u5F00\u591A\u5C11\u5C42\u94FE\u63A5 / base \u6761\u76EE\uFF1B\u8D8A\u6DF1\u5305\u542B\u7684\u5B50\u9875\u9762\u8D8A\u591A",
   "settings.exportLevel.option.1": "\u4E00\u7EA7\uFF08\u4EC5\u5F53\u524D\u7B14\u8BB0\uFF09",
   "settings.exportLevel.option.2": "\u4E8C\u7EA7\uFF08\u542B\u76F4\u63A5\u5B50\u9875\u9762\uFF09",
   "settings.exportLevel.option.3": "\u4E09\u7EA7\uFF08\u542B\u5B50\u9875\u9762\u7684\u5B50\u9875\u9762\uFF09",
   "settings.stripUniquePrefix.name": "\u517C\u5BB9 Unique \u7B14\u8BB0\u524D\u7F00",
   "settings.stripUniquePrefix.desc": "\u8BFB\u53D6\u6838\u5FC3\u63D2\u4EF6\u300C\u552F\u4E00\u7B14\u8BB0\u521B\u5EFA\u5668\u300D\u7684\u683C\u5F0F\uFF0C\u5BFC\u51FA\u65F6\u4ECE HTML \u6807\u9898\u4E2D\u53BB\u6389\u5BF9\u5E94\u7684\u65F6\u95F4\u6233\u524D\u7F00\uFF08\u5982 202606281230- \u6211\u7684\u7B14\u8BB0 \u2192 \u6211\u7684\u7B14\u8BB0\uFF09",
   "settings.pageLinkLength.name": "\u9875\u9762\u540D\u79F0\u957F\u5EA6",
-  "settings.pageLinkLength.desc": "\u751F\u6210\u5206\u4EAB\u94FE\u63A5\u65F6\u7684\u8DEF\u5F84\u957F\u5EA6\uFF0C\u8D8A\u957F\u78B0\u649E\u6982\u7387\u8D8A\u4F4E",
   "settings.ossRegion.name": "Region",
-  "settings.ossRegion.desc": "\u4F8B\u5982 oss-cn-hangzhou",
   "settings.ossBucket.name": "Bucket",
   "settings.ossKeyId.name": "Access key ID",
   "settings.ossKeySecret.name": "Access key secret",
   "settings.ossPrefix.name": "\u4E0A\u4F20\u524D\u7F00\u8DEF\u5F84",
-  "settings.ossPrefix.desc": "OSS \u4E2D\u7684\u76EE\u5F55\u524D\u7F00\uFF0C\u4F8B\u5982 notes \u2192 notes/<\u7B14\u8BB0\u540D>/index.html",
   "settings.ossDomain.name": "\u81EA\u5B9A\u4E49\u57DF\u540D",
-  "settings.ossDomain.desc": "\u66FF\u6362\u9ED8\u8BA4\u7684 OSS \u57DF\u540D\uFF0C\u7559\u7A7A\u5219\u4F7F\u7528\u9ED8\u8BA4\u3002\u4F8B\u5982 https://cdn.example.com",
   "settings.urlPreview.label": "\u9884\u89C8\uFF1A",
   "settings.route.heading": "\u53D1\u5E03\u8DEF\u7EBF\u914D\u7F6E",
   "settings.route.name": "\u53D1\u5E03\u8DEF\u7EBF",
-  "settings.route.desc": "\u9009\u62E9\u4E00\u6761\u53D1\u5E03\u8DEF\u7EBF\uFF08\u4E8C\u9009\u4E00\uFF09\uFF0C\u9009\u62E9\u540E\u4E0B\u65B9\u4F1A\u663E\u793A\u5BF9\u5E94\u914D\u7F6E",
-  "settings.route.option.none": "\u2014 \u8BF7\u9009\u62E9 \u2014",
   "settings.cos.heading": "\u901A\u8FC7\u817E\u8BAF\u4E91COS\u53D1\u5E03",
   "settings.cos.callout.item1": "\u8BF7\u786E\u4FDD COS \u5B58\u50A8\u6876\u8BBF\u95EE\u6743\u9650\u4E3A\u300C\u516C\u6709\u8BFB\u79C1\u6709\u5199\u300D",
   "settings.cos.callout.item2": "COS \u5FC5\u987B\u914D\u7F6E\u81EA\u5B9A\u4E49\u57DF\u540D\uFF0C\u5426\u5219\u94FE\u63A5\u6253\u5F00\u53EA\u4F1A\u89E6\u53D1\u4E0B\u8F7D",
   "settings.cosRegion.name": "Region",
-  "settings.cosRegion.desc": "\u4F8B\u5982 ap-guangzhou",
   "settings.cosBucket.name": "Bucket",
-  "settings.cosBucket.desc": "\u542B APPID\uFF0C\u4F8B\u5982 my-bucket-1250000000",
   "settings.cosSecretId.name": "SecretId",
   "settings.cosSecretKey.name": "SecretKey",
   "settings.cosPrefix.name": "\u4E0A\u4F20\u524D\u7F00\u8DEF\u5F84",
-  "settings.cosPrefix.desc": "COS \u4E2D\u7684\u76EE\u5F55\u524D\u7F00\uFF0C\u4F8B\u5982 notes \u2192 notes/<\u7B14\u8BB0\u540D>",
   "settings.cosDomain.name": "\u81EA\u5B9A\u4E49\u57DF\u540D",
-  "settings.cosDomain.desc": "\u66FF\u6362\u9ED8\u8BA4\u7684 COS \u57DF\u540D\uFF0C\u7559\u7A7A\u5219\u4F7F\u7528\u9ED8\u8BA4\u3002\u4F8B\u5982 https://cdn.example.com",
   "modal.views.loading": "\u6D4F\u89C8 \u2026",
   "modal.views.value": "\u{1F441} {count}",
   "modal.views.fail": "\u{1F441} \u2014",
@@ -26092,48 +26080,36 @@ var zh = {
 };
 var en = {
   "settings.language": "\u8BED\u8A00 / Language",
-  "settings.language.desc": "Switch interface language",
   "settings.general.heading": "General",
   "settings.export.heading": "Export Settings",
   "settings.oss.heading": "Publish via Aliyun OSS",
   "settings.oss.callout.item1": 'Ensure your OSS Bucket ACL is set to "Public Read"',
   "settings.oss.callout.item2": "OSS must have a custom domain configured; otherwise links will trigger a download instead of opening",
   "settings.exportLevel.name": "Export depth",
-  "settings.exportLevel.desc": "How many levels of links / base entries to expand when exporting; deeper includes more sub-pages",
   "settings.exportLevel.option.1": "Level 1 (this note only)",
   "settings.exportLevel.option.2": "Level 2 (+ direct sub-pages)",
   "settings.exportLevel.option.3": "Level 3 (+ sub-pages of sub-pages)",
   "settings.stripUniquePrefix.name": "Unique-note prefix compatibility",
   "settings.stripUniquePrefix.desc": 'Read the core "Unique note creator" format and strip its timestamp prefix from the exported HTML title (e.g. 202606281230-My Note \u2192 My Note)',
   "settings.pageLinkLength.name": "Page Name Length",
-  "settings.pageLinkLength.desc": "Length of the share link path; longer means fewer collisions",
   "settings.ossRegion.name": "Region",
-  "settings.ossRegion.desc": "e.g. oss-cn-hangzhou",
   "settings.ossBucket.name": "Bucket",
   "settings.ossKeyId.name": "Access key ID",
   "settings.ossKeySecret.name": "Access key secret",
   "settings.ossPrefix.name": "Upload Prefix",
-  "settings.ossPrefix.desc": "Directory prefix in OSS, e.g. notes \u2192 notes/<note-name>/index.html",
   "settings.ossDomain.name": "Custom Domain",
-  "settings.ossDomain.desc": "Replace the default OSS domain. Leave empty for default. e.g. https://cdn.example.com",
   "settings.urlPreview.label": "Preview: ",
   "settings.route.heading": "Publish Route",
   "settings.route.name": "Publish route",
-  "settings.route.desc": "Pick one publish route; its configuration appears below once selected",
-  "settings.route.option.none": "\u2014 Select \u2014",
   "settings.cos.heading": "Publish via Tencent COS",
   "settings.cos.callout.item1": 'Ensure your COS bucket permission is "Public Read / Private Write"',
   "settings.cos.callout.item2": "COS must have a custom domain configured; otherwise links will trigger a download instead of opening",
   "settings.cosRegion.name": "Region",
-  "settings.cosRegion.desc": "e.g. ap-guangzhou",
   "settings.cosBucket.name": "Bucket",
-  "settings.cosBucket.desc": "Includes APPID, e.g. my-bucket-1250000000",
   "settings.cosSecretId.name": "SecretId",
   "settings.cosSecretKey.name": "SecretKey",
   "settings.cosPrefix.name": "Upload Prefix",
-  "settings.cosPrefix.desc": "Directory prefix in COS, e.g. notes \u2192 notes/<note-name>",
   "settings.cosDomain.name": "Custom Domain",
-  "settings.cosDomain.desc": "Replace the default COS domain. Leave empty for default. e.g. https://cdn.example.com",
   "modal.views.loading": "Views \u2026",
   "modal.views.value": "\u{1F441} {count}",
   "modal.views.fail": "\u{1F441} \u2014",
@@ -26334,6 +26310,21 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
     const sample = "ab3c5d7e9f2x".slice(0, Math.max(1, s.pageLinkLength));
     return `${base}/${prefix}/${sample}`;
   }
+  /** Renders the heading + usage tips + live URL preview as a single callout box. */
+  renderRouteCallout(setting, heading, tips) {
+    setting.settingEl.empty();
+    setting.settingEl.addClass("opal-route-callout");
+    setting.settingEl.createDiv({ cls: "opal-route-callout-heading", text: heading });
+    for (const tip of tips) {
+      setting.settingEl.createDiv({ cls: "opal-route-callout-item", text: tip });
+    }
+    const previewRow = setting.settingEl.createDiv({ cls: "opal-route-callout-preview" });
+    previewRow.createSpan({ cls: "opal-url-preview-label", text: t("settings.urlPreview.label") });
+    this.previewEl = previewRow.createSpan({
+      cls: "opal-url-preview-url",
+      text: this.buildPreviewUrl()
+    });
+  }
   getSettingDefinitions() {
     return [
       {
@@ -26358,7 +26349,6 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
     return [
       {
         name: t("settings.language"),
-        desc: t("settings.language.desc"),
         render: (setting) => {
           setting.addDropdown(
             (dropdown) => dropdown.addOption("zh", "\u4E2D\u6587").addOption("en", "English").setValue(this.plugin.settings.language).onChange(async (value) => {
@@ -26377,7 +26367,6 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
     return [
       {
         name: t("settings.exportLevel.name"),
-        desc: t("settings.exportLevel.desc"),
         render: (setting) => {
           setting.addDropdown(
             (dropdown) => dropdown.addOption("1", t("settings.exportLevel.option.1")).addOption("2", t("settings.exportLevel.option.2")).addOption("3", t("settings.exportLevel.option.3")).setValue(String(this.plugin.settings.exportLevel)).onChange(async (value) => {
@@ -26389,7 +26378,6 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
       },
       {
         name: t("settings.pageLinkLength.name"),
-        desc: t("settings.pageLinkLength.desc"),
         render: (setting) => {
           setting.addDropdown((dropdown) => {
             const capacities = {
@@ -26426,21 +26414,33 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
     ];
   }
   // ── 发布路线配置 / Publish Route ──────────
-  // One route, two choices (Aliyun OSS / Tencent COS). The matching credential
-  // items only appear once a route is picked; "none" shows just the selector.
+  // Two choices (Aliyun OSS / Tencent COS), rendered as a segmented button
+  // group instead of a dropdown. Switching plays a small animation on the
+  // active button only; the config fields below just appear/disappear.
   routeItems() {
     const items = [
       {
         name: t("settings.route.name"),
-        desc: t("settings.route.desc"),
         render: (setting) => {
-          setting.addDropdown(
-            (dropdown) => dropdown.addOption("none", t("settings.route.option.none")).addOption("aliyun", "\u963F\u91CC\u4E91 OSS").addOption("tencent", "\u817E\u8BAF\u4E91 COS").setValue(this.plugin.settings.storageProvider).onChange(async (value) => {
-              this.plugin.settings.storageProvider = value;
+          const group = setting.controlEl.createDiv({ cls: "opal-route-buttongroup" });
+          const options = [
+            { value: "aliyun", label: "\u963F\u91CC\u4E91 OSS" },
+            { value: "tencent", label: "\u817E\u8BAF\u4E91 COS" }
+          ];
+          for (const opt of options) {
+            const btn = group.createEl("button", {
+              cls: "opal-route-btn",
+              text: opt.label,
+              attr: { type: "button" }
+            });
+            btn.toggleClass("is-active", this.plugin.settings.storageProvider === opt.value);
+            btn.addEventListener("click", async () => {
+              if (this.plugin.settings.storageProvider === opt.value) return;
+              this.plugin.settings.storageProvider = opt.value;
               await this.plugin.saveSettings();
               this.update();
-            })
-          );
+            });
+          }
         }
       }
     ];
@@ -26457,28 +26457,14 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
       {
         name: t("settings.oss.heading"),
         render: (setting) => {
-          setting.settingEl.empty();
-          setting.settingEl.addClass("opal-oss-callout");
-          const calloutList = setting.settingEl.createEl("ul");
-          calloutList.createEl("li", { text: t("settings.oss.callout.item1") });
-          calloutList.createEl("li", { text: t("settings.oss.callout.item2") });
-        }
-      },
-      {
-        name: t("settings.urlPreview.label"),
-        render: (setting) => {
-          setting.settingEl.empty();
-          setting.settingEl.addClass("opal-url-preview");
-          setting.settingEl.createSpan({ cls: "opal-url-preview-label", text: t("settings.urlPreview.label") });
-          this.previewEl = setting.settingEl.createSpan({
-            cls: "opal-url-preview-url",
-            text: this.buildPreviewUrl()
-          });
+          this.renderRouteCallout(setting, t("settings.oss.heading"), [
+            t("settings.oss.callout.item1"),
+            t("settings.oss.callout.item2")
+          ]);
         }
       },
       {
         name: t("settings.ossRegion.name"),
-        desc: t("settings.ossRegion.desc"),
         render: (setting) => {
           setting.addText(
             (text) => text.setPlaceholder("oss-cn-hangzhou").setValue(this.plugin.settings.ossRegion).onChange(async (value) => {
@@ -26529,7 +26515,6 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
       },
       {
         name: t("settings.ossPrefix.name"),
-        desc: t("settings.ossPrefix.desc"),
         render: (setting) => {
           setting.addText(
             (text) => text.setPlaceholder("notes").setValue(this.plugin.settings.ossPrefix).onChange(async (value) => {
@@ -26543,7 +26528,6 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
       },
       {
         name: t("settings.ossDomain.name"),
-        desc: t("settings.ossDomain.desc"),
         render: (setting) => {
           setting.addText(
             (text) => text.setPlaceholder("https://cdn.example.com").setValue(this.plugin.settings.ossDomain).onChange(async (value) => {
@@ -26563,28 +26547,14 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
       {
         name: t("settings.cos.heading"),
         render: (setting) => {
-          setting.settingEl.empty();
-          setting.settingEl.addClass("opal-oss-callout");
-          const calloutList = setting.settingEl.createEl("ul");
-          calloutList.createEl("li", { text: t("settings.cos.callout.item1") });
-          calloutList.createEl("li", { text: t("settings.cos.callout.item2") });
-        }
-      },
-      {
-        name: t("settings.urlPreview.label"),
-        render: (setting) => {
-          setting.settingEl.empty();
-          setting.settingEl.addClass("opal-url-preview");
-          setting.settingEl.createSpan({ cls: "opal-url-preview-label", text: t("settings.urlPreview.label") });
-          this.previewEl = setting.settingEl.createSpan({
-            cls: "opal-url-preview-url",
-            text: this.buildPreviewUrl()
-          });
+          this.renderRouteCallout(setting, t("settings.cos.heading"), [
+            t("settings.cos.callout.item1"),
+            t("settings.cos.callout.item2")
+          ]);
         }
       },
       {
         name: t("settings.cosRegion.name"),
-        desc: t("settings.cosRegion.desc"),
         render: (setting) => {
           setting.addText(
             (text) => text.setPlaceholder("ap-guangzhou").setValue(this.plugin.settings.cosRegion).onChange(async (value) => {
@@ -26598,7 +26568,6 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
       },
       {
         name: t("settings.cosBucket.name"),
-        desc: t("settings.cosBucket.desc"),
         render: (setting) => {
           setting.addText(
             (text) => text.setPlaceholder("my-bucket-1250000000").setValue(this.plugin.settings.cosBucket).onChange(async (value) => {
@@ -26636,7 +26605,6 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
       },
       {
         name: t("settings.cosPrefix.name"),
-        desc: t("settings.cosPrefix.desc"),
         render: (setting) => {
           setting.addText(
             (text) => text.setPlaceholder("notes").setValue(this.plugin.settings.cosPrefix).onChange(async (value) => {
@@ -26650,7 +26618,6 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
       },
       {
         name: t("settings.cosDomain.name"),
-        desc: t("settings.cosDomain.desc"),
         render: (setting) => {
           setting.addText(
             (text) => text.setPlaceholder("https://cdn.example.com").setValue(this.plugin.settings.cosDomain).onChange(async (value) => {
