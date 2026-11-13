@@ -5,7 +5,7 @@
   "engines": {
     "node": ">=20.19.0"
   },
-  "description": "Publish notes as short links and track who's viewed them.",
+  "description": "Export notes as polished static web pages and share via short links — publish locally or to Aliyun OSS / Tencent COS, with built-in page-view tracking and analytics.",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
