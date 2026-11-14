@@ -239,11 +239,8 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 						attr: { type: "button" },
 					});
 					btn.toggleClass("is-active", this.plugin.settings.storageProvider === opt.value);
-					btn.addEventListener("click", async () => {
-						if (this.plugin.settings.storageProvider === opt.value) return;
-						this.plugin.settings.storageProvider = opt.value;
-						await this.plugin.saveSettings();
-						this.update();
+					btn.addEventListener("click", () => {
+						void this.selectRoute(opt.value);
 					});
 				}
 			},
@@ -256,6 +253,13 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 		}
 
 		return items;
+	}
+
+	private async selectRoute(provider: ShareOnlineSettings["storageProvider"]): Promise<void> {
+		if (this.plugin.settings.storageProvider === provider) return;
+		this.plugin.settings.storageProvider = provider;
+		await this.plugin.saveSettings();
+		this.update();
 	}
 
 	/** The hint card (usage tips + URL preview) for the currently selected route. */
