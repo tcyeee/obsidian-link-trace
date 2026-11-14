@@ -1,7 +1,7 @@
 {
   "id": "link-trace",
   "name": "Link Trace",
-  "version": "0.1.25",
+  "version": "0.1.26",
   "minAppVersion": "1.13.0",
   "description": "Export notes as polished static web pages and share via short links — publish locally or to Aliyun OSS / Tencent COS, with built-in page-view tracking and analytics.",
   "author": "tcyeee",
