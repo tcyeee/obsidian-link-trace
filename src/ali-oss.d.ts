@@ -34,6 +34,7 @@ declare module "ali-oss" {
     accessKeySecret: string;
     bucket: string;
     authorizationV4?: boolean;
+    secure?: boolean;
   }
 
   class OSS {

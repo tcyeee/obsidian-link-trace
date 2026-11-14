@@ -21,6 +21,10 @@ export class AliyunStore implements BlobStore {
 					accessKeySecret: ossAccessKeySecret,
 					bucket: ossBucket,
 					authorizationV4: true,
+					// ali-oss defaults to plain HTTP; binary PUTs over HTTP are prone to
+					// mid-path ECONNRESET (e.g. DPI middleboxes resetting unencrypted
+					// uploads) that HTTPS avoids.
+					secure: true,
 			  })
 			: null;
 	}

@@ -708,14 +708,20 @@ ul.dv-list li { margin: 0.25em 0; line-height: 1.6; }
   flex-shrink: 0;
   width: 100%;
   text-align: center;
-  margin: 3em 0 1.5em;
-  padding-top: 1.5em;
+  margin: 1.5em 0 0.75em;
+  padding-top: 0.75em;
   border-top: 1px dashed #DADCDE;
-  font-size: 0.75rem;
+  font-size: 0.8em;
   color: #aaa;
 }
-.lt-footer a { color: #aaa; text-decoration: none; }
-.lt-footer a:hover { color: #888; text-decoration: underline; }
+.lt-footer a,
+.lt-footer a:hover {
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+}
+.lt-footer a:not(.internal-link):not(.footnote-backref)[href^="http"]::after { content: none; }
+.lt-footer a:hover { color: #888; }
 
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 3px; height: 3px; }
