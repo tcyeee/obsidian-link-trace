@@ -26441,11 +26441,8 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
             attr: { type: "button" }
           });
           btn.toggleClass("is-active", this.plugin.settings.storageProvider === opt.value);
-          btn.addEventListener("click", async () => {
-            if (this.plugin.settings.storageProvider === opt.value) return;
-            this.plugin.settings.storageProvider = opt.value;
-            await this.plugin.saveSettings();
-            this.update();
+          btn.addEventListener("click", () => {
+            void this.selectRoute(opt.value);
           });
         }
       }
@@ -26456,6 +26453,12 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
       items.push(...this.tencentConfigItems());
     }
     return items;
+  }
+  async selectRoute(provider) {
+    if (this.plugin.settings.storageProvider === provider) return;
+    this.plugin.settings.storageProvider = provider;
+    await this.plugin.saveSettings();
+    this.update();
   }
   /** The hint card (usage tips + URL preview) for the currently selected route. */
   routeHintItem() {
