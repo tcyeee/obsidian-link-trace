@@ -1,3 +1,12 @@
+# 0.1.27
+
+- fix: prevent task-list items from wrapping to a new line (#16) (cb4849c)
+- fix: avoid misused-promise in route button click handler (#15) (65bf505)
+
+# 0.1.26
+
+- fix: force HTTPS for OSS uploads; polish footer styling and link (#14) (d1fa378)
+
 # 0.1.25
 
 - feat: migrate settings tab to declarative getSettingDefinitions() API, bump minAppVersion to 1.13.0 (f89d905)
