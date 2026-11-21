@@ -28341,7 +28341,7 @@ blockquote p { color: #81888D; font-size: 14px; margin: 0; }
 
 /* \u2500\u2500 Task list \u2500\u2500 */
 .contains-task-list { list-style: none; padding-left: 0.25em; }
-.task-list-item { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.5em; margin: 0.3em 0; }
+.task-list-item { display: flex; align-items: baseline; flex-wrap: unset; gap: 0.5em; margin: 0.3em 0; }
 /* Loose lists wrap item text in a block <p>; let it fill the remaining row width
    and wrap its text internally, instead of its max-content width bumping the
    whole block onto a new flex line (which would strand the checkbox alone). */
