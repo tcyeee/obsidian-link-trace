@@ -308,29 +308,32 @@ blockquote p { color: #81888D; font-size: 14px; margin: 0; }
 
 /* ── Task list ── */
 .contains-task-list { list-style: none; padding-left: 0.25em; }
-.task-list-item { display: flex; align-items: baseline; flex-wrap: unset; gap: 0.5em; margin: 0.3em 0; }
-/* Loose lists wrap item text in a block <p>; let it fill the remaining row width
-   and wrap its text internally, instead of its max-content width bumping the
-   whole block onto a new flex line (which would strand the checkbox alone). */
-.task-list-item > p { flex: 1 1 0; min-width: 0; }
-.task-list-item > ul, .task-list-item > ol { flex: 0 0 100%; padding-left: 1.5em; margin: 0.2em 0 0; }
-/* A code block nested in a task item is wrapped in .pre-wrapper (a flex item).
-   Without min-width:0 its non-wrapping min-content (longest code line) becomes the
-   flex floor and bumps the whole row wider than the viewport — horizontal page
-   scroll on narrow screens. Pin it to its own full-width line and let it shrink so
-   the inner pre's overflow:auto handles long lines. */
-.task-list-item > .pre-wrapper, .task-list-item > pre { flex: 0 0 100%; min-width: 0; }
+/* Keep text and block children in normal flow. Flex puts nested lists beside
+   the label (nowrap), or can strand the checkbox on a separate line (wrap).
+   A hanging checkbox works with both tight lists and loose lists using <p>. */
+.task-list-item {
+  display: block;
+  position: relative;
+  padding-left: calc(14px + 0.5em);
+  margin: 0.3em 0;
+}
+.task-list-item > ul, .task-list-item > ol { padding-left: 1.5em; margin: 0.2em 0 0; }
+.task-list-item > .contains-task-list { padding-left: 0; }
+.task-list-item > .pre-wrapper, .task-list-item > pre { min-width: 0; max-width: 100%; }
 .task-list-item-checkbox {
   -webkit-appearance: none;
   appearance: none;
-  flex-shrink: 0;
+  position: absolute;
+  left: 0;
+  top: calc((1.74em - 14px) / 2);
+  margin: 0;
+  font: inherit;
   width: 14px; height: 14px;
   border: 1.5px solid ${THEME};
   border-radius: 3px;
   background: #fff;
   cursor: default;
   pointer-events: none;
-  translate: 0 1px;
 }
 .task-list-item-checkbox:checked {
   background-color: ${THEME};
