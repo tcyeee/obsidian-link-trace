@@ -1,3 +1,7 @@
+# 0.1.28
+
+- fix(render): keep nested task lists below their parent labels (4fb1dfe)
+
 # 0.1.27
 
 - fix: prevent task-list items from wrapping to a new line (#16) (cb4849c)
