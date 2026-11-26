@@ -466,6 +466,18 @@ hr { border: none; border-top: 1px dashed #DADCDE; margin: 1.5em 0; }
 
 /* ── Image ── */
 img { max-width: 100%; border-radius: 4px; }
+.lt-link-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  vertical-align: middle;
+  margin-inline-end: 0.25em;
+}
+.better-link-display-app-tile .lt-link-icon {
+  width: var(--better-link-display-app-icon-size, 32px);
+  height: var(--better-link-display-app-icon-size, 32px);
+  margin: 0;
+}
 .markdown-preview-view img.lt-zoomable { cursor: zoom-in; }
 
 /* ── Imgs gallery ── */

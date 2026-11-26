@@ -1,4 +1,4 @@
-import { App, TFile, MarkdownRenderer, Component, FileSystemAdapter } from "obsidian";
+import { App, TFile, MarkdownRenderer, Component, FileSystemAdapter, arrayBufferToBase64 } from "obsidian";
 import { renderBaseAsTable, renderInlineBaseAsTable, resolveBaseEmbeds } from "./base-renderer";
 import { resolveDataviewBlocks, runDataviewQuery } from "./dataview-renderer";
 import { registerImage, processImgsBlocks } from "./imgs-renderer";
@@ -87,6 +87,26 @@ function collectImages(
   });
 
   return images;
+}
+
+async function prepareBookmarkIcons(el: HTMLElement): Promise<void> {
+  // Inline bookmarks retain this Markdown shape even without Better Link Display enabled.
+  el.querySelectorAll<HTMLImageElement>('a.external-link > img[src^="data:image/"]').forEach(img => {
+    if (!img.alt && img.parentElement?.textContent?.trim()) img.classList.add("lt-link-icon");
+  });
+
+  const tiles = el.querySelectorAll<HTMLImageElement>(".better-link-display-app-tile img");
+  await Promise.all(Array.from(tiles, async img => {
+    img.classList.add("lt-link-icon");
+    // A grid's cached PNG can live under .obsidian, outside the vault's TFile index.
+    if (!img.src.startsWith("app://") || !new URL(img.src).pathname.endsWith(".png")) return;
+    try {
+      const response = await fetch(img.src);
+      if (response.ok && response.headers.get("Content-Type") === "image/png") {
+        img.src = `data:image/png;base64,${arrayBufferToBase64(await response.arrayBuffer())}`;
+      }
+    } catch { /* An unavailable cached icon should not prevent exporting the link. */ }
+  }));
 }
 
 /* ── Self-embed resolution ─────────────────────────────────────────────────
@@ -397,6 +417,8 @@ export async function renderNote(
   // Process imgs code blocks, then collect remaining images (wiki embeds, markdown images)
   processImgsBlocks(app, file, el, images);
   collectImages(app, file, el, images);
+
+  await prepareBookmarkIcons(el);
 
   // Defer off-screen image loading so the first screen paints without waiting
   // on every image (covers vault, gallery and any external <img>).

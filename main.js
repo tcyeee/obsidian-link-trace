@@ -28499,6 +28499,18 @@ hr { border: none; border-top: 1px dashed #DADCDE; margin: 1.5em 0; }
 
 /* \u2500\u2500 Image \u2500\u2500 */
 img { max-width: 100%; border-radius: 4px; }
+.lt-link-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  vertical-align: middle;
+  margin-inline-end: 0.25em;
+}
+.better-link-display-app-tile .lt-link-icon {
+  width: var(--better-link-display-app-icon-size, 32px);
+  height: var(--better-link-display-app-icon-size, 32px);
+  margin: 0;
+}
 .markdown-preview-view img.lt-zoomable { cursor: zoom-in; }
 
 /* \u2500\u2500 Imgs gallery \u2500\u2500 */
@@ -28821,6 +28833,24 @@ function collectImages(app, sourceFile, el, images = /* @__PURE__ */ new Map()) 
   });
   return images;
 }
+async function prepareBookmarkIcons(el) {
+  el.querySelectorAll('a.external-link > img[src^="data:image/"]').forEach((img) => {
+    var _a2, _b2;
+    if (!img.alt && ((_b2 = (_a2 = img.parentElement) == null ? void 0 : _a2.textContent) == null ? void 0 : _b2.trim())) img.classList.add("lt-link-icon");
+  });
+  const tiles = el.querySelectorAll(".better-link-display-app-tile img");
+  await Promise.all(Array.from(tiles, async (img) => {
+    img.classList.add("lt-link-icon");
+    if (!img.src.startsWith("app://") || !new URL(img.src).pathname.endsWith(".png")) return;
+    try {
+      const response = await fetch(img.src);
+      if (response.ok && response.headers.get("Content-Type") === "image/png") {
+        img.src = `data:image/png;base64,${(0, import_obsidian4.arrayBufferToBase64)(await response.arrayBuffer())}`;
+      }
+    } catch (e) {
+    }
+  }));
+}
 var EMBED_RE = /!\[\[([^\]\n]+)\]\]/g;
 function parseEmbedTarget(inner) {
   const main = inner.split("|")[0];
@@ -29039,6 +29069,7 @@ async function renderNote(app, file, rawContent) {
   });
   processImgsBlocks(app, file, el, images);
   collectImages(app, file, el, images);
+  await prepareBookmarkIcons(el);
   el.querySelectorAll("img").forEach((img) => {
     img.setAttribute("loading", "lazy");
     img.setAttribute("decoding", "async");
@@ -29497,7 +29528,7 @@ ${katexJsTag}
       // grid/table, not standalone gallery photos \u2014 excluded so they don't get
       // swept into the same prev/next index as unrelated note content.
       var items = Array.prototype.slice.call(document.querySelectorAll(
-        '.markdown-preview-view img:not(.base-card-banner), .markdown-preview-view .imgs-video-item'
+        '.markdown-preview-view img:not(.base-card-banner):not(.lt-link-icon), .markdown-preview-view .imgs-video-item'
       ));
       var current = -1;
       var currentIsVideo = false;
