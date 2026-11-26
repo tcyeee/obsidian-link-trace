@@ -263,7 +263,7 @@ ${katexJsTag}
       // grid/table, not standalone gallery photos — excluded so they don't get
       // swept into the same prev/next index as unrelated note content.
       var items = Array.prototype.slice.call(document.querySelectorAll(
-        '.markdown-preview-view img:not(.base-card-banner), .markdown-preview-view .imgs-video-item'
+        '.markdown-preview-view img:not(.base-card-banner):not(.lt-link-icon), .markdown-preview-view .imgs-video-item'
       ));
       var current = -1;
       var currentIsVideo = false;
