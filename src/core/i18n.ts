@@ -6,6 +6,10 @@ const zh: Translations = {
 	"settings.language": "语言 / Language",
 
 	"settings.general.heading": "通用",
+	"settings.analytics.heading": "分享统计",
+	"settings.analytics.endpoint": "GoatCounter 采集地址",
+	"settings.analytics.recentVisitsToken": "访问流水密钥",
+	"settings.analytics.recentVisitsTokenDesc": "填入自建访问流水接口的密钥，用于读取最近访问。",
 	"settings.export.heading": "导出设置",
 	"settings.oss.hint": "使用提示",
 	"settings.oss.callout.item1": "请确保 OSS Bucket 权限为「公共读」",
@@ -165,12 +169,23 @@ const zh: Translations = {
 	"popover.stats.noTrend": "近 14 天暂无访问",
 	"popover.stats.expand": "展开",
 	"popover.stats.collapse": "收起",
+	"popover.stats.recentVisits": "最近访问",
+	"popover.stats.recentVisitsNotConfigured": "请在设置中配置访问流水密钥",
+	"popover.stats.recentVisitsUnavailable": "暂时无法读取访问记录",
+	"popover.stats.recentVisitsEmpty": "暂无访问记录",
+	"popover.stats.recentVisitsUnknownLocation": "未知地区",
+	"popover.stats.recentVisitsUnknownOs": "未知系统",
+	"popover.stats.recentVisitLine": "来自{location}的 {os} 用户访问",
 };
 
 const en: Translations = {
 	"settings.language": "语言 / Language",
 
 	"settings.general.heading": "General",
+	"settings.analytics.heading": "Share Analytics",
+	"settings.analytics.endpoint": "GoatCounter tracking URL",
+	"settings.analytics.recentVisitsToken": "Recent visits token",
+	"settings.analytics.recentVisitsTokenDesc": "Enter the token for your self-hosted recent visits endpoint.",
 	"settings.export.heading": "Export Settings",
 	"settings.oss.hint": "Usage tips",
 	"settings.oss.callout.item1": "Ensure your OSS Bucket ACL is set to \"Public Read\"",
@@ -330,6 +345,13 @@ const en: Translations = {
 	"popover.stats.noTrend": "No visits in the last 14 days",
 	"popover.stats.expand": "Expand",
 	"popover.stats.collapse": "Collapse",
+	"popover.stats.recentVisits": "Recent visits",
+	"popover.stats.recentVisitsNotConfigured": "Configure a recent visits token in Settings",
+	"popover.stats.recentVisitsUnavailable": "Couldn't load recent visits",
+	"popover.stats.recentVisitsEmpty": "No visits yet",
+	"popover.stats.recentVisitsUnknownLocation": "Unknown region",
+	"popover.stats.recentVisitsUnknownOs": "Unknown OS",
+	"popover.stats.recentVisitLine": "{os} visitor from {location}",
 };
 
 const translations: Record<Language, Translations> = { zh, en };

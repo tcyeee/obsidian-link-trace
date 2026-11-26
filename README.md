@@ -29,7 +29,7 @@ You can include the note's directly linked notes (and their links, one level dee
 - **Auto-generated table of contents** sidebar with scroll tracking, collapsible on mobile
 - **Status bar indicator** — the share icon turns green when the current note is published, and flags it as stale after you edit
 - **Share Stats page** — a dedicated tab listing every page you've published, with total pages/views and a per-page detail view (visits over time, referrers, browsers, OS, countries, screen sizes)
-- **Privacy-friendly analytics** — cookieless view tracking via a self-hosted [GoatCounter](https://www.goatcounter.com/) instance, no personal data collected
+- **Privacy-friendly analytics** — cookieless view tracking via a self-hosted [GoatCounter](https://www.goatcounter.com/) instance
 - **English / 中文** interface
 
 ### Installation
@@ -70,7 +70,7 @@ Click the status bar share icon on any note to open the popover:
 | Export as ZIP | Saves a local copy |
 | Stop sharing | Deletes the page from the cloud; the link stops working |
 
-Once published, the popover also shows the page's view count, with an expandable detail view (visits trend, referrers, browsers, etc.).
+Once published, the popover shows the page's view count and recent trend. Expand it to see the five latest visits, followed by country/region, operating system, browser, and screen size. The visit list requires a [private recent visits endpoint](server/recent-visits/README.md).
 
 #### Share Stats page
 
@@ -98,7 +98,7 @@ Both require the bucket to allow public read access, and a custom domain configu
 
 ### Privacy & analytics
 
-Published pages embed a lightweight, cookieless view-count tracker via a self-hosted [GoatCounter](https://www.goatcounter.com/) instance — it collects no personal data and sets no cookies. View counts surface in the share popover and the Share Stats page.
+Published pages embed a cookieless [GoatCounter](https://www.goatcounter.com/) tracker. The Obsidian plugin reads aggregate statistics from that service to show view counts and breakdowns. If the site owner enables individual pageviews, the private recent visits endpoint also returns each visit's time, approximate IP-derived location, and operating system to authorized clients.
 
 ### Requirements
 

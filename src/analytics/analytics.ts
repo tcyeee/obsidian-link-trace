@@ -232,6 +232,32 @@ export function countryLabel(code: string, fallbackName: string): string {
 	return COUNTRY_ZH[code] ?? (fallbackName || code);
 }
 
+export const RECENT_VISIT_LIMIT = 5;
+
+export interface RecentVisit {
+	timestamp: Date;
+	countryCode: string;
+	country: string;
+	region: string;
+	os: string;
+}
+
+/** Parse the private pageview endpoint, newest first. */
+export function parseRecentVisits(json: unknown): RecentVisit[] | null {
+	if (!Array.isArray(json)) return null;
+	const visits: RecentVisit[] = [];
+	for (const row of json) {
+		if (!row || typeof row !== "object") return null;
+		const { timestamp, countryCode, country, region, os } = row as Record<string, unknown>;
+		if (typeof timestamp !== "string" || typeof countryCode !== "string" ||
+			typeof country !== "string" || typeof region !== "string" || typeof os !== "string") return null;
+		const date = new Date(timestamp);
+		if (!Number.isFinite(date.getTime())) return null;
+		visits.push({ timestamp: date, countryCode, country, region, os });
+	}
+	return visits.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()).slice(0, RECENT_VISIT_LIMIT);
+}
+
 /**
  * 把「国家维度 + 各国省份下钻」合成为「国家-省份」中文标签的可读列表。
  * - 某国有具名省份 → 逐省输出 `中国-广东`；该国内未识别到省份的剩余访问以国家名单列 `中国`。

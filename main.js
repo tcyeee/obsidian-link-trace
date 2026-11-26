@@ -25932,6 +25932,10 @@ var import_obsidian = require("obsidian");
 var zh = {
   "settings.language": "\u8BED\u8A00 / Language",
   "settings.general.heading": "\u901A\u7528",
+  "settings.analytics.heading": "\u5206\u4EAB\u7EDF\u8BA1",
+  "settings.analytics.endpoint": "GoatCounter \u91C7\u96C6\u5730\u5740",
+  "settings.analytics.recentVisitsToken": "\u8BBF\u95EE\u6D41\u6C34\u5BC6\u94A5",
+  "settings.analytics.recentVisitsTokenDesc": "\u586B\u5165\u81EA\u5EFA\u8BBF\u95EE\u6D41\u6C34\u63A5\u53E3\u7684\u5BC6\u94A5\uFF0C\u7528\u4E8E\u8BFB\u53D6\u6700\u8FD1\u8BBF\u95EE\u3002",
   "settings.export.heading": "\u5BFC\u51FA\u8BBE\u7F6E",
   "settings.oss.hint": "\u4F7F\u7528\u63D0\u793A",
   "settings.oss.callout.item1": "\u8BF7\u786E\u4FDD OSS Bucket \u6743\u9650\u4E3A\u300C\u516C\u5171\u8BFB\u300D",
@@ -26076,11 +26080,22 @@ var zh = {
   "popover.stats.refresh": "\u5237\u65B0\u9605\u8BFB\u91CF",
   "popover.stats.noTrend": "\u8FD1 14 \u5929\u6682\u65E0\u8BBF\u95EE",
   "popover.stats.expand": "\u5C55\u5F00",
-  "popover.stats.collapse": "\u6536\u8D77"
+  "popover.stats.collapse": "\u6536\u8D77",
+  "popover.stats.recentVisits": "\u6700\u8FD1\u8BBF\u95EE",
+  "popover.stats.recentVisitsNotConfigured": "\u8BF7\u5728\u8BBE\u7F6E\u4E2D\u914D\u7F6E\u8BBF\u95EE\u6D41\u6C34\u5BC6\u94A5",
+  "popover.stats.recentVisitsUnavailable": "\u6682\u65F6\u65E0\u6CD5\u8BFB\u53D6\u8BBF\u95EE\u8BB0\u5F55",
+  "popover.stats.recentVisitsEmpty": "\u6682\u65E0\u8BBF\u95EE\u8BB0\u5F55",
+  "popover.stats.recentVisitsUnknownLocation": "\u672A\u77E5\u5730\u533A",
+  "popover.stats.recentVisitsUnknownOs": "\u672A\u77E5\u7CFB\u7EDF",
+  "popover.stats.recentVisitLine": "\u6765\u81EA{location}\u7684 {os} \u7528\u6237\u8BBF\u95EE"
 };
 var en = {
   "settings.language": "\u8BED\u8A00 / Language",
   "settings.general.heading": "General",
+  "settings.analytics.heading": "Share Analytics",
+  "settings.analytics.endpoint": "GoatCounter tracking URL",
+  "settings.analytics.recentVisitsToken": "Recent visits token",
+  "settings.analytics.recentVisitsTokenDesc": "Enter the token for your self-hosted recent visits endpoint.",
   "settings.export.heading": "Export Settings",
   "settings.oss.hint": "Usage tips",
   "settings.oss.callout.item1": 'Ensure your OSS Bucket ACL is set to "Public Read"',
@@ -26225,7 +26240,14 @@ var en = {
   "popover.stats.refresh": "Refresh views",
   "popover.stats.noTrend": "No visits in the last 14 days",
   "popover.stats.expand": "Expand",
-  "popover.stats.collapse": "Collapse"
+  "popover.stats.collapse": "Collapse",
+  "popover.stats.recentVisits": "Recent visits",
+  "popover.stats.recentVisitsNotConfigured": "Configure a recent visits token in Settings",
+  "popover.stats.recentVisitsUnavailable": "Couldn't load recent visits",
+  "popover.stats.recentVisitsEmpty": "No visits yet",
+  "popover.stats.recentVisitsUnknownLocation": "Unknown region",
+  "popover.stats.recentVisitsUnknownOs": "Unknown OS",
+  "popover.stats.recentVisitLine": "{os} visitor from {location}"
 };
 var translations = { zh, en };
 var currentLanguage = "zh";
@@ -26271,6 +26293,7 @@ function formatPageCount(count) {
 }
 
 // src/ui/settings.ts
+var RECENT_VISITS_SECRET_ID = "link-trace-recent-visits";
 var DEFAULT_SETTINGS = {
   exportLevel: 1,
   stripUniquePrefix: true,
@@ -26346,6 +26369,34 @@ var ShareOnlineSettingTab = class extends import_obsidian.PluginSettingTab {
         type: "group",
         heading: t("settings.route.heading"),
         items: this.routeItems()
+      },
+      {
+        type: "group",
+        heading: t("settings.analytics.heading"),
+        items: [
+          {
+            name: t("settings.analytics.endpoint"),
+            render: (setting) => {
+              setting.addText((text) => text.setValue(this.plugin.settings.goatcounterEndpoint).onChange(async (value) => {
+                this.plugin.settings.goatcounterEndpoint = value.trim();
+                await this.plugin.saveSettings();
+              }));
+            }
+          },
+          {
+            name: t("settings.analytics.recentVisitsToken"),
+            desc: t("settings.analytics.recentVisitsTokenDesc"),
+            render: (setting) => {
+              const storage = this.app.secretStorage;
+              setting.addText((text) => {
+                var _a2;
+                text.inputEl.type = "password";
+                text.setValue((_a2 = storage.getSecret(RECENT_VISITS_SECRET_ID)) != null ? _a2 : "");
+                text.onChange((value) => storage.setSecret(RECENT_VISITS_SECRET_ID, value.trim()));
+              });
+            }
+          }
+        ]
       }
     ];
   }
@@ -29220,6 +29271,20 @@ function countryLabel(code, fallbackName) {
   var _a2;
   return (_a2 = COUNTRY_ZH[code]) != null ? _a2 : fallbackName || code;
 }
+var RECENT_VISIT_LIMIT = 5;
+function parseRecentVisits(json) {
+  if (!Array.isArray(json)) return null;
+  const visits = [];
+  for (const row of json) {
+    if (!row || typeof row !== "object") return null;
+    const { timestamp, countryCode, country, region, os } = row;
+    if (typeof timestamp !== "string" || typeof countryCode !== "string" || typeof country !== "string" || typeof region !== "string" || typeof os !== "string") return null;
+    const date = new Date(timestamp);
+    if (!Number.isFinite(date.getTime())) return null;
+    visits.push({ timestamp: date, countryCode, country, region, os });
+  }
+  return visits.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()).slice(0, RECENT_VISIT_LIMIT);
+}
 function buildLocationRows(countries, regionsByCode, limit) {
   var _a2, _b2;
   const rows = [];
@@ -30716,6 +30781,26 @@ async function fetchPageDetail(settings, shareLink, onPart) {
   };
 }
 var POPOVER_DIMENSIONS = ["locations", "systems", "browsers", "sizes"];
+async function fetchRecentVisits(settings, shareLink, token) {
+  const apiBase = deriveApiBase(settings.goatcounterEndpoint.trim());
+  if (!(apiBase == null ? void 0 : apiBase.startsWith("https://"))) return null;
+  try {
+    const page = new URL(shareLink);
+    if (page.protocol !== "https:" && page.protocol !== "http:") return null;
+    const url = new URL(`${apiBase}/recent-visits`);
+    url.searchParams.set("host", page.host);
+    url.searchParams.set("path", page.pathname);
+    const res = await (0, import_obsidian8.requestUrl)({
+      url: url.href,
+      method: "GET",
+      headers: { ...STATS_HEADERS, authorization: `Bearer ${token}` },
+      throw: false
+    });
+    return res.status === 200 ? parseRecentVisits(res.json) : null;
+  } catch (e) {
+    return null;
+  }
+}
 async function fetchPopoverDimensions(settings, shareLink, onPart) {
   if (!canReadAnalytics(settings)) return null;
   const apiBase = deriveApiBase(settings.goatcounterEndpoint.trim());
@@ -31611,12 +31696,13 @@ var SharePopover = class {
       const c = this.statsCache.get(shareLink);
       return (c == null ? void 0 : c.views) !== void 0 || (c == null ? void 0 : c.trend) !== void 0;
     };
+    const refreshVisits = this.renderExpand(block, card, shareLink);
     refresh.addEventListener("click", (e) => {
       e.preventDefault();
       load();
+      refreshVisits();
     });
     load();
-    this.renderExpand(block, card, shareLink);
   }
   /**
    * Fetch this page's cumulative views + 14-day trend and fill the block. Serial
@@ -31680,8 +31766,8 @@ var SharePopover = class {
   }
   /**
    * Render the "expand" toggle plus its collapsed panel. The per-dimension
-   * breakdown (countries / OS / browsers / sizes) is fetched lazily the first
-   * time the panel is opened; re-toggling just shows/hides the cached panel.
+   * breakdown loads on first expansion. The visit list also reloads whenever
+   * the panel is reopened or the user clicks refresh while it's open.
    */
   renderExpand(block, card, shareLink) {
     const toggle = block.createDiv({ cls: "opal-share-popover-expand-toggle" });
@@ -31689,12 +31775,24 @@ var SharePopover = class {
     (0, import_obsidian10.setIcon)(chevron, "chevron-down");
     const label = toggle.createSpan({ text: t("popover.stats.expand") });
     const panel = block.createDiv({ cls: "opal-share-popover-expand-panel is-collapsed" });
+    const visits = panel.createDiv({ cls: "opal-detail-section" });
+    visits.createDiv({ cls: "opal-detail-section-title", text: t("popover.stats.recentVisits") });
+    const visitsBody = visits.createDiv({ cls: "opal-detail-section-body", attr: { "aria-live": "polite" } });
+    const dimensions = panel.createDiv();
     panel.addEventListener("transitionend", (e) => {
       if (e.propertyName !== "max-height") return;
       this.position(card, this.anchor);
     });
     let expanded = false;
     let loaded = false;
+    let loadingVisits = false;
+    const refreshVisits = () => {
+      if (!expanded || loadingVisits) return;
+      loadingVisits = true;
+      void this.loadRecentVisits(card, shareLink, visitsBody).finally(() => {
+        loadingVisits = false;
+      });
+    };
     toggle.addEventListener("click", () => {
       expanded = !expanded;
       toggle.toggleClass("is-expanded", expanded);
@@ -31702,10 +31800,48 @@ var SharePopover = class {
       label.setText(t(expanded ? "popover.stats.collapse" : "popover.stats.expand"));
       if (expanded && !loaded) {
         loaded = true;
-        void this.loadExpand(card, shareLink, panel);
+        void this.loadExpand(card, shareLink, dimensions);
       }
+      refreshVisits();
       this.position(card, this.anchor);
     });
+    return refreshVisits;
+  }
+  async loadRecentVisits(card, shareLink, body) {
+    const token = this.plugin.app.secretStorage.getSecret(RECENT_VISITS_SECRET_ID);
+    if (!token) {
+      body.empty();
+      body.createDiv({ cls: "opal-detail-empty", text: t("popover.stats.recentVisitsNotConfigured") });
+      return;
+    }
+    if (!body.hasChildNodes()) body.createDiv({ cls: "opal-detail-section-spinner opal-detail-spinner" });
+    const visits = await fetchRecentVisits(this.plugin.settings, shareLink, token);
+    if (this.el !== card || !card.isConnected) return;
+    body.empty();
+    if (!(visits == null ? void 0 : visits.length)) {
+      body.createDiv({
+        cls: "opal-detail-empty",
+        text: t(visits === null ? "popover.stats.recentVisitsUnavailable" : "popover.stats.recentVisitsEmpty")
+      });
+    } else {
+      const list = body.createDiv({ cls: "opal-detail-list", attr: { role: "list" } });
+      const chinese = getLanguage() === "zh";
+      for (const visit of visits) {
+        const country = chinese ? countryLabel(visit.countryCode, visit.country) : visit.country || visit.countryCode;
+        const region = chinese && visit.countryCode === "CN" ? provinceLabel(visit.region) : visit.region;
+        const location = region || country || t("popover.stats.recentVisitsUnknownLocation");
+        const row = list.createDiv({ cls: "opal-share-popover-visit", attr: { role: "listitem" } });
+        row.createEl("time", {
+          text: `[${formatDateTime2(visit.timestamp)}]`,
+          attr: { datetime: visit.timestamp.toISOString() }
+        });
+        row.createSpan({ text: t("popover.stats.recentVisitLine", {
+          location,
+          os: visit.os || t("popover.stats.recentVisitsUnknownOs")
+        }) });
+      }
+    }
+    this.position(card, this.anchor);
   }
   /**
    * Fetch the four breakdown dimensions and fill the expand panel. Each section

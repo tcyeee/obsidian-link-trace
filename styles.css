@@ -326,12 +326,13 @@
 }
 .opal-share-popover-expand-panel {
   margin-top: 10px;
-  overflow: hidden;
-  max-height: 600px;
+  overflow: auto;
+  max-height: min(600px, 55vh);
   opacity: 1;
   transition: max-height 0.25s ease, opacity 0.2s ease, margin-top 0.25s ease;
 }
 .opal-share-popover-expand-panel.is-collapsed {
+  overflow: hidden;
   max-height: 0;
   margin-top: 0;
   opacity: 0;
@@ -340,6 +341,21 @@
    section's bottom margin so the panel doesn't add stray space inside the card. */
 .opal-share-popover-expand-panel .opal-detail-section:last-child {
   margin-bottom: 0;
+}
+.opal-share-popover:has(.opal-share-popover-expand-toggle.is-expanded) {
+  width: 376px;
+}
+.opal-share-popover-visit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 6px;
+  padding: 3px 0;
+  font-size: var(--font-ui-smaller);
+}
+.opal-share-popover-visit time {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .opal-share-popover-hint {

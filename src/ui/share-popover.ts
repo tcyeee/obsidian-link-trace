@@ -1,11 +1,12 @@
 import { Notice, TFile, setIcon, setTooltip } from "obsidian";
 import type ShareOnlinePlugin from "../../main";
-import { t } from "../core/i18n";
-import { canReadAnalytics, type DailyPoint, type DimensionItem } from "../analytics/analytics";
+import { getLanguage, t } from "../core/i18n";
+import { canReadAnalytics, countryLabel, provinceLabel, type DailyPoint, type DimensionItem } from "../analytics/analytics";
 import {
 	fetchPageViews,
 	fetchDailyTrend,
 	fetchPopoverDimensions,
+	fetchRecentVisits,
 	type PopoverDimensionKey,
 } from "../analytics/analytics-client";
 import { sizeLabel } from "../analytics/stats-detail-modal";
@@ -16,6 +17,7 @@ import {
 	MAX_SUB_PAGES,
 	type SubNoteNode,
 } from "../publish/exporter";
+import { RECENT_VISITS_SECRET_ID } from "./settings";
 
 /** A linked note plus its current share link (empty when not yet published). */
 type SubNoteStatus = { file: TFile; shareLink: string };
@@ -898,13 +900,13 @@ export class SharePopover {
 			const c = this.statsCache.get(shareLink);
 			return c?.views !== undefined || c?.trend !== undefined;
 		};
+		const refreshVisits = this.renderExpand(block, card, shareLink);
 		refresh.addEventListener("click", (e) => {
 			e.preventDefault();
 			load();
+			refreshVisits();
 		});
 		load();
-
-		this.renderExpand(block, card, shareLink);
 	}
 
 	/**
@@ -980,16 +982,20 @@ export class SharePopover {
 
 	/**
 	 * Render the "expand" toggle plus its collapsed panel. The per-dimension
-	 * breakdown (countries / OS / browsers / sizes) is fetched lazily the first
-	 * time the panel is opened; re-toggling just shows/hides the cached panel.
+	 * breakdown loads on first expansion. The visit list also reloads whenever
+	 * the panel is reopened or the user clicks refresh while it's open.
 	 */
-	private renderExpand(block: HTMLElement, card: HTMLElement, shareLink: string): void {
+	private renderExpand(block: HTMLElement, card: HTMLElement, shareLink: string): () => void {
 		const toggle = block.createDiv({ cls: "opal-share-popover-expand-toggle" });
 		const chevron = toggle.createSpan({ cls: "opal-share-popover-expand-chevron" });
 		setIcon(chevron, "chevron-down");
 		const label = toggle.createSpan({ text: t("popover.stats.expand") });
 
 		const panel = block.createDiv({ cls: "opal-share-popover-expand-panel is-collapsed" });
+		const visits = panel.createDiv({ cls: "opal-detail-section" });
+		visits.createDiv({ cls: "opal-detail-section-title", text: t("popover.stats.recentVisits") });
+		const visitsBody = visits.createDiv({ cls: "opal-detail-section-body", attr: { "aria-live": "polite" } });
+		const dimensions = panel.createDiv();
 
 		// Keep the card anchored as the panel grows/shrinks: the max-height transition
 		// changes the card's height over time, so reposition once it finishes settling.
@@ -1000,6 +1006,14 @@ export class SharePopover {
 
 		let expanded = false;
 		let loaded = false;
+		let loadingVisits = false;
+		const refreshVisits = () => {
+			if (!expanded || loadingVisits) return;
+			loadingVisits = true;
+			void this.loadRecentVisits(card, shareLink, visitsBody).finally(() => {
+				loadingVisits = false;
+			});
+		};
 		toggle.addEventListener("click", () => {
 			expanded = !expanded;
 			toggle.toggleClass("is-expanded", expanded);
@@ -1007,10 +1021,49 @@ export class SharePopover {
 			label.setText(t(expanded ? "popover.stats.collapse" : "popover.stats.expand"));
 			if (expanded && !loaded) {
 				loaded = true;
-				void this.loadExpand(card, shareLink, panel);
+				void this.loadExpand(card, shareLink, dimensions);
 			}
+			refreshVisits();
 			this.position(card, this.anchor);
 		});
+		return refreshVisits;
+	}
+
+	private async loadRecentVisits(card: HTMLElement, shareLink: string, body: HTMLElement): Promise<void> {
+		const token = this.plugin.app.secretStorage.getSecret(RECENT_VISITS_SECRET_ID);
+		if (!token) {
+			body.empty();
+			body.createDiv({ cls: "opal-detail-empty", text: t("popover.stats.recentVisitsNotConfigured") });
+			return;
+		}
+		if (!body.hasChildNodes()) body.createDiv({ cls: "opal-detail-section-spinner opal-detail-spinner" });
+		const visits = await fetchRecentVisits(this.plugin.settings, shareLink, token);
+		if (this.el !== card || !card.isConnected) return;
+		body.empty();
+		if (!visits?.length) {
+			body.createDiv({
+				cls: "opal-detail-empty",
+				text: t(visits === null ? "popover.stats.recentVisitsUnavailable" : "popover.stats.recentVisitsEmpty"),
+			});
+		} else {
+			const list = body.createDiv({ cls: "opal-detail-list", attr: { role: "list" } });
+			const chinese = getLanguage() === "zh";
+			for (const visit of visits) {
+				const country = chinese ? countryLabel(visit.countryCode, visit.country) : visit.country || visit.countryCode;
+				const region = chinese && visit.countryCode === "CN" ? provinceLabel(visit.region) : visit.region;
+				const location = region || country || t("popover.stats.recentVisitsUnknownLocation");
+				const row = list.createDiv({ cls: "opal-share-popover-visit", attr: { role: "listitem" } });
+				row.createEl("time", {
+					text: `[${formatDateTime(visit.timestamp)}]`,
+					attr: { datetime: visit.timestamp.toISOString() },
+				});
+				row.createSpan({ text: t("popover.stats.recentVisitLine", {
+					location,
+					os: visit.os || t("popover.stats.recentVisitsUnknownOs"),
+				}) });
+			}
+		}
+		this.position(card, this.anchor);
 	}
 
 	/**

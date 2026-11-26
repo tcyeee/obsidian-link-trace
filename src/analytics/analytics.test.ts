@@ -10,6 +10,7 @@ import {
 	canReadAnalytics,
 	parseDimensionStats,
 	parseDailySeries,
+	parseRecentVisits,
 	recentActiveDays,
 	provinceLabel,
 	countryLabel,
@@ -17,6 +18,35 @@ import {
 	type DimensionItem,
 	type PublishedPage,
 } from "./analytics";
+
+describe("parseRecentVisits", () => {
+	const row = {
+		timestamp: "2026-11-26T06:01:24Z",
+		countryCode: "CN",
+		country: "China",
+		region: "Hubei",
+		os: "Windows",
+	};
+
+	it("keeps the five latest events in order with the original region and OS", () => {
+		const visits = parseRecentVisits([
+			...Array.from({ length: 5 }, () => row),
+			{ ...row, timestamp: "2026-11-26T07:22:33Z", region: "Beijing", os: "iOS" },
+		]);
+		expect(visits).toHaveLength(5);
+		expect(visits?.[0]).toMatchObject({
+			timestamp: new Date("2026-11-26T07:22:33Z"),
+			region: "Beijing",
+			os: "iOS",
+		});
+	});
+
+	it("distinguishes no records from an invalid response", () => {
+		expect(parseRecentVisits([])).toEqual([]);
+		expect(parseRecentVisits([row, { ...row, timestamp: "invalid" }])).toBeNull();
+		expect(parseRecentVisits({ hits: [] })).toBeNull();
+	});
+});
 
 describe("getGoatCounterScriptTag", () => {
 	it("生成 data-goatcounter + async 脚本，src 为端点加 .js", () => {

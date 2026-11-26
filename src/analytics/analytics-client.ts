@@ -5,6 +5,7 @@ import {
 	parseHitsList,
 	parseDimensionStats,
 	parseDailySeries,
+	parseRecentVisits,
 	recentActiveDays,
 	buildLocationRows,
 	extractPathname,
@@ -14,6 +15,7 @@ import {
 	type PageDetail,
 	type DimensionItem,
 	type DailyPoint,
+	type RecentVisit,
 } from "./analytics";
 
 /** 统计起点：取一个足够早的固定时刻，等效“全部累计”。 */
@@ -320,6 +322,32 @@ export async function fetchPageDetail(
 const POPOVER_DIMENSIONS = ["locations", "systems", "browsers", "sizes"] as const;
 /** 气泡展开面板可逐块渲染的维度键。 */
 export type PopoverDimensionKey = (typeof POPOVER_DIMENSIONS)[number];
+
+/** Read the last five pageviews from the publisher's private GoatCounter endpoint. */
+export async function fetchRecentVisits(
+	settings: ShareOnlineSettings,
+	shareLink: string,
+	token: string
+): Promise<RecentVisit[] | null> {
+	const apiBase = deriveApiBase(settings.goatcounterEndpoint.trim());
+	if (!apiBase?.startsWith("https://")) return null;
+	try {
+		const page = new URL(shareLink);
+		if (page.protocol !== "https:" && page.protocol !== "http:") return null;
+		const url = new URL(`${apiBase}/recent-visits`);
+		url.searchParams.set("host", page.host);
+		url.searchParams.set("path", page.pathname);
+		const res = await requestUrl({
+			url: url.href,
+			method: "GET",
+			headers: { ...STATS_HEADERS, authorization: `Bearer ${token}` },
+			throw: false,
+		});
+		return res.status === 200 ? parseRecentVisits(res.json) : null;
+	} catch {
+		return null;
+	}
+}
 
 /**
  * 拉取分享气泡「展开」面板所需的四个维度（国家/地区、操作系统、浏览器、屏幕尺寸）。
