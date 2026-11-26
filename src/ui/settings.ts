@@ -8,6 +8,8 @@ import {
 import type ShareOnlinePlugin from "../../main";
 import { Language, t, setLanguage, formatPageCount } from "../core/i18n";
 
+export const RECENT_VISITS_SECRET_ID = "link-trace-recent-visits";
+
 export interface ShareOnlineSettings {
 	/** Export depth: 1 = main note only, 2 = + direct sub-pages, 3 = + one more level. */
 	exportLevel: number;
@@ -124,6 +126,35 @@ export class ShareOnlineSettingTab extends PluginSettingTab {
 				type: "group",
 				heading: t("settings.route.heading"),
 				items: this.routeItems(),
+			},
+			{
+				type: "group",
+				heading: t("settings.analytics.heading"),
+				items: [
+					{
+						name: t("settings.analytics.endpoint"),
+						render: (setting: Setting) => {
+							setting.addText((text) => text
+								.setValue(this.plugin.settings.goatcounterEndpoint)
+								.onChange(async (value) => {
+									this.plugin.settings.goatcounterEndpoint = value.trim();
+									await this.plugin.saveSettings();
+								}));
+						},
+					},
+					{
+						name: t("settings.analytics.recentVisitsToken"),
+						desc: t("settings.analytics.recentVisitsTokenDesc"),
+						render: (setting: Setting) => {
+							const storage = this.app.secretStorage;
+							setting.addText((text) => {
+								text.inputEl.type = "password";
+								text.setValue(storage.getSecret(RECENT_VISITS_SECRET_ID) ?? "");
+								text.onChange((value) => storage.setSecret(RECENT_VISITS_SECRET_ID, value.trim()));
+							});
+						},
+					},
+				],
 			},
 		];
 	}
